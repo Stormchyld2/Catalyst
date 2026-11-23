@@ -55,5 +55,4 @@ Critical-success effects, presets and favourites, dice sets, accessibility passe
 - Resizing the tray by hand clears settled dice from the mat (Dice Box rebuilds its world); the result panel keeps the values.
 - The number colour on the dice comes from the Dice Box theme and is not separately configurable.
 - The d4 is small at the default dice size; the large size helps.
-- The campaign session folder (`Notes/Campaign Sessions/`) needs product sign-off.
 - Still to check by hand on Windows: the Tauri/WebView2 window, a real GPU, high-DPI, sound output, and the network physically disabled.

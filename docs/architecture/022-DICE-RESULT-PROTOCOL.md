@@ -63,14 +63,14 @@ A plain `2d20` is a **sum**. Advantage and disadvantage are separate roll kinds 
 History is kept in memory (`RollHistory`, newest first, 500 entries) for the running app session. While a campaign session is active (`diceTray.startCampaignSession(projectRoot, title)` or `resumeCampaignSession`), `CampaignSessionSink` also appends each of that session's records to ordinary files in the project, through Rust commands in `src-tauri/src/dice_sessions.rs`:
 
 ```text
-<project>/Notes/Campaign Sessions/<session-id>/session.json   { id, title, startedAt }
-<project>/Notes/Campaign Sessions/<session-id>/rolls.jsonl    one RollRecord per line
+<project>/Story Development/Sessions/Roll Logs/<session-id>/session.json   { id, title, startedAt }
+<project>/Story Development/Sessions/Roll Logs/<session-id>/rolls.jsonl    one RollRecord per line
 ```
 
 - **File-authoritative, no database** (`AGENTS.md`): append-only JSON Lines, readable without Catalyst; reopening a session reads the file back into history.
 - **Safe paths:** session IDs must be `session-` plus a UUID v4, so no path can escape the folder. `session.json` is written to a temporary file and renamed; each appended line is synced to disk.
 - **Validated on write:** the Rust side rejects a record whose ID, session, die faces, totals, enum values or timestamp are invalid. Damaged lines are skipped on read and counted (`skippedLines`), never fatal.
-- **Location needs sign-off:** `Notes/` is one of the canonical roots; a dedicated `Campaign Sessions/` root may suit the Campaign Studio better once it exists. Moving it is a constant in `dice_sessions.rs`.
+- **Location (approved by Jason, 2026-11-23):** the campaign's `Story Development/Sessions` folder that the New Campaign Wizard creates, in a `Roll Logs` folder beside `Session Prep` and `Session Logs`. One roll log per game session. The folder is created on the first session if it does not exist yet.
 - Rolls with no active session are not stored. A failed write leaves the roll in memory and shows "Roll not saved to the session file".
 
 Tauri commands: `start_dice_session`, `append_dice_roll`, `get_dice_session_history`, `list_dice_sessions`.

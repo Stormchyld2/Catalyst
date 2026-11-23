@@ -1,8 +1,11 @@
 //! Campaign session dice history, stored as ordinary project files.
 //!
 //! ```text
-//! <project root>/Notes/Campaign Sessions/<session-id>/session.json   session metadata
-//! <project root>/Notes/Campaign Sessions/<session-id>/rolls.jsonl    one roll record per line
+//! <project root>/Story Development/Sessions/Roll Logs/<session-id>/session.json   session metadata
+//! <project root>/Story Development/Sessions/Roll Logs/<session-id>/rolls.jsonl    one roll record per line
+//!
+//! One roll log per game session, beside the `Session Prep` and `Session Logs`
+//! folders that the New Campaign Wizard creates.
 //! ```
 //!
 //! The files are authoritative and readable without Catalyst. There is no
@@ -17,13 +20,13 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-/// Lives under the canonical `Notes/` root until Catalyst defines a campaign
-/// folder of its own (see doc 022).
-const NOTES_DIR: &str = "Notes";
-pub const SESSIONS_DIR: &str = "Campaign Sessions";
+/// The campaign's Sessions folder, as created by the New Campaign Wizard.
+pub const CAMPAIGN_SESSIONS_DIR: &str = "Story Development/Sessions";
+/// Roll logs live in their own folder inside it, one subfolder per game session.
+pub const ROLL_LOGS_DIR: &str = "Roll Logs";
 
 fn sessions_root(root: &Path) -> PathBuf {
-    root.join(NOTES_DIR).join(SESSIONS_DIR)
+    root.join("Story Development").join("Sessions").join(ROLL_LOGS_DIR)
 }
 const SESSION_FILE: &str = "session.json";
 const ROLLS_FILE: &str = "rolls.jsonl";
@@ -306,6 +309,12 @@ mod tests {
         append_roll(dir.path(), &session.id, &record(&session.id, &[20])).unwrap();
 
         let folder = sessions_root(dir.path()).join(&session.id);
+        // One roll log per game session, in the campaign wizard's Sessions folder.
+        assert_eq!(
+            folder,
+            dir.path().join("Story Development").join("Sessions").join("Roll Logs").join(&session.id)
+        );
+        assert!(dir.path().join(CAMPAIGN_SESSIONS_DIR).join(ROLL_LOGS_DIR).is_dir());
         let lines = fs::read_to_string(folder.join(ROLLS_FILE)).unwrap();
         assert_eq!(lines.lines().count(), 2);
         assert!(lines.contains("\"expression\":\"2d20+2\""));
