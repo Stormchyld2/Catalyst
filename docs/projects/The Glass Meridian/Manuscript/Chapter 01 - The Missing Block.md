@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: chapter
   id: ch-af191cae-023b-47c9-a7d8-c8930ba691d0
 title: Chapter 1 — The Missing Block

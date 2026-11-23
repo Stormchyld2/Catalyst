@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: object
   id: obj-5114f098-9d74-411b-a284-fb045b1f95e1
 title: Venn Survey Compass

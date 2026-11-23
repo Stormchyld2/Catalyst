@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-82a7f555-b91e-4828-a09e-4afc532a4038
 title: Story Beat Sheet

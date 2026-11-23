@@ -14,7 +14,21 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 const FRONTMATTER_DELIMITER: &str = "---";
-const TEMP_PREFIX: &str = ".lithomark-save-";
+const TEMP_PREFIX: &str = ".catalyst-save-";
+/// Recovery artifacts written before the Catalyst rename. Still recognised.
+const LEGACY_TEMP_PREFIX: &str = ".lithomark-save-";
+
+/// Frontmatter key holding a document's stable identity.
+pub const IDENTITY_KEY: &str = "catalyst";
+/// Identity key used by documents written before the Catalyst rename. It is
+/// still read, and a legacy file keeps its key when saved, so existing
+/// projects are never silently migrated.
+pub const LEGACY_IDENTITY_KEY: &str = "lithomark";
+
+/// Project-local hidden folder (trash and similar app state).
+pub const APP_DIR: &str = ".catalyst";
+/// Hidden folder used before the Catalyst rename; still read for trash entries.
+pub const LEGACY_APP_DIR: &str = ".lithomark";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DocumentIdentity {
@@ -162,9 +176,9 @@ pub fn delete_document(
         ));
     }
 
-    let trash_root = project_root.join(".lithomark").join("trash");
+    let trash_root = project_root.join(APP_DIR).join("trash");
     // Refuse to write into a redirected trash folder outside the project.
-    for directory in [project_root.join(".lithomark"), trash_root.clone()] {
+    for directory in [project_root.join(APP_DIR), trash_root.clone()] {
         if directory.is_symlink() {
             return Err(format!("Trash directory '{}' must not be a symbolic link.", directory.display()));
         }
@@ -213,16 +227,34 @@ pub fn list_trashed_documents(project_root: &Path) -> Result<Vec<TrashedDocument
     if !project_root.is_absolute() || !project_root.is_dir() {
         return Err("Trash listing requires an existing absolute project directory.".into());
     }
-    let trash = project_root.join(".lithomark").join("trash");
-    if !trash.exists() { return Ok(Vec::new()); }
+    let mut results = Vec::new();
+    // New deletions go to .catalyst/trash; entries made before the rename in
+    // .lithomark/trash stay listable and restorable.
+    for app_dir in [APP_DIR, LEGACY_APP_DIR] {
+        list_trash_root(project_root, &project_root.join(app_dir).join("trash"), &mut results)?;
+    }
+    results.sort_by(|a, b| a.original_relative_path.cmp(&b.original_relative_path));
+    Ok(results)
+}
+
+fn trash_entry_dir(project_root: &Path, entry_id: &str) -> PathBuf {
+    let current = project_root.join(APP_DIR).join("trash").join(entry_id);
+    if current.exists() {
+        current
+    } else {
+        project_root.join(LEGACY_APP_DIR).join("trash").join(entry_id)
+    }
+}
+
+fn list_trash_root(project_root: &Path, trash: &Path, results: &mut Vec<TrashedDocument>) -> Result<(), String> {
+    if !trash.exists() { return Ok(()); }
     let root = fs::canonicalize(project_root).map_err(|e| format!("Invalid project root: {e}"))?;
-    let verified_trash = fs::canonicalize(&trash).map_err(|e| format!("Invalid trash directory: {e}"))?;
-    if !verified_trash.starts_with(&root) || fs::symlink_metadata(&trash)
+    let verified_trash = fs::canonicalize(trash).map_err(|e| format!("Invalid trash directory: {e}"))?;
+    if !verified_trash.starts_with(&root) || fs::symlink_metadata(trash)
         .map_err(|e| format!("Cannot inspect trash: {e}"))?.file_type().is_symlink() {
         return Err("Trash directory must be inside the project and not a symlink.".into());
     }
-    let mut results = Vec::new();
-    for entry in fs::read_dir(&trash).map_err(|e| format!("Cannot list trash: {e}"))? {
+    for entry in fs::read_dir(trash).map_err(|e| format!("Cannot list trash: {e}"))? {
         let entry = entry.map_err(|e| format!("Cannot inspect trash entry: {e}"))?;
         if !entry.file_type().map_err(|e| e.to_string())?.is_dir() || entry.file_type().map_err(|e| e.to_string())?.is_symlink() {
             continue;
@@ -247,8 +279,7 @@ pub fn list_trashed_documents(project_root: &Path) -> Result<Vec<TrashedDocument
             identity: parsed.identity, source_hash: sha256_hex(&raw),
         });
     }
-    results.sort_by(|a, b| a.original_relative_path.cmp(&b.original_relative_path));
-    Ok(results)
+    Ok(())
 }
 
 /// Restore only an inspected trash entry to its unoccupied original path.
@@ -275,7 +306,8 @@ pub fn restore_trashed_document(
     if !verified_parent.starts_with(&root) {
         return Err("Restore destination escapes the project.".into());
     }
-    let trash_file = project_root.join(".lithomark/trash").join(entry_id).join("document.md");
+    let entry_dir = trash_entry_dir(project_root, entry_id);
+    let trash_file = entry_dir.join("document.md");
     let latest = fs::read(&trash_file).map_err(|e| format!("Cannot recheck trash: {e}"))?;
     if sha256_hex(&latest) != expected_source_hash {
         return Err("Trashed document changed during restoration.".into());
@@ -296,7 +328,7 @@ pub fn restore_trashed_document(
         return Err("Restored document identity mismatch; trash was retained.".into());
     }
     // Preserve the trash copy if cleanup fails; it remains available for review.
-    fs::remove_dir_all(project_root.join(".lithomark/trash").join(entry_id))
+    fs::remove_dir_all(&entry_dir)
         .map_err(|e| format!("Document restored, but trash cleanup failed: {e}"))?;
     Ok(restored)
 }
@@ -328,7 +360,14 @@ pub fn save_document(
         }
     }
 
-    let serialized = serialize_document(document)?;
+    // A document written before the Catalyst rename keeps its legacy identity
+    // key so saving never migrates an existing project behind the user's back.
+    let identity_key = if path.exists() && file_uses_legacy_identity(&path) {
+        LEGACY_IDENTITY_KEY
+    } else {
+        IDENTITY_KEY
+    };
+    let serialized = serialize_document_with_key(document, identity_key)?;
     let parent = path.parent().ok_or_else(|| "Document path has no parent.".to_string())?;
     fs::create_dir_all(parent)
         .map_err(|e| format!("Could not create document directory '{}': {e}", parent.display()))?;
@@ -469,8 +508,8 @@ fn recovery_file_name(destination: &Path, extension: &str) -> String {
 
 fn decode_recovery_destination(artifact: &Path) -> Option<String> {
     let name = artifact.file_name()?.to_str()?;
-    let stem = name.strip_prefix(TEMP_PREFIX)?
-        .strip_suffix(".tmp").or_else(|| name.strip_prefix(TEMP_PREFIX)?.strip_suffix(".bak"))?;
+    let unprefixed = name.strip_prefix(TEMP_PREFIX).or_else(|| name.strip_prefix(LEGACY_TEMP_PREFIX))?;
+    let stem = unprefixed.strip_suffix(".tmp").or_else(|| unprefixed.strip_suffix(".bak"))?;
     // UUIDs contain hyphens: take the fixed 36-character UUID suffix rather
     // than splitting on the last hyphen (which loses most of the UUID).
     let uuid_start = stem.len().checked_sub(36)?;
@@ -527,7 +566,7 @@ pub fn discover_recovery_artifacts(project_root: &Path) -> Result<Vec<RecoveryAr
             }
             let name = entry.file_name();
             let name = name.to_string_lossy();
-            if !name.starts_with(TEMP_PREFIX) {
+            if !name.starts_with(TEMP_PREFIX) && !name.starts_with(LEGACY_TEMP_PREFIX) {
                 continue;
             }
             let kind = if name.ends_with(".tmp") {
@@ -680,17 +719,31 @@ pub fn restore_recovery_artifact(
     result.map(|_| safety_copy)
 }
 
+/// Whether an existing file's frontmatter uses the pre-rename identity key.
+fn file_uses_legacy_identity(path: &Path) -> bool {
+    let Ok(raw) = fs::read_to_string(path) else { return false };
+    let normalized = raw.replace("\r\n", "\n");
+    let Ok((yaml, _)) = split_frontmatter(&normalized) else { return false };
+    serde_yaml::from_str::<BTreeMap<String, Value>>(yaml)
+        .map(|root| root.contains_key(LEGACY_IDENTITY_KEY) && !root.contains_key(IDENTITY_KEY))
+        .unwrap_or(false)
+}
+
 pub fn parse_document(relative_path: &Path, raw: &str) -> Result<CatalystDocument, String> {
     let normalized = raw.replace("\r\n", "\n").replace('\r', "\n");
     let (yaml, body) = split_frontmatter(&normalized)?;
     let mut root: BTreeMap<String, Value> =
         serde_yaml::from_str(yaml).map_err(|e| format!("Invalid document YAML: {e}"))?;
 
-    let lithomark = root
-        .remove("lithomark")
-        .ok_or_else(|| "Document frontmatter is missing 'lithomark' identity.".to_string())?;
-    let identity: DocumentIdentity = serde_yaml::from_value(lithomark)
-        .map_err(|e| format!("Invalid lithomark document identity: {e}"))?;
+    let identity_value = match (root.remove(IDENTITY_KEY), root.remove(LEGACY_IDENTITY_KEY)) {
+        (Some(_), Some(_)) => {
+            return Err("Document frontmatter has both 'catalyst' and legacy 'lithomark' identities.".into())
+        }
+        (Some(value), None) | (None, Some(value)) => value,
+        (None, None) => return Err("Document frontmatter is missing 'catalyst' identity.".into()),
+    };
+    let identity: DocumentIdentity = serde_yaml::from_value(identity_value)
+        .map_err(|e| format!("Invalid Catalyst document identity: {e}"))?;
     validate_identity(&identity)?;
 
     let title = match root.remove("title") {
@@ -710,18 +763,22 @@ pub fn parse_document(relative_path: &Path, raw: &str) -> Result<CatalystDocumen
 }
 
 pub fn serialize_document(document: &CatalystDocument) -> Result<String, String> {
+    serialize_document_with_key(document, IDENTITY_KEY)
+}
+
+fn serialize_document_with_key(document: &CatalystDocument, identity_key: &str) -> Result<String, String> {
     validate_identity(&document.identity)?;
 
     let mut root = document.metadata.clone();
-    if root.contains_key("lithomark") {
-        return Err("Document metadata must not override reserved 'lithomark' identity.".into());
+    if root.contains_key(IDENTITY_KEY) || root.contains_key(LEGACY_IDENTITY_KEY) {
+        return Err("Document metadata must not override the reserved 'catalyst' identity.".into());
     }
     if root.contains_key("title") {
         return Err("Document metadata must not override reserved 'title' field.".into());
     }
 
     root.insert(
-        "lithomark".into(),
+        identity_key.into(),
         serde_yaml::to_value(&document.identity)
             .map_err(|e| format!("Could not serialize document identity: {e}"))?,
     );
@@ -1088,6 +1145,32 @@ mod tests {
     }
 
     #[test]
+    fn legacy_identity_key_is_read_and_kept_on_save() {
+        let temp = root();
+        let path = Path::new("Notes/old.md");
+        fs::create_dir_all(temp.path().join("Notes")).unwrap();
+        fs::write(
+            temp.path().join(path),
+            "---\nlithomark:\n  id: note-11111111-1111-4111-8111-111111111111\n  type: note\n  schema_version: 1\ntitle: Old\n---\nBody\n",
+        ).unwrap();
+        let mut document = read_document(temp.path(), path).unwrap();
+        assert_eq!(document.identity.id, "note-11111111-1111-4111-8111-111111111111");
+        document.body = "Edited".into();
+        save_document(temp.path(), &document, Some(&document.source_hash)).unwrap();
+        let raw = fs::read_to_string(temp.path().join(path)).unwrap();
+        assert!(raw.contains("lithomark:") && !raw.contains("catalyst:"));
+        assert_eq!(read_document(temp.path(), path).unwrap().body.trim(), "Edited");
+    }
+
+    #[test]
+    fn new_documents_use_catalyst_identity_key() {
+        let temp = root();
+        create_document(temp.path(), Path::new("Notes/new.md"), "note", Some("New"), "Body").unwrap();
+        let raw = fs::read_to_string(temp.path().join("Notes/new.md")).unwrap();
+        assert!(raw.contains("catalyst:") && !raw.contains("lithomark"));
+    }
+
+    #[test]
     fn invalid_frontmatter_is_not_rewritten() {
         let temp = root();
         let path = Path::new("Notes/broken.md");
@@ -1129,7 +1212,7 @@ mod tests {
         assert_eq!(deleted, created.identity);
         assert!(!temp.path().join(path).exists());
 
-        let trash = temp.path().join(".lithomark/trash");
+        let trash = temp.path().join(".catalyst/trash");
         let entries: Vec<_> = fs::read_dir(trash).unwrap().map(Result::unwrap).collect();
         assert_eq!(entries.len(), 1);
         let entry = entries[0].path();
@@ -1166,7 +1249,7 @@ mod tests {
         assert!(restore_trashed_document(temp.path(), &entry.entry_id, &entry.source_hash).unwrap_err().contains("already exists"));
         assert_eq!(fs::read_to_string(temp.path().join(path)).unwrap(), "Do not overwrite.");
         fs::remove_file(temp.path().join(path)).unwrap();
-        let trash_file = temp.path().join(".lithomark/trash").join(&entry.entry_id).join("document.md");
+        let trash_file = temp.path().join(".catalyst/trash").join(&entry.entry_id).join("document.md");
         fs::write(&trash_file, fs::read_to_string(&trash_file).unwrap() + "\nEdited externally.").unwrap();
         assert!(restore_trashed_document(temp.path(), &entry.entry_id, &entry.source_hash).unwrap_err().contains("changed"));
         assert!(!temp.path().join(path).exists());

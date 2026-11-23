@@ -190,7 +190,14 @@ function shortTitle(text: string): string {
 /** The documents Create will write, for the Review step's preview. Folders
  *  are always the full approved tree. */
 export function plannedFiles(draft: CampaignDraft): string[] {
-  const files = ["project.yaml", "campaign.yaml", "Adventures/Main Campaign/Campaign Overview.md"];
+  const files = [
+    "project.yaml",
+    "campaign.yaml",
+    "Adventures/Main Campaign/Campaign Overview.md",
+    // The offline GM Reference Library is copied into every campaign (020 §9).
+    "Game Master/Guides/ (7 starter guides)",
+    "Game Master/Random Tables/ (10 random tables)",
+  ];
   if (draft.mode === "quick-start") return files;
   const add = (folder: string, title: string) => files.push(`${folder}/${safeName(title)}.md`);
   if (draft.houseRules.trim()) add("Rules & Mechanics/House Rules", "House Rules");

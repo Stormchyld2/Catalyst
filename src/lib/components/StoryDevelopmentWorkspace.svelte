@@ -1272,19 +1272,19 @@
         void loadDocument(currentProject.value.id, detail.relativePath);
       }
     };
-    window.addEventListener("lithomark:recovery-restored", handleRecoveryRestored);
-    window.addEventListener("lithomark:flush-documents-before-close", flushBeforeClose);
+    window.addEventListener("catalyst:recovery-restored", handleRecoveryRestored);
+    window.addEventListener("catalyst:flush-documents-before-close", flushBeforeClose);
     window.addEventListener("beforeunload", handleBeforeUnload);
-    window.addEventListener("lithomark:before-workspace-change", handleWorkspaceChange);
-    window.addEventListener("lithomark:before-project-change", handleWorkspaceChange);
+    window.addEventListener("catalyst:before-workspace-change", handleWorkspaceChange);
+    window.addEventListener("catalyst:before-project-change", handleWorkspaceChange);
     window.addEventListener("keydown", handleSaveShortcut, true);
 
     return () => {
-      window.removeEventListener("lithomark:recovery-restored", handleRecoveryRestored);
-      window.removeEventListener("lithomark:flush-documents-before-close", flushBeforeClose);
+      window.removeEventListener("catalyst:recovery-restored", handleRecoveryRestored);
+      window.removeEventListener("catalyst:flush-documents-before-close", flushBeforeClose);
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("lithomark:before-workspace-change", handleWorkspaceChange);
-      window.removeEventListener("lithomark:before-project-change", handleWorkspaceChange);
+      window.removeEventListener("catalyst:before-workspace-change", handleWorkspaceChange);
+      window.removeEventListener("catalyst:before-project-change", handleWorkspaceChange);
       window.removeEventListener("keydown", handleSaveShortcut, true);
     };
   });

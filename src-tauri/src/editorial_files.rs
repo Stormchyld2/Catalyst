@@ -10,7 +10,9 @@ pub struct PendingEditorialFiles(Mutex<Vec<String>>);
 
 pub fn supported(path: &Path) -> bool {
     path.extension().and_then(|e| e.to_str()).is_some_and(|e| {
-        e.eq_ignore_ascii_case("lithomark-review") || e.eq_ignore_ascii_case("lithomark-feedback")
+        ["catalyst-review", "catalyst-feedback", "lithomark-review", "lithomark-feedback"]
+            .iter()
+            .any(|known| e.eq_ignore_ascii_case(known))
     })
 }
 
@@ -47,9 +49,11 @@ mod tests {
     use super::*;
     #[test]
     fn only_editorial_documents_are_routed() {
-        assert!(supported(Path::new("/tmp/Review.LITHOMARK-REVIEW")));
+        assert!(supported(Path::new("/tmp/Review.CATALYST-REVIEW")));
+        assert!(supported(Path::new("/tmp/notes.catalyst-feedback")));
+        assert!(supported(Path::new("/tmp/old.lithomark-review")));
         assert!(supported(Path::new("/tmp/notes.lithomark-feedback")));
         assert!(!supported(Path::new("--flag")));
-        assert!(!supported(Path::new("review.lithomark-review.exe")));
+        assert!(!supported(Path::new("review.catalyst-review.exe")));
     }
 }

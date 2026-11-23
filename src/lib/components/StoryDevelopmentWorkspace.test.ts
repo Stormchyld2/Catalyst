@@ -846,7 +846,7 @@ describe("StoryDevelopmentWorkspace", () => {
     const editor = screen.getByRole("textbox", { name: "Document Markdown source including YAML frontmatter" });
     await fireEvent.input(editor, { target: { value: "Unsaved project draft" } });
 
-    const event = new CustomEvent("lithomark:before-project-change", { cancelable: true });
+    const event = new CustomEvent("catalyst:before-project-change", { cancelable: true });
     expect(window.dispatchEvent(event)).toBe(false);
   });
 
@@ -867,7 +867,7 @@ describe("StoryDevelopmentWorkspace", () => {
     await fireEvent.input(editor, { target: { value: "Keep this draft" } });
 
     const pendingDocumentSaves: Promise<boolean>[] = [];
-    window.dispatchEvent(new CustomEvent("lithomark:before-workspace-change", {
+    window.dispatchEvent(new CustomEvent("catalyst:before-workspace-change", {
       cancelable: true,
       detail: { pendingDocumentSaves },
     }));

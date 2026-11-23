@@ -38,8 +38,8 @@ pub struct PluginManifest {
     pub author: String,
     #[serde(rename = "apiVersion")]
     pub api_version: String,
-    #[serde(rename = "minimumLithoMarkVersion")]
-    pub minimum_lithomark_version: String,
+    #[serde(rename = "minimumCatalystVersion", alias = "minimumLithoMarkVersion")]
+    pub minimum_catalyst_version: String,
     #[serde(rename = "type")]
     pub kind: PluginKind,
     pub entry: String,
@@ -407,7 +407,7 @@ impl PluginManifest {
         require_text("plugin name", &self.name)?;
         require_text("plugin version", &self.version)?;
         require_text("plugin author", &self.author)?;
-        require_text("minimum Catalyst version", &self.minimum_lithomark_version)?;
+        require_text("minimum Catalyst version", &self.minimum_catalyst_version)?;
         validate_entry(&self.entry)?;
         self.validate_contributions()?;
         Ok(())
@@ -532,7 +532,7 @@ mod tests {
             "version": "1.0.0",
             "author": "Example",
             "apiVersion": "1",
-            "minimumLithoMarkVersion": "0.1.0",
+            "minimumCatalystVersion": "0.1.0",
             "type": "extension",
             "entry": "dist/index.js",
             "permissions": permissions,

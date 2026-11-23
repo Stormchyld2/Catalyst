@@ -2825,19 +2825,19 @@ mod tests {
         let mut project = create_test_project(&conn);
         assert_eq!(get_project(&conn, &project.id).unwrap().unwrap().project_root, None);
 
-        update_project_root(&conn, &project.id, "/tmp/lithomark-project").unwrap();
+        update_project_root(&conn, &project.id, "/tmp/catalyst-project").unwrap();
         let stored = get_project(&conn, &project.id).unwrap().unwrap();
         assert_eq!(
             stored.project_root.as_deref(),
-            Some("/tmp/lithomark-project")
+            Some("/tmp/catalyst-project")
         );
 
-        project.project_root = Some("/tmp/lithomark-project-2".into());
+        project.project_root = Some("/tmp/catalyst-project-2".into());
         update_project(&conn, &project).unwrap();
         let stored = get_project(&conn, &project.id).unwrap().unwrap();
         assert_eq!(
             stored.project_root.as_deref(),
-            Some("/tmp/lithomark-project-2")
+            Some("/tmp/catalyst-project-2")
         );
     }
 

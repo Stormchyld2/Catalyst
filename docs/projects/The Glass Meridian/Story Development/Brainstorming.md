@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-981e58e5-89ba-4062-b4a8-0392ea452421
 title: Brainstorming

@@ -179,12 +179,12 @@ pub fn build_write_projection(project_root: &Path, project_id: Uuid) -> Result<W
             source_id: Some(match manuscript.as_ref() {
                 Some(value) if value.document.metadata.get("scene_authority")
                     .and_then(|value| value.as_str()) == Some("individual_files") =>
-                    format!("lithomark:scene-files:{}", value.document.relative_path.display()),
+                    format!("catalyst:scene-files:{}", value.document.relative_path.display()),
                 Some(value) => format!(
-                    "lithomark:file:{}",
+                    "catalyst:file:{}",
                     value.document.relative_path.to_string_lossy().replace('\\', "/")
                 ),
-                None => format!("lithomark:planned:{key}"),
+                None => format!("catalyst:planned:{key}"),
             }),
             archived: false,
             locked: false,
@@ -284,9 +284,9 @@ pub fn build_write_projection(project_root: &Path, project_id: Uuid) -> Result<W
                 },
                 position: scene_index as i32,
                 source_id: Some(if drafted {
-                    format!("lithomark:drafted:{scene_index}")
+                    format!("catalyst:drafted:{scene_index}")
                 } else {
-                    format!("lithomark:planned:{scene_index}")
+                    format!("catalyst:planned:{scene_index}")
                 }),
                 archived: false,
                 locked: false,
@@ -313,7 +313,7 @@ pub fn build_write_projection(project_root: &Path, project_id: Uuid) -> Result<W
                         content: content.clone(),
                         prose: None,
                         position: beat_index as i32,
-                        source_id: Some("lithomark:planning".into()),
+                        source_id: Some("catalyst:planning".into()),
                     });
                 }
             }
@@ -355,7 +355,7 @@ fn apply_compatible_outline(
         || !audit.write_only_scenes.is_empty()
         || (!audit.conflicting_scene_parents.is_empty()
             && projection.chapters.iter().any(|chapter|
-                chapter.source_id.as_deref().is_some_and(|source| source.starts_with("lithomark:file:"))))
+                chapter.source_id.as_deref().is_some_and(|source| source_kind(source, "file").is_some())))
     {
         return false;
     }
@@ -389,7 +389,7 @@ fn apply_compatible_outline(
                     content: beat.content.clone(),
                     prose: None,
                     position: position as i32,
-                    source_id: Some("lithomark:outline".into()),
+                    source_id: Some("catalyst:outline".into()),
                 }).collect());
         }
         projection.scenes_by_chapter.insert(chapter.id.to_string(), scenes);
@@ -439,7 +439,7 @@ pub fn save_chapter_prose(
 
     // Scene-owned chapters must be edited through their scene files.
     // Writing a chapter-wide body here would introduce a second prose authority.
-    if chapter.source_id.as_deref().is_some_and(|source| source.starts_with("lithomark:scene-files:")) {
+    if chapter.source_id.as_deref().is_some_and(|source| source_kind(source, "scene-files").is_some()) {
         return Err("This chapter uses individual scene files. Edit its scenes instead of replacing the chapter manuscript.".into());
     }
 
@@ -456,7 +456,7 @@ pub fn save_chapter_prose(
     let relative_path = chapter
         .source_id
         .as_deref()
-        .and_then(|source| source.strip_prefix("lithomark:file:"))
+        .and_then(|source| source_kind(source, "file"))
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| {
             std::path::PathBuf::from(format!(
@@ -506,7 +506,7 @@ pub fn stage_legacy_chapter_scenes(
     let chapter = projection.chapters.iter().find(|chapter| chapter.id == chapter_id)
         .ok_or_else(|| "Chapter not found.".to_string())?;
     let source = chapter.source_id.as_deref()
-        .and_then(|source| source.strip_prefix("lithomark:file:"))
+        .and_then(|source| source_kind(source, "file"))
         .ok_or_else(|| "Only file-backed legacy chapters can be staged.".to_string())?;
     let source_document = read_document(project_root, Path::new(source))?;
     let segments = split_manuscript_scenes(&source_document.body);
@@ -571,7 +571,7 @@ pub fn verify_staged_legacy_chapter(
     let chapter = projection.chapters.iter().find(|chapter| chapter.id == chapter_id)
         .ok_or_else(|| "Chapter not found.".to_string())?;
     let source = chapter.source_id.as_deref()
-        .and_then(|source| source.strip_prefix("lithomark:file:"))
+        .and_then(|source| source_kind(source, "file"))
         .ok_or_else(|| "Only legacy file-backed chapters can be verified.".to_string())?;
     let source_document = read_document(project_root, Path::new(source))?;
     let segments = split_manuscript_scenes(&source_document.body);
@@ -614,7 +614,7 @@ pub fn activate_staged_legacy_chapter(
     let chapter = projection.chapters.iter().find(|chapter| chapter.id == chapter_id)
         .ok_or_else(|| "Chapter not found.".to_string())?;
     let source = chapter.source_id.as_deref()
-        .and_then(|value| value.strip_prefix("lithomark:file:"))
+        .and_then(|value| source_kind(value, "file"))
         .ok_or_else(|| "Chapter is not a legacy manuscript.".to_string())?;
     let mut document = read_document(project_root, Path::new(source))?;
     if document.metadata.contains_key("scene_authority") {
@@ -1281,12 +1281,28 @@ fn deterministic_uuid(namespace: &str, key: &str) -> Uuid {
     Uuid::from_bytes(bytes)
 }
 
+/// Projection source ids are written as `catalyst:<kind>:<rest>`. Rows projected
+/// before the Catalyst rename used the `lithomark:` prefix, so both are accepted.
+fn source_kind<'a>(source: &'a str, kind: &str) -> Option<&'a str> {
+    ["catalyst:", "lithomark:"].iter().find_map(|prefix| {
+        source.strip_prefix(prefix)?.strip_prefix(kind)?.strip_prefix(':')
+    })
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn source_kind_accepts_catalyst_and_legacy_prefixes() {
+        assert_eq!(super::source_kind("catalyst:file:Manuscript/A.md", "file"), Some("Manuscript/A.md"));
+        assert_eq!(super::source_kind("lithomark:file:Manuscript/A.md", "file"), Some("Manuscript/A.md"));
+        assert_eq!(super::source_kind("catalyst:scene-files:A.md", "file"), None);
+        assert_eq!(super::source_kind("other:file:A.md", "file"), None);
+    }
+
     use super::*;
     #[test]
     fn canonical_scene_creation_without_master_outline() {
-        let root = std::env::temp_dir().join(format!("lithomark-scene-test-{}", Uuid::new_v4()));
+        let root = std::env::temp_dir().join(format!("catalyst-scene-test-{}", Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
         let chapter_id = Uuid::new_v4();
         let chapter = CatalystDocument {

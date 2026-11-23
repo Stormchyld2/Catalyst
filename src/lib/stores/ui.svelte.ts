@@ -48,7 +48,8 @@ const ONBOARDING_COMPLETED_KEY = "kindling:onboardingCompleted";
 
 // Guidance preferences (Phase C)
 const GUIDANCE_ENABLED_KEY = "kindling:guidanceEnabled";
-const SHOW_SAMPLE_PROJECT_KEY = "lithomark:showSampleProject";
+const SHOW_SAMPLE_PROJECT_KEY = "catalyst:showSampleProject";
+const LEGACY_SHOW_SAMPLE_PROJECT_KEY = "lithomark:showSampleProject";
 const TOOLTIP_SEEN_PREFIX = "kindling:tooltipSeen:";
 
 export type GuidanceArea =
@@ -114,7 +115,7 @@ class UIStore {
 
     const guidanceStored = storage?.getItem(GUIDANCE_ENABLED_KEY) ?? null;
     this._guidanceEnabled = guidanceStored === null ? true : guidanceStored === "true";
-    const sampleStored = storage?.getItem(SHOW_SAMPLE_PROJECT_KEY) ?? null;
+    const sampleStored = storage?.getItem(SHOW_SAMPLE_PROJECT_KEY) ?? storage?.getItem(LEGACY_SHOW_SAMPLE_PROJECT_KEY) ?? null;
     this._showSampleProject = sampleStored === null ? true : sampleStored === "true";
 
     this._theme = getStoredPreference();

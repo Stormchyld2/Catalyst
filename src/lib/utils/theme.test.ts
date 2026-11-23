@@ -63,17 +63,24 @@ describe("theme utility", () => {
     });
 
     it("returns 'light' when stored", () => {
-      store["lithomark:theme"] = "light";
+      store["catalyst:theme"] = "light";
       expect(getStoredPreference()).toBe("light");
     });
 
     it("returns 'system' when stored", () => {
-      store["lithomark:theme"] = "system";
+      store["catalyst:theme"] = "system";
       expect(getStoredPreference()).toBe("system");
     });
 
+    it("migrates a preference saved under the pre-rename key", () => {
+      store["lithomark:theme"] = "light";
+      expect(getStoredPreference()).toBe("light");
+      expect(store["catalyst:theme"]).toBe("light");
+      expect(store["lithomark:theme"]).toBeUndefined();
+    });
+
     it("returns 'dark' for invalid stored value", () => {
-      store["lithomark:theme"] = "invalid";
+      store["catalyst:theme"] = "invalid";
       expect(getStoredPreference()).toBe("dark");
     });
   });
@@ -81,7 +88,7 @@ describe("theme utility", () => {
   describe("setThemePreference", () => {
     it("persists and applies dark theme", () => {
       setThemePreference("dark");
-      expect(localStorageMock.setItem).toHaveBeenCalledWith("lithomark:theme", "dark");
+      expect(localStorageMock.setItem).toHaveBeenCalledWith("catalyst:theme", "dark");
       expect(setAttributeSpy).toHaveBeenCalledWith("data-theme", "dark");
     });
 
@@ -98,7 +105,7 @@ describe("theme utility", () => {
 
     it("persists and applies light theme", () => {
       setThemePreference("light");
-      expect(localStorageMock.setItem).toHaveBeenCalledWith("lithomark:theme", "light");
+      expect(localStorageMock.setItem).toHaveBeenCalledWith("catalyst:theme", "light");
       expect(setAttributeSpy).toHaveBeenCalledWith("data-theme", "light");
     });
 
@@ -137,7 +144,7 @@ describe("theme utility", () => {
 
   describe("initTheme", () => {
     it("applies theme from storage on init", () => {
-      store["lithomark:theme"] = "light";
+      store["catalyst:theme"] = "light";
       initTheme();
       expect(setAttributeSpy).toHaveBeenCalledWith("data-theme", "light");
     });
@@ -148,7 +155,7 @@ describe("theme utility", () => {
     });
 
     it("sets up system listener when preference is system", () => {
-      store["lithomark:theme"] = "system";
+      store["catalyst:theme"] = "system";
       initTheme();
       expect(addListenerSpy).toHaveBeenCalledWith("change", expect.any(Function));
     });

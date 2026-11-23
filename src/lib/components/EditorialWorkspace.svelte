@@ -804,7 +804,7 @@
           filters: [
             {
               name: "Catalyst editorial files",
-              extensions: ["lithomark-review", "lithomark-feedback"],
+              extensions: ["catalyst-review", "catalyst-feedback", "lithomark-review", "lithomark-feedback"],
             },
           ],
         }));
@@ -914,8 +914,8 @@
     await action(async () => {
       const path = await save({
         title: "Export for editorial review",
-        defaultPath: `${roundName}.lithomark-review`,
-        filters: [{ name: "Catalyst review", extensions: ["lithomark-review"] }],
+        defaultPath: `${roundName}.catalyst-review`,
+        filters: [{ name: "Catalyst review", extensions: ["catalyst-review"] }],
       });
       if (!path) return;
       const created = await invoke<EditorialRound>("export_editorial_review", {
@@ -1064,11 +1064,11 @@
       if (!recovery) await flush();
       const path = await save({
         title: recovery ? "Export recovery copy" : "Return editorial feedback",
-        defaultPath: `${round.title} - ${round.name} - ${session.name || "review"}${recovery ? " - recovery.lithomark-review" : ".lithomark-feedback"}`,
+        defaultPath: `${round.title} - ${round.name} - ${session.name || "review"}${recovery ? " - recovery.catalyst-review" : ".catalyst-feedback"}`,
         filters: [
           {
             name: recovery ? "Catalyst recovery review" : "Catalyst feedback",
-            extensions: [recovery ? "lithomark-review" : "lithomark-feedback"],
+            extensions: [recovery ? "catalyst-review" : "catalyst-feedback"],
           },
         ],
       });
@@ -1096,8 +1096,8 @@
       if (!reviewer) return;
       const path = await save({
         title: "Send replies and decisions to your editor",
-        defaultPath: `${round!.title} - ${round!.name} - reply to ${reviewer.name}.lithomark-review`,
-        filters: [{ name: "Catalyst review response", extensions: ["lithomark-review"] }],
+        defaultPath: `${round!.title} - ${round!.name} - reply to ${reviewer.name}.catalyst-review`,
+        filters: [{ name: "Catalyst review response", extensions: ["catalyst-review"] }],
       });
       if (!path) return;
       await invoke("export_editorial_reply", { roundId: feedback.round.id, reviewerId, path });

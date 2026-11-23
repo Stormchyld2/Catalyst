@@ -123,7 +123,7 @@ describe("editorial workspace", () => {
     async (entry) => {
       const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
       if (entry === "local") await view.component.openLocal("project", "s");
-      else await view.component.openFile("/review.lithomark-review");
+      else await view.component.openFile("/review.catalyst-review");
       if (entry === "package") {
         expect(
           view
@@ -178,7 +178,7 @@ describe("editorial workspace", () => {
         expect(view.getByText("1 of 1")).toBeTruthy();
         expect(document.querySelector(".editorial-search-match")?.textContent).toBe("letter");
         await view.component.openLocal("project", "s");
-      } else await view.component.openFile("/review.lithomark-review");
+      } else await view.component.openFile("/review.catalyst-review");
       expect(view.queryByRole("searchbox")).toBeNull();
       if (entry === "package") {
         expect(document.querySelector('.scene-link[aria-current="location"]')?.textContent).toBe(
@@ -195,7 +195,7 @@ describe("editorial workspace", () => {
 
   it("marks a missing reviewer name required and clears validation when supplied", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     const name = view.getByLabelText("Name shown with feedback") as HTMLInputElement;
     expect(name.required).toBe(true);
     expect(name.getAttribute("aria-invalid")).toBe("true");
@@ -542,7 +542,7 @@ describe("editorial workspace", () => {
   });
   it("keeps first-time attribution mounted through native-style character input", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     const input = view.getByLabelText("Name shown with feedback");
     for (const value of ["R", "Ro", "Rowan"]) {
       await fireEvent.input(input, { target: { value } });
@@ -554,7 +554,7 @@ describe("editorial workspace", () => {
   });
   it("activates inline feedback without expanding the edit selection", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     editor().commands.setTextSelection(1);
     editor().commands.insertContent("Quietly, ");
     await fireEvent.change(view.getByLabelText("Markup view"), { target: { value: "all" } });
@@ -699,7 +699,7 @@ describe("editorial workspace", () => {
   });
   it("keeps the current workspace usable when opening local feedback fails", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     editor().commands.insertContent("A note. ");
     const text = editor().getText();
     const original = vi.mocked(invoke).getMockImplementation()!;
@@ -719,7 +719,7 @@ describe("editorial workspace", () => {
       return original(cmd, args);
     });
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/future.lithomark-review");
+    await view.component.openFile("/future.catalyst-review");
     expect(view.component.isOpen()).toBe(true);
     expect(view.queryByRole("dialog")).toBeNull();
     expect(view.getByRole("alert").textContent).toContain("Unsupported review package version");
@@ -832,7 +832,7 @@ describe("editorial workspace", () => {
         : original(cmd, args)
     );
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/saved.lithomark-review");
+    await view.component.openFile("/saved.catalyst-review");
     editor().commands.setTextSelection(editor().state.doc.content.size - 1);
     editor().commands.insertContent(" End.");
     await tick();
@@ -852,7 +852,7 @@ describe("editorial workspace", () => {
   });
   it("opens directly, types suggestions, undoes, saves and exports a resumable review", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     await fireEvent.input(view.getByLabelText("Your name"), { target: { value: "Rowan" } });
     editor().commands.setTextSelection(1);
     editor().commands.insertContent("At dusk, ");
@@ -870,13 +870,13 @@ describe("editorial workspace", () => {
         session: expect.objectContaining({ name: "Rowan", changes: expect.any(Array) }),
       })
     );
-    vi.mocked(save).mockResolvedValue("/returned.lithomark-feedback");
+    vi.mocked(save).mockResolvedValue("/returned.catalyst-feedback");
     await fireEvent.click(view.getByLabelText("Manuscript actions"));
     await fireEvent.click(view.getByRole("menuitem", { name: "Export feedback" }));
     await waitFor(() =>
       expect(invoke).toHaveBeenCalledWith(
         "export_editorial_feedback",
-        expect.objectContaining({ path: "/returned.lithomark-feedback" })
+        expect.objectContaining({ path: "/returned.catalyst-feedback" })
       )
     );
     await fireEvent.click(view.getByRole("button", { name: "Close review" }));
@@ -885,7 +885,7 @@ describe("editorial workspace", () => {
 
   it("keeps focus in search while selecting a match and focuses comment composition", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     await fireEvent.click(view.getByRole("button", { name: "Find in manuscript" }));
     const search = view.getByRole("searchbox");
     const pane = document.querySelector<HTMLElement>(".manuscript-column")!;
@@ -931,18 +931,18 @@ describe("editorial workspace", () => {
   });
   it("exports a failed save as a reopenable review with a newer generation", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     await view.component.flush();
     vi.mocked(invoke).mockRejectedValueOnce(new Error("disk full"));
     await fireEvent.input(view.getByLabelText("Your name"), { target: { value: "Rowan" } });
     await expect(view.component.flush()).rejects.toThrow("disk full");
-    vi.mocked(save).mockResolvedValue("/recovery.lithomark-review");
+    vi.mocked(save).mockResolvedValue("/recovery.catalyst-review");
     await fireEvent.click(view.getAllByText("Export recovery copy")[0]);
     await waitFor(() =>
       expect(invoke).toHaveBeenCalledWith(
         "export_editorial_recovery",
         expect.objectContaining({
-          path: "/recovery.lithomark-review",
+          path: "/recovery.catalyst-review",
           session: expect.objectContaining({ generation: 3 }),
         })
       )
@@ -951,7 +951,7 @@ describe("editorial workspace", () => {
   });
   it("adds contextual comments, replies, resolves and reopens them", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     await fireEvent.input(view.getByLabelText("Your name"), { target: { value: "Rowan" } });
     editor().commands.setTextSelection({ from: 1, to: 8 });
     await fireEvent.click(view.getByRole("button", { name: "Comment" }));
@@ -1003,7 +1003,7 @@ describe("editorial workspace", () => {
         };
     });
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/feedback.lithomark-feedback");
+    await view.component.openFile("/feedback.catalyst-feedback");
     expect(document.querySelector(".workspace-header .crumb")).toBeNull();
     expect(view.getByRole("heading", { name: "Feedback from Rowan" })).toBeTruthy();
     expect(view.getByLabelText("Feedback in this file").textContent).toContain("1scene included");
@@ -1068,7 +1068,7 @@ describe("editorial workspace", () => {
         };
     });
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/feedback.lithomark-feedback");
+    await view.component.openFile("/feedback.catalyst-feedback");
     const summary = view.getByLabelText("Feedback in this file");
     expect(summary.textContent).toContain("1scene included");
     expect(summary.textContent).toContain("0suggestions");
@@ -1080,7 +1080,7 @@ describe("editorial workspace", () => {
 
   it("withdraws a suggestion without moving unrelated comments, including undo and redo", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     await fireEvent.input(view.getByLabelText("Your name"), { target: { value: "Rowan" } });
     editor().commands.setTextSelection({ from: 20, to: 26 });
     await fireEvent.click(view.getByRole("button", { name: "Comment" }));
@@ -1121,7 +1121,7 @@ describe("editorial workspace", () => {
   });
   it("keeps intervening comments anchored when withdrawing after a multi-paragraph paste", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     await fireEvent.input(view.getByLabelText("Your name"), { target: { value: "Rowan" } });
     editor().commands.setTextSelection(1);
     editor().commands.insertContent("<p>First note.</p><p>Middle note.</p><p>Last note.</p>");
@@ -1184,14 +1184,14 @@ describe("editorial workspace", () => {
     await waitFor(() => expect(view.getByText("Review decision saved.")).toBeTruthy());
     expect(editor()).toBe(before);
     expect(editor().state.selection.eq(selection)).toBe(true);
-    vi.mocked(save).mockResolvedValue("/reply.lithomark-review");
+    vi.mocked(save).mockResolvedValue("/reply.catalyst-review");
     await fireEvent.click(view.getByLabelText("Review options"));
     await fireEvent.click(view.getByText("Export replies and decisions"));
     await waitFor(() =>
       expect(invoke).toHaveBeenCalledWith("export_editorial_reply", {
         roundId: "round",
         reviewerId: "rowan",
-        path: "/reply.lithomark-review",
+        path: "/reply.catalyst-review",
       })
     );
   });
@@ -1270,7 +1270,7 @@ describe("editorial workspace", () => {
 
   it("records scroll-based reading position independently from the cursor", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     vi.spyOn(editor().view, "posAtCoords").mockReturnValue({ pos: 15, inside: 0 });
     await fireEvent.scroll(document.querySelector(".manuscript-column")!);
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -1284,7 +1284,7 @@ describe("editorial workspace", () => {
   });
   it("keeps the workspace open with recoverable work when saving fails", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
-    await view.component.openFile("/review.lithomark-review");
+    await view.component.openFile("/review.catalyst-review");
     await view.component.flush();
     vi.mocked(invoke).mockRejectedValue(new Error("disk full"));
     await fireEvent.input(view.getByLabelText("Your name"), { target: { value: "Rowan" } });
@@ -1330,7 +1330,7 @@ describe("editorial workspace", () => {
           expect(view.getByRole("alert").textContent).toContain("Cannot open this round")
         );
       } else {
-        vi.mocked(save).mockResolvedValue("/round.lithomark-review");
+        vi.mocked(save).mockResolvedValue("/round.catalyst-review");
         const exportButton = view.getByRole("button", {
           name: "Export review package",
         }) as HTMLButtonElement;
@@ -1391,7 +1391,7 @@ describe("editorial workspace", () => {
   it("exports scoped review rounds and opens their saved feedback", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
     await view.component.openProject("project");
-    vi.mocked(save).mockResolvedValue("/round.lithomark-review");
+    vi.mocked(save).mockResolvedValue("/round.catalyst-review");
     await fireEvent.click(view.getByLabelText("Selected chapters"));
     expect((view.getByLabelText("Selected chapters") as HTMLInputElement).name).toBe(
       (view.getByLabelText("Entire manuscript") as HTMLInputElement).name

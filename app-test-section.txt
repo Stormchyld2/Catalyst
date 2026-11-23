@@ -364,12 +364,12 @@ it.each(["export", "export success"])(
   async (background) => {
     vi.useFakeTimers();
     currentProject.setChapters(mockChapters);
-    localStorage.setItem("kindling:lastExportPath", "/tmp/lithomark-review-export");
+    localStorage.setItem("kindling:lastExportPath", "/tmp/catalyst-review-export");
     vi.mocked(invoke).mockImplementation(async (cmd) => {
       if (cmd === "save_scene_synopsis") throw new Error("disk full");
       if (cmd === "export_to_markdown")
         return {
-          output_path: "/tmp/lithomark-review-export",
+          output_path: "/tmp/catalyst-review-export",
           chapters_exported: 1,
           scenes_exported: 1,
           files_created: 1,
