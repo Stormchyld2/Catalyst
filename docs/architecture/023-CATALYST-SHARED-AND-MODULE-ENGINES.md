@@ -9,7 +9,7 @@
 
 Catalyst is an offline-first tabletop RPG operating environment. **Create reusable platform engines once, then let multiple workspaces consume them through stable contracts.** No duplicate rules evaluator inside Character Studio and Encounter Builder; no second dice parser inside Character Studio; no separate sourcebook indexing subsystem per workspace.
 
-The standalone **Catalyst Character Studio** repository is a *temporary build/test host* for reusable engines and a future integrated workspace. It must not become a second owner of Catalyst's shared engine contracts. Establish versioned contract fixtures and an extraction/integration plan before copying implementations.
+The standalone **Catalyst Character Studio** repository (`Stormchyld2/Catalyst-Character-Builder`) is the **development and testing owner** of the Guided Character Builder, Character Sheet renderer/designer, character advancement workflow, and their character-specific support engines. Shared contracts remain coordinated with parent Catalyst. The parent app must consume these implementations through adapters rather than rebuilding them. Establish versioned contract fixtures and an integration plan before copying implementations.
 
 A shared engine is a service or library with at least two plausible consumers and no UI/workspace dependency. A module-specific engine implements domain behavior uniquely owned by one workspace. Promote module-specific functionality to shared only after a second actual consumer and stable abstraction are demonstrated.
 
@@ -61,10 +61,10 @@ S29 | **Localization, Units & Accessibility Core** | all workspaces | locale/uni
 
 ID | Owner/workspace | Specialized engine | Depends on
 ---|---|---|---
-M01 | Character Studio | **Guided Character Builder workflow**: edition-driven steps, UI cards, drafts, selection review, incomplete-choice dashboard | S01–S07, S15
-M02 | Character Studio | **Interactive Character Sheet renderer/designer**: widgets, editable fields, tabs, skins and layouts | S03, S05, S09, S14, S15
-M03 | Character Studio | **Character advancement UX**: level-up walkthrough, before/after diff and approval | S04–S06, S09, S10
-M04 | Character Studio | **NPC/Creature stat block composer** | S03–S06, S14, S22
+M01 | **Standalone Character Studio repo** | **Guided Character Builder workflow**: edition-driven steps, UI cards, drafts, selection review, incomplete-choice dashboard | S01–S07, S15
+M02 | **Standalone Character Studio repo** | **Interactive Character Sheet renderer/designer**: widgets, editable fields, tabs, skins and layouts | S03, S05, S09, S14, S15
+M03 | **Standalone Character Studio repo** | **Character advancement UX**: level-up walkthrough, before/after diff and approval | S04–S06, S09, S10
+M04 | **Standalone Character Studio repo** | **NPC/Creature stat block composer** | S03–S06, S14, S22
 M05 | Campaign Wizard | **New Campaign seeding orchestrator**: Quick Start, 10-step Guided Setup, folder plan and atomic creation | S01–S04, S15, S26
 M06 | World Builder | **Worldbuilding profile/editor**: governments, nations, locations, cultures, religions, flora/fauna | S02, S03, S15, S19, S20
 M07 | Adventure Studio | **Quest/scene branching editor and puzzle/trap composer** | S02, S03, S09, S20, S23
@@ -120,7 +120,7 @@ Repositories:
 - Parent: Stormchyld2/Catalyst
 - Temporary incubator: Stormchyld2/Catalyst-Character-Builder (app display name: Catalyst Character Studio).
 
-Contract ownership belongs in this document in parent Catalyst. Character Studio maintains an implementation/adapter document pointing here; before integration compare engine schema versions and run tests.
+This parent document governs cross-module integration contracts. **Implementation ownership of M01–M04 and character-specific supporting engines belongs to the standalone Character Studio repository.** The parent app provides adapters to its existing file/document/ID services, global dice service, and other shared capabilities. Claude must not implement rival builder/sheet engines in parent Catalyst.
 
 Never copy a full second UI app into Catalyst as the integration method. Extract or vendor **only license-cleared pure engine modules and focused Svelte components** that meet parent service contracts; adapt persistence to the real Catalyst document service. Keep a manifest listing donor source URL, exact commit SHA, license, copied paths, license notices, assets excluded and subsequent modifications. GPL projects may guide UX design but their code is not copied without a conscious GPL licensing decision.
 
@@ -146,7 +146,7 @@ Avoid circular dependencies: Character Studio may consume shared rules/dice/sour
 
 **Stage E — multiplayer/polish:** S24, S25, S29 and Android adapters. Do not start LAN transport before redaction/authority and state contracts are tested.
 
-**Small first addendum milestone:** deliver S04–S06 as a standalone, dependency-light rules core, with example System-Neutral pack, verified SRD pack manifest/schema only, and contract tests. Treat actual SRD content import as a separate licensed task. If S07 already exists in Claude's dice branch, adopt/test the existing parser rather than implement another.
+**Small first addendum milestone in parent Catalyst:** audit S04–S06 interfaces and existing services, define shared DTOs and contract fixtures, and prepare integration adapters for the character-focused implementations under development in the separate Character Studio repository. **Do not independently build the Character Builder, Sheet Designer, advancement workflow or character-specific S04–S06 implementations in parent Catalyst.** Treat actual SRD content import as a separate licensed task. If S07 already exists in Claude's dice branch, adopt/test its parser rather than implementing another.
 
 Before any build, identify active PRs and paths touched; avoid conflicts with wizard/dice branches. Keep docs/contracts-only changes in their own PR, then one feature branch per coherent engine slice.
 
@@ -169,3 +169,26 @@ This registry is a target map of engine boundaries **not an instruction to build
 
 Architecture is not implementation. Keep current Campaign Wizard and Dice Roller status as independently verified, and keep Character Studio as a separate addendum workstream until contracts are ready.
 
+
+## 10. Character Studio supporting-engine ownership clarification
+
+The standalone Character Studio repository additionally owns these **character-specific engines** (their generic primitives may use a shared S04–S07 interface). They are *not* separate global replacements for parent Catalyst services:
+
+| ID | Character-specific engine | Capability and reuse boundary |
+|---|---|---|
+| C01 | Character Record, Draft & Migration | Canonical character serialization, drafts, schema versioning, edit/save, unknown field preservation and controlled migration; adapt parent file authority on integration |
+| C02 | Character Option Catalog & Source Filter | Edition/source/pack-aware species, class, subclass, backgrounds, feats, spells and equipment choices with search/visibility filters; uses S04 |
+| C03 | Build Legality & Completeness Validator | Check choices, prerequisites, limits, conflicting selections, unresolved steps and explain reasons; uses S05/S06 |
+| C04 | Multiclass, Feature & Advancement Planner | Rule-dependent progression, subclass timing, feature grants, ability improvements, resource change previews and history; uses S04–S06 |
+| C05 | Spellbook & Power Management | Known/prepared/available spells, slots, power choices, spell lists, cast/use commands, concentration where defined by pack |
+| C06 | Equipment Effects & Loadout | Owned/equipped/attuned states, encumbrance where defined, weapons/armor modifiers, proficiency rules and inventory links; coordinates with shared S22 |
+| C07 | Character Resources, Recovery & Conditions | HP/other health, temporary resources, short/long rest and non-D&D recovery rules, death saves and status effects; integrates shared S09/S21 |
+| C08 | Action & Roll Binding | Available actions, source-aware attack/save/check expressions, target roll context and result consumption through shared S07; no duplicate dice evaluator |
+| C09 | Character Sheet Binding & Theme | Map canonical fields + derived calculations into template widgets, responsive layouts, parchment/ink-friendly/clean visual themes; uses shared S03/S14 |
+| C10 | Character Sourcebook Linker | Source/edition/page attribution for character options; opens shared S12/S13 reader, no second PDF engine |
+| C11 | Character Import/Export & Print Profiles | Character JSON/YAML/Markdown portability, third-party import mapping with consent, blank/completed/decorative prints; uses shared S14/S26 |
+| C12 | Character History, Diff & Reconciliation | Record choice/progression/GM edits, undoable transactions, pack upgrades and template conflicts; uses shared S09 |
+
+**Scope rule:** C01–C12 are developed and tested in `Stormchyld2/Catalyst-Character-Builder`. The parent Catalyst team may define interfaces, fixtures and adapters, but must coordinate before modifying or duplicating these engines. Engine C08 consumes the existing global dice engine; C10 consumes the global Sourcebook Library; C11 consumes the global export/print primitives. Character Studio must not independently create competing shared infrastructure.
+
+**Build order:** C01 → C02/C03 → C09 (manual sheet MVP) → C04/C05/C06/C07/C08 (guided/advancement/live play) → C10/C11/C12 (sourcebook/print/migration polish). Keep first milestone small and demonstrably working.
