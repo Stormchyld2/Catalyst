@@ -205,8 +205,8 @@
     document ? extractHeadings(bodyDraft) : []
   );
   const storyTemplateGroups = $derived.by(() => {
-    const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Items", general: "General" };
-    const order = ["character", "location", "worldbuilding", "organization", "object", "general"];
+    const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Items", campaign: "Campaign", adventure: "Adventures", creature: "Creatures", general: "General" };
+    const order = ["campaign", "character", "creature", "adventure", "location", "worldbuilding", "organization", "object", "general"];
     const grouped = new Map<string, EntityTemplateSummary[]>();
     for (const template of entityTemplates.templates.filter((item) => !item.scope || item.scope === "story-development")) {
       const key = template.category || "general";
