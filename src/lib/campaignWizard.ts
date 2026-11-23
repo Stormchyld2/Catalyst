@@ -1,108 +1,94 @@
-// New Campaign Wizard: option lists and the payload sent to `create_new_campaign`.
-// IDs here must match src-tauri/src/campaign_wizard.rs, which validates them.
+// New Campaign Wizard (docs/architecture/020-CAMPAIGN-WIZARD-ARCHITECTURE.md):
+// option lists, temporary draft state, validation, the planned-files preview
+// and the payload sent to `create_new_campaign`. IDs must match
+// src-tauri/src/campaign_wizard.rs, which validates them again.
 
-export const GAME_SYSTEMS = [
-  "Fifth Edition (5e)",
-  "Pathfinder 2e",
-  "Call of Cthulhu",
-  "Savage Worlds",
-  "Fate",
-  "Powered by the Apocalypse",
-  "Blades in the Dark",
-  "Old-School (OSR)",
-  "Homebrew",
-] as const;
-
-export const CAMPAIGN_STARTERS = [
-  { id: "blank", name: "Blank Campaign", description: "Folders and the campaign overview only." },
-  { id: "adventure-path", name: "Adventure Path", description: "Three arcs that build to a finale." },
-  { id: "sandbox", name: "Sandbox / Hexcrawl", description: "A region, faction clocks and rumors." },
-  { id: "mystery", name: "Mystery & Intrigue", description: "A central mystery with clues and suspects." },
-  { id: "dungeon", name: "Dungeon Delve", description: "One deep location with levels and denizens." },
-  { id: "one-shot", name: "One-Shot", description: "A single three-scene adventure." },
+export const RULES_PACKS = [
+  { id: "system-neutral", name: "System-Neutral", description: "No rules assumptions. Works with any game." },
+  { id: "custom-homebrew", name: "Custom / Homebrew", description: "Your own or another system, named by you." },
 ] as const;
 
 export const WORLD_CATEGORIES = [
-  { id: "factions", label: "Factions & Governments" },
-  { id: "organizations", label: "Organizations & Guilds" },
-  { id: "cultures", label: "Cultures & Peoples" },
-  { id: "religions", label: "Religions & Pantheons" },
-  { id: "history", label: "History & Lore" },
-  { id: "magic", label: "Magic & Technology" },
-  { id: "bestiary", label: "Bestiary & Creatures" },
-  { id: "items", label: "Items & Artifacts" },
+  { id: "geography", label: "Geography & Climate" },
+  { id: "government", label: "Governments & Politics" },
+  { id: "nations", label: "Kingdoms & Nations" },
+  { id: "settlements", label: "Settlements & Locations" },
+  { id: "history", label: "History & Timelines" },
+  { id: "lore", label: "Lore & Legends" },
+  { id: "cultures", label: "Cultures & Species" },
+  { id: "religions", label: "Religions & Deities" },
+  { id: "magic", label: "Magic & Supernatural" },
   { id: "languages", label: "Languages" },
+  { id: "economy", label: "Economy & Trade" },
+  { id: "technology", label: "Technology & Crafting" },
+  { id: "factions", label: "Organizations & Factions" },
+  { id: "laws", label: "Laws & Customs" },
+  { id: "natural", label: "Natural World" },
 ] as const;
-
-export const GM_TEMPLATES = [
-  { id: "session-prep", title: "Session Prep" },
-  { id: "session-log", title: "Session Log" },
-  { id: "npc-card", title: "NPC Quick Card" },
-  { id: "location-card", title: "Location Card" },
-  { id: "faction-card", title: "Faction Card" },
-  { id: "quest-hook", title: "Quest / Adventure Hook" },
-  { id: "encounter", title: "Encounter" },
-  { id: "loot-table", title: "Treasure & Loot" },
-  { id: "random-table", title: "Random Table" },
-  { id: "handout", title: "Player Handout" },
-] as const;
-
-export const SAFETY_TOOLS = ["Session Zero", "Lines & Veils", "X-Card", "Open Door", "Stars & Wishes"] as const;
 
 export const GUIDED_STEPS = [
   "Campaign Basics",
-  "Players & Table",
-  "World Overview",
-  "Worldbuilding Categories",
-  "Locations",
-  "NPCs & Villains",
-  "Story & Hooks",
-  "First Session",
-  "Game Master Toolkit",
+  "Rules & Game System",
+  "World & Setting",
+  "Worldbuilding Foundations",
+  "Players & Characters",
+  "NPCs, Creatures & Factions",
+  "Adventure & Campaign Story",
+  "Locations & Maps",
+  "Session Setup",
   "Review & Create",
 ] as const;
 
 export type SetupMode = "quick-start" | "guided";
 
-export interface LocationDraft { name: string; location_type: string; description: string }
-export interface NpcDraft { name: string; role: string; affiliation: string; description: string; antagonist: boolean }
-export interface CategoryDraft { enabled: boolean; notes: string; entries: string }
+export interface PlayerDraft { player_name: string; character_name: string }
+export interface NpcDraft { name: string; disposition: "ally" | "neutral" | "villain"; role: string; motivation: string; description: string }
+export interface EntryDraft { name: string; kind: string; description: string }
+export interface CategoryDraft { enabled: boolean; names: string; notes: string }
 
 export interface CampaignDraft {
   mode: SetupMode;
   projectRoot: string;
   name: string;
-  gameSystem: string;
-  edition: string;
+  subtitle: string;
+  premise: string;
   genre: string;
   tone: string;
-  pitch: string;
-  playerCount: string;
+  gmName: string;
+  startDate: string;
+  rulesPackId: string;
+  customSystemName: string;
+  advancement: string;
   startingLevel: string;
-  sessionLength: string;
-  cadence: string;
-  playMode: string;
-  safetyTools: string[];
-  lines: string;
-  veils: string;
-  setting: string;
+  difficulty: string;
+  houseRules: string;
+  worldMode: "new" | "blank";
+  worldName: string;
   era: string;
-  magicLevel: string;
-  technologyLevel: string;
+  calendar: string;
+  geography: string;
   worldNotes: string;
   categories: Record<string, CategoryDraft>;
-  locations: LocationDraft[];
+  partyName: string;
+  startingProgression: string;
+  players: PlayerDraft[];
   npcs: NpcDraft[];
+  creatures: EntryDraft[];
+  factions: EntryDraft[];
   centralConflict: string;
-  mainThreat: string;
-  themes: string;
-  hooks: string;
-  starterId: string;
-  sessionZeroNotes: string;
-  openingScene: string;
-  sessionOneNotes: string;
-  gmTemplateIds: string[];
-  houseRules: string;
+  startingAdventure: string;
+  startingAdventureSummary: string;
+  arcs: string;
+  sideQuests: string;
+  startingLocation: string;
+  locations: EntryDraft[];
+  mapReferences: string;
+  firstSessionTitle: string;
+  firstSessionNotes: string;
+  gmNotes: string;
+  playMode: "physical" | "hybrid" | "digital";
+  dice: "physical" | "digital";
+  playerDisplay: boolean;
 }
 
 export function emptyDraft(): CampaignDraft {
@@ -110,39 +96,45 @@ export function emptyDraft(): CampaignDraft {
     mode: "quick-start",
     projectRoot: "",
     name: "",
-    gameSystem: "",
-    edition: "",
+    subtitle: "",
+    premise: "",
     genre: "",
     tone: "",
-    pitch: "",
-    playerCount: "",
+    gmName: "",
+    startDate: "",
+    rulesPackId: "system-neutral",
+    customSystemName: "",
+    advancement: "",
     startingLevel: "",
-    sessionLength: "",
-    cadence: "",
-    playMode: "",
-    safetyTools: [],
-    lines: "",
-    veils: "",
-    setting: "",
-    era: "",
-    magicLevel: "",
-    technologyLevel: "",
-    worldNotes: "",
-    categories: Object.fromEntries(
-      WORLD_CATEGORIES.map((category) => [category.id, { enabled: false, notes: "", entries: "" }])
-    ),
-    locations: [],
-    npcs: [],
-    centralConflict: "",
-    mainThreat: "",
-    themes: "",
-    hooks: "",
-    starterId: "adventure-path",
-    sessionZeroNotes: "",
-    openingScene: "",
-    sessionOneNotes: "",
-    gmTemplateIds: GM_TEMPLATES.map((template) => template.id),
+    difficulty: "",
     houseRules: "",
+    worldMode: "new",
+    worldName: "",
+    era: "",
+    calendar: "",
+    geography: "",
+    worldNotes: "",
+    categories: Object.fromEntries(WORLD_CATEGORIES.map((c) => [c.id, { enabled: false, names: "", notes: "" }])),
+    partyName: "",
+    startingProgression: "",
+    players: [],
+    npcs: [],
+    creatures: [],
+    factions: [],
+    centralConflict: "",
+    startingAdventure: "",
+    startingAdventureSummary: "",
+    arcs: "",
+    sideQuests: "",
+    startingLocation: "",
+    locations: [],
+    mapReferences: "",
+    firstSessionTitle: "",
+    firstSessionNotes: "",
+    gmNotes: "",
+    playMode: "physical",
+    dice: "physical",
+    playerDisplay: false,
   };
 }
 
@@ -154,32 +146,29 @@ export function lines(value: string): string[] {
   return value.split(/\r?\n/).map((part) => part.trim()).filter(Boolean);
 }
 
-/** Returns an error message for a guided step, or null when it may advance. */
-export function validateGuidedStep(step: number, draft: CampaignDraft): string | null {
-  if (step === 0) return validateBasics(draft);
-  if (step === 1 && draft.playerCount.trim()) {
-    const count = Number(draft.playerCount);
-    if (!Number.isInteger(count) || count < 1 || count > 50) return "Player count must be a whole number from 1 to 50.";
-  }
-  if (step === 2 && ![draft.setting, draft.era, draft.magicLevel, draft.technologyLevel, draft.worldNotes].some((value) => value.trim())) {
-    return "Enter at least one world detail. You can expand it later.";
-  }
-  if (step === 4 && draft.locations.some((location) => !location.name.trim())) {
-    return "Each location needs a name. Remove unused rows or enter a name.";
-  }
-  if (step === 5 && draft.npcs.some((npc) => !npc.name.trim())) {
-    return "Each NPC needs a name. Remove unused rows or enter a name.";
-  }
-  return null;
-}
-
-export function validateBasics(draft: CampaignDraft): string | null {
+/** Error for the essentials every campaign needs (Quick Start and step 1). */
+export function validateEssentials(draft: CampaignDraft): string | null {
   if (!draft.name.trim()) return "Enter a campaign name.";
-  if (!draft.projectRoot.trim()) return "Choose an empty local folder for the campaign.";
+  if (!draft.projectRoot.trim()) return "Choose a local folder for the campaign.";
+  if (draft.rulesPackId === "custom-homebrew" && !draft.customSystemName.trim()) return "Name your custom or homebrew system.";
   return null;
 }
 
-/** Every guided step must pass before Create; returns the first failing step. */
+/** Returns an error for a guided step, or null when it may advance. All
+ *  content is optional; only names of rows the GM added are required. */
+export function validateGuidedStep(step: number, draft: CampaignDraft): string | null {
+  if (step === 0 && !draft.name.trim()) return "Enter a campaign name.";
+  if (step === 0 && !draft.projectRoot.trim()) return "Choose a local folder for the campaign.";
+  if (step === 1 && draft.rulesPackId === "custom-homebrew" && !draft.customSystemName.trim()) return "Name your custom or homebrew system.";
+  if (step === 5) {
+    if (draft.npcs.some((row) => !row.name.trim())) return "Each NPC needs a name. Remove unused rows or enter a name.";
+    if (draft.creatures.some((row) => !row.name.trim())) return "Each creature needs a name. Remove unused rows or enter a name.";
+    if (draft.factions.some((row) => !row.name.trim())) return "Each faction needs a name. Remove unused rows or enter a name.";
+  }
+  if (step === 7 && draft.locations.some((row) => !row.name.trim())) return "Each location needs a name. Remove unused rows or enter a name.";
+  return null;
+}
+
 export function firstInvalidStep(draft: CampaignDraft): { step: number; error: string } | null {
   for (let step = 0; step < GUIDED_STEPS.length - 1; step++) {
     const error = validateGuidedStep(step, draft);
@@ -188,70 +177,126 @@ export function firstInvalidStep(draft: CampaignDraft): { step: number; error: s
   return null;
 }
 
+function safeName(value: string): string {
+  const cleaned = value.trim().replace(/[\u0000-\u001f<>:"/\\|?*]/g, "-").trim().replace(/[. ]+$/, "").trim();
+  return cleaned || "Untitled";
+}
+
+function shortTitle(text: string): string {
+  const first = text.split(/\r?\n/)[0].trim();
+  return first.length > 60 ? `${first.slice(0, 60).trimEnd()}…` : first || "Untitled";
+}
+
+/** The documents Create will write, for the Review step's preview. Folders
+ *  are always the full approved tree. */
+export function plannedFiles(draft: CampaignDraft): string[] {
+  const files = ["project.yaml", "campaign.yaml", "Adventures/Main Campaign/Campaign Overview.md"];
+  if (draft.mode === "quick-start") return files;
+  const add = (folder: string, title: string) => files.push(`${folder}/${safeName(title)}.md`);
+  if (draft.houseRules.trim()) add("Rules & Mechanics/House Rules", "House Rules");
+  if ([draft.worldName, draft.era, draft.calendar, draft.geography, draft.worldNotes].some((v) => v.trim())) {
+    add("Worldbuilding", draft.worldName.trim() || "World Overview");
+  }
+  for (const category of WORLD_CATEGORIES) {
+    const value = draft.categories[category.id];
+    if (!value?.enabled) continue;
+    if (value.notes.trim()) add(`Worldbuilding/${category.label}`, `${category.label} Notes`);
+    for (const name of csv(value.names)) add(`Worldbuilding/${category.label}`, name);
+  }
+  for (const player of draft.players) if (player.character_name.trim()) add("Characters/Player Characters", player.character_name);
+  for (const npc of draft.npcs) add("Characters/Non-Player Characters", npc.name);
+  for (const creature of draft.creatures) add("Creatures & Monsters/Custom Creatures", creature.name);
+  for (const faction of draft.factions) add("Worldbuilding/Organizations & Factions", faction.name);
+  if (draft.startingAdventure.trim()) add("Adventures/Main Campaign", draft.startingAdventure);
+  for (const arc of lines(draft.arcs)) add("Adventures/Main Campaign", shortTitle(arc));
+  for (const quest of lines(draft.sideQuests)) add("Adventures/Side Quests", shortTitle(quest));
+  for (const location of draft.locations) add("Worldbuilding/Settlements & Locations", location.name);
+  const start = draft.startingLocation.trim();
+  if (start && !draft.locations.some((l) => l.name.trim().toLowerCase() === start.toLowerCase())) {
+    add("Worldbuilding/Settlements & Locations", start);
+  }
+  if (lines(draft.mapReferences).length) add("Maps", "Map References");
+  if (draft.firstSessionTitle.trim() || draft.firstSessionNotes.trim()) add("Sessions/Session Plans", draft.firstSessionTitle.trim() || "Session 1");
+  if (draft.gmNotes.trim()) add("Game Master/GM Notes", "GM Notes");
+  return files;
+}
+
 export function buildCampaignInput(draft: CampaignDraft) {
   const base = {
     project_root: draft.projectRoot.trim(),
     name: draft.name.trim(),
     setup_mode: draft.mode,
-    game_system: draft.gameSystem.trim(),
-    pitch: draft.pitch.trim(),
-    starter_id: draft.starterId,
+    basics: { premise: draft.premise.trim() },
+    rules: { pack_id: draft.rulesPackId, custom_system_name: draft.customSystemName.trim() },
   };
-  if (draft.mode === "quick-start") {
-    // Quick Start: the backend installs every GM template and seeds defaults.
-    return { ...base, gm_template_ids: null };
-  }
+  if (draft.mode === "quick-start") return base;
+  const entry = (row: EntryDraft) => ({ name: row.name.trim(), kind: row.kind.trim(), description: row.description.trim() });
   return {
     ...base,
-    edition: draft.edition.trim(),
-    genre: draft.genre.trim(),
-    tone: draft.tone.trim(),
-    table: {
-      player_count: draft.playerCount.trim() ? Number(draft.playerCount) : null,
+    basics: {
+      subtitle: draft.subtitle.trim(),
+      premise: draft.premise.trim(),
+      genre: draft.genre.trim(),
+      tone: draft.tone.trim(),
+      gm_name: draft.gmName.trim(),
+      start_date: draft.startDate.trim(),
+    },
+    rules: {
+      pack_id: draft.rulesPackId,
+      custom_system_name: draft.customSystemName.trim(),
+      advancement: draft.advancement.trim(),
       starting_level: draft.startingLevel.trim(),
-      session_length: draft.sessionLength.trim(),
-      cadence: draft.cadence.trim(),
-      play_mode: draft.playMode.trim(),
-      safety_tools: draft.safetyTools,
-      lines: csv(draft.lines),
-      veils: csv(draft.veils),
+      difficulty: draft.difficulty.trim(),
+      house_rules: draft.houseRules.trim(),
     },
     world: {
-      setting: draft.setting.trim(),
+      mode: draft.worldMode,
+      name: draft.worldName.trim(),
       era: draft.era.trim(),
-      magic_level: draft.magicLevel.trim(),
-      technology_level: draft.technologyLevel.trim(),
+      calendar: draft.calendar.trim(),
+      geography: draft.geography.trim(),
       notes: draft.worldNotes.trim(),
     },
-    world_categories: WORLD_CATEGORIES.filter((category) => draft.categories[category.id]?.enabled).map((category) => ({
-      id: category.id,
-      notes: draft.categories[category.id].notes.trim(),
-      entries: csv(draft.categories[category.id].entries),
+    worldbuilding: WORLD_CATEGORIES.filter((c) => draft.categories[c.id]?.enabled).map((c) => ({
+      id: c.id,
+      names: csv(draft.categories[c.id].names),
+      notes: draft.categories[c.id].notes.trim(),
     })),
-    locations: draft.locations.map((location) => ({
-      name: location.name.trim(),
-      location_type: location.location_type.trim(),
-      description: location.description.trim(),
+    party: {
+      name: draft.partyName.trim(),
+      starting_progression: draft.startingProgression.trim(),
+      players: draft.players
+        .map((p) => ({ player_name: p.player_name.trim(), character_name: p.character_name.trim() }))
+        .filter((p) => p.player_name || p.character_name),
+    },
+    npcs: draft.npcs.map((n) => ({
+      name: n.name.trim(),
+      disposition: n.disposition,
+      role: n.role.trim(),
+      motivation: n.motivation.trim(),
+      description: n.description.trim(),
     })),
-    npcs: draft.npcs.map((npc) => ({
-      name: npc.name.trim(),
-      role: npc.role.trim(),
-      affiliation: npc.affiliation.trim(),
-      description: npc.description.trim(),
-      antagonist: npc.antagonist,
-    })),
+    creatures: draft.creatures.map(entry),
+    factions: draft.factions.map(entry),
     story: {
       central_conflict: draft.centralConflict.trim(),
-      main_threat: draft.mainThreat.trim(),
-      themes: csv(draft.themes),
-      hooks: lines(draft.hooks),
+      starting_adventure: draft.startingAdventure.trim(),
+      starting_adventure_summary: draft.startingAdventureSummary.trim(),
+      arcs: lines(draft.arcs),
+      side_quests: lines(draft.sideQuests),
     },
-    first_session: {
-      session_zero_notes: draft.sessionZeroNotes.trim(),
-      opening_scene: draft.openingScene.trim(),
-      session_one_notes: draft.sessionOneNotes.trim(),
+    locations: {
+      starting_location: draft.startingLocation.trim(),
+      entries: draft.locations.map(entry),
+      map_references: lines(draft.mapReferences),
     },
-    gm_template_ids: [...draft.gmTemplateIds],
-    house_rules: draft.houseRules.trim(),
+    session: {
+      first_session_title: draft.firstSessionTitle.trim(),
+      first_session_notes: draft.firstSessionNotes.trim(),
+      gm_notes: draft.gmNotes.trim(),
+      play_mode: draft.playMode,
+      dice: draft.dice,
+      player_display: draft.playerDisplay,
+    },
   };
 }

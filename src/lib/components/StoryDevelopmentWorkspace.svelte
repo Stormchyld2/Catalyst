@@ -205,8 +205,8 @@
     document ? extractHeadings(bodyDraft) : []
   );
   const storyTemplateGroups = $derived.by(() => {
-    const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Items", general: "General" };
-    const order = ["character", "location", "worldbuilding", "organization", "object", "general"];
+    const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Items", campaign: "Campaign", adventure: "Adventures", creature: "Creatures", general: "General" };
+    const order = ["campaign", "character", "creature", "adventure", "location", "worldbuilding", "organization", "object", "general"];
     const grouped = new Map<string, EntityTemplateSummary[]>();
     for (const template of entityTemplates.templates.filter((item) => !item.scope || item.scope === "story-development")) {
       const key = template.category || "general";
@@ -1894,8 +1894,8 @@
   .template-merge-preview { max-height:300px; overflow:auto; white-space:pre-wrap; font-size:12px; }
   .template-create-backdrop--folder { z-index: 1200 !important; }
   .template-create-backdrop { position: fixed; inset: 0; z-index: 1100; background: #000b; display: grid; place-items: center; padding: 1rem; }
-  .template-create-dialog { background: #242424; border: 1px solid #866b42; color: #eee; border-radius: 8px; padding: 1.5rem; width: min(640px, 95vw); max-height: 85vh; overflow: auto; display: grid; gap: .55rem; }
-  .template-create-dialog input, .template-create-dialog select, .template-create-dialog textarea { width: 100%; background: #303030; border: 1px solid #666; color: #eee; padding: .55rem; border-radius: 4px; }
+  .template-create-dialog { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text); border-radius: 8px; padding: 1.5rem; width: min(640px, 95vw); max-height: 85vh; overflow: auto; display: grid; gap: .55rem; }
+  .template-create-dialog input, .template-create-dialog select, .template-create-dialog textarea { width: 100%; background: var(--color-control-bg); border: 1px solid var(--color-control-border); color: var(--color-control-text); padding: .55rem; border-radius: 4px; }
   .template-create-actions { display: flex; justify-content: end; gap: .7rem; margin-top: 1rem; }
 
 

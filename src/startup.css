@@ -26,8 +26,8 @@ body {
   box-sizing: border-box;
   background:
     url("./assets/catalyst-logo.png") center calc(50% - 90px) / min(560px, 72vw) auto no-repeat,
-    radial-gradient(ellipse at center, #1c1712 0%, #08080a 70%);
-  color: #f1e8d8;
+    radial-gradient(ellipse at center, #1a1d22 0%, #0b0c0e 70%);
+  color: #f0f1f3;
   font-family: var(--font-ui);
   font-size: var(--text-small);
   line-height: var(--leading);
@@ -59,7 +59,7 @@ body {
   width: 42px;
   height: 42px;
   border: 3px solid rgb(255 255 255 / .28);
-  border-top-color: #d8ab5f;
+  border-top-color: #6ea9cf;
   box-shadow: 0 0 18px rgb(216 171 95 / .2);
   border-radius: 50%;
   animation: startup-spin 900ms linear infinite !important;
@@ -79,7 +79,7 @@ body {
 }
 
 #startup-message {
-  color: #f2ede3;
+  color: #f0f1f3;
   font-size: 0.95rem;
   font-weight: 600;
   text-shadow: 0 2px 12px rgb(0 0 0 / .78);
