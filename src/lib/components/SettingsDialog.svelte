@@ -90,6 +90,14 @@
   );
   const activeArea = $derived(activeSection.areas.find((item) => item.id === area));
   const isProjectArea = $derived(activeGroup.id === "projects");
+  // Last project area shown, so a hidden ProjectSettings keeps its section.
+  let projectArea = $state("details");
+  let projectAreaVisited = $state(false);
+  $effect(() => {
+    if (!isProjectArea) return;
+    projectArea = area;
+    projectAreaVisited = true;
+  });
   const locationLabel = $derived(
     [activeGroup.label, isProjectArea ? selected?.name : undefined, activeSection.label]
       .filter(Boolean)
@@ -327,20 +335,23 @@
           <AppearanceSettings onStartTour={startTour} />
         {:else if area === "author"}
           <AuthorSettings bind:dirty={authorDirty} bind:busy={authorBusy} />
-        {:else if isProjectArea}
-          {#if !loading && !error && projects.length === 0}
-            <p class="ka-help">
-              No projects yet. Create or import a project to configure its settings.
-            </p>
-          {:else if selected}
+        {:else if isProjectArea && !loading && !error && projects.length === 0}
+          <p class="ka-help">
+            No projects yet. Create or import a project to configure its settings.
+          </p>
+        {/if}
+        <!-- Project settings stay mounted (hidden) after their first visit so an
+             unsaved project draft survives a trip to another settings area. -->
+        {#if selected && projectAreaVisited}
+          <div hidden={!isProjectArea}>
             {#key selected.id}<ProjectSettings
                 project={selected}
-                section={area}
+                section={projectArea}
                 onSave={projectSaved}
                 bind:dirty={projectDirty}
                 bind:busy={projectBusy}
               />{/key}
-          {/if}
+          </div>
         {/if}
       </div>
     </div>
