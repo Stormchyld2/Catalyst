@@ -31,6 +31,7 @@ pub mod manuscript;
 pub mod new_book_foundation;
 pub mod campaign_wizard;
 pub mod review;
+pub mod soundboard;
 pub mod story_development;
 pub mod write_projection;
 pub mod outline;
@@ -304,6 +305,11 @@ pub fn run() {
             commands::get_story_development_index,
             commands::get_story_development_document,
             commands::get_story_development_asset,
+            commands::list_soundboard_audio,
+            commands::read_soundboard_audio,
+            commands::load_soundboard_layout,
+            commands::save_soundboard_layout,
+            commands::import_soundboard_audio,
             commands::update_story_development_metadata,
             commands::update_story_development_body,
             commands::update_story_development_source,

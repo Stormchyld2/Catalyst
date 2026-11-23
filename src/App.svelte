@@ -34,6 +34,7 @@
   import RecoveryManagerDialog from "./lib/components/RecoveryManagerDialog.svelte";
   import ProjectDashboard from "./lib/components/ProjectDashboard.svelte";
   import GitWorkspace from "./lib/components/GitWorkspace.svelte";
+  import SoundboardWorkspace from "./lib/components/SoundboardWorkspace.svelte";
   import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
   import CampaignWizardDialog from "./lib/components/CampaignWizardDialog.svelte";
@@ -836,6 +837,8 @@
       />
     {:else if workspace.active === "git"}
       <GitWorkspace project={currentProject.value} />
+    {:else if workspace.active === "listen"}
+      <SoundboardWorkspace project={currentProject.value} />
     {:else}
       <section class="workspace-placeholder" aria-live="polite">
         <div class="workspace-placeholder__card">
