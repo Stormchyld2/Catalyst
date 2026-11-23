@@ -1,0 +1,182 @@
+<script lang="ts">
+  import { ui } from "../stores/ui.svelte";
+
+  let { onStartTour }: { onStartTour?: () => void } = $props();
+
+  // Each tip shows once; this brings them back without switching tips off and on.
+  let tipsReset = $state(false);
+  function showTipsAgain() {
+    ui.resetGuidanceTooltips();
+    tipsReset = true;
+  }
+</script>
+
+<div class="settings-pane">
+  <p class="settings-lede">
+    Choose how LithoMark looks and how much guidance it shows. Changes apply immediately to all
+    projects.
+  </p>
+  <div class="ka-group">
+    <fieldset class="settings-fieldset">
+      <legend class="ka-group-title">Appearance</legend>
+      <div class="ka-segments">
+        <div class="ka-segment-track" role="radiogroup" aria-label="Theme">
+          {#each [{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }, { value: "system", label: "System" }] as opt}
+            <label class="ka-segment" class:ka-selected={ui.theme === opt.value}>
+              <input
+                type="radio"
+                name="theme"
+                data-testid="theme-option-{opt.value}"
+                value={opt.value}
+                checked={ui.theme === opt.value}
+                onchange={() => ui.setTheme(opt.value as "dark" | "light" | "system")}
+              />
+              <span>{opt.label}</span>
+            </label>
+          {/each}
+        </div>
+      </div>
+      <p class="ka-help">“System” follows your operating system’s appearance setting.</p>
+
+      <div class="accent-block">
+        <span class="ka-group-title">Accent color</span>
+        <div class="accent-options" role="radiogroup" aria-label="Accent color">
+          {#each [
+            { value: "blue", label: "Blue" },
+            { value: "gold", label: "Gold" },
+            { value: "teal", label: "Teal" },
+            { value: "purple", label: "Purple" }
+          ] as opt}
+            <label class="accent-option" class:selected={ui.accent === opt.value}>
+              <input
+                type="radio"
+                name="accent"
+                value={opt.value}
+                checked={ui.accent === opt.value}
+                onchange={() => ui.setAccent(opt.value as "blue" | "gold" | "teal" | "purple")}
+              />
+              <span class="accent-swatch" data-accent-preview={opt.value}></span>
+              <span>{opt.label}</span>
+            </label>
+          {/each}
+        </div>
+        <p class="ka-help">Accent colors apply immediately across navigation, focus rings, and primary actions.</p>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="ka-group">
+    <fieldset class="settings-fieldset">
+      <legend class="ka-group-title">Home</legend>
+      <div class="ka-check">
+        <input
+          id="show-sample-project"
+          type="checkbox"
+          checked={ui.showSampleProject}
+          onchange={(e) => ui.setShowSampleProject((e.target as HTMLInputElement).checked)}
+          aria-describedby="show-sample-project-help"
+        />
+        <label for="show-sample-project">Show The Glass Meridian sample on Home</label>
+      </div>
+      <p id="show-sample-project-help" class="ka-help">
+        Hide the bundled sample from Home once you no longer need it. This does not delete the sample.
+      </p>
+    </fieldset>
+  </div>
+
+  <div class="ka-group">
+    <fieldset class="settings-fieldset">
+      <legend class="ka-group-title">Guidance</legend>
+      <div class="ka-check">
+        <input
+          id="guidance-enabled"
+          type="checkbox"
+          checked={ui.guidanceEnabled}
+          onchange={(e) => ui.setGuidanceEnabled((e.target as HTMLInputElement).checked)}
+          aria-describedby="guidance-enabled-help"
+        />
+        <label for="guidance-enabled">Show guidance tips</label>
+      </div>
+      <p id="guidance-enabled-help" class="ka-help">
+        A tip appears the first time you visit the sidebar, scene panel and references. Each tip
+        shows once.
+      </p>
+      <div class="guidance-actions">
+        <button
+          type="button"
+          class="ka-button ka-button--secondary"
+          onclick={showTipsAgain}
+          disabled={!ui.guidanceEnabled}
+          aria-describedby="guidance-reset-status"
+        >
+          Show tips again
+        </button>
+        {#if onStartTour}
+          <button type="button" class="ka-button ka-button--secondary" onclick={onStartTour}>
+            Take the tour
+          </button>
+        {/if}
+      </div>
+      <p id="guidance-reset-status" class="ka-help" role="status">
+        {#if !ui.guidanceEnabled}
+          Turn on guidance tips to show them again.
+        {:else if tipsReset}
+          Tips will appear again as you visit each area.
+        {/if}
+      </p>
+    </fieldset>
+  </div>
+</div>
+
+<style>
+  .accent-block {
+    display: grid;
+    gap: var(--space-2xs);
+    margin-top: var(--space-s);
+    padding-top: var(--space-s);
+    border-top: var(--border-hair);
+  }
+  .accent-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+  }
+  .accent-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 5px 9px;
+    border: var(--border-hair);
+    border-radius: var(--radius-s);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .accent-option.selected {
+    box-shadow: var(--focus-ring);
+  }
+  .accent-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .accent-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgb(255 255 255 / .25);
+  }
+  .accent-swatch[data-accent-preview="blue"] { background: #6E8CA8; }
+  .accent-swatch[data-accent-preview="gold"] { background: #D8AB5F; }
+  .accent-swatch[data-accent-preview="teal"] { background: #65AAA5; }
+  .accent-swatch[data-accent-preview="purple"] { background: #B39AC4; }
+  .guidance-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+  }
+  #guidance-reset-status:empty {
+    display: none;
+  }
+</style>

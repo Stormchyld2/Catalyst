@@ -1,0 +1,37 @@
+LithoMark
+│
+├── Kindling-derived core
+│   ├── manuscript editor
+│   ├── chapters / scenes
+│   ├── beat-based outlining
+│   ├── revisions / review
+│   ├── imports / exports
+│   ├── templates
+│   └── project shell
+│
+├── Novalist-derived planning
+│   ├── plot grid
+│   ├── plotlines
+│   ├── timeline
+│   ├── planning board
+│   ├── series planning
+│   └── relationship graph
+│
+├── Novalist-derived wiki / story bible
+│   ├── characters
+│   ├── locations
+│   ├── items
+│   ├── lore
+│   ├── custom entity types
+│   ├── custom fields
+│   ├── templates
+│   ├── backlinks / referenced-by
+│   └── wiki view
+│
+└── LithoMark-original systems
+    ├── Markdown-first vault
+    ├── GitHub Pull / Commit / Push
+    ├── integrated terminal
+    ├── Obsidian-style wikilinks/backlinks
+    ├── workspace views
+    └── LithoMark branding/UI

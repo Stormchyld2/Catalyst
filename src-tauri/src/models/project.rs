@@ -1,0 +1,146 @@
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum SourceType {
+    Scrivener,
+    Plottr,
+    Markdown,
+    YWriter,
+    Longform,
+    NovelWriter,
+    Blank,
+}
+
+impl SourceType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SourceType::Scrivener => "scrivener",
+            SourceType::Plottr => "plottr",
+            SourceType::Markdown => "markdown",
+            SourceType::YWriter => "ywriter",
+            SourceType::Longform => "longform",
+            SourceType::NovelWriter => "novelwriter",
+            SourceType::Blank => "blank",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "scrivener" => Some(SourceType::Scrivener),
+            "plottr" => Some(SourceType::Plottr),
+            "markdown" => Some(SourceType::Markdown),
+            "ywriter" => Some(SourceType::YWriter),
+            "longform" => Some(SourceType::Longform),
+            "novelwriter" => Some(SourceType::NovelWriter),
+            "blank" => Some(SourceType::Blank),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Project {
+    pub id: Uuid,
+    pub name: String,
+    pub source_type: SourceType,
+    pub source_path: Option<String>,
+    /// Authoritative LithoMark project folder. Unlike source_path, this is the
+    /// root owned by the project and is independent of any imported source file.
+    #[serde(default)]
+    pub project_root: Option<String>,
+    pub created_at: String,
+    pub modified_at: String,
+    // Project-specific metadata for export title page
+    /// Pen name for this project (overrides app-level author name if set)
+    pub author_pen_name: Option<String>,
+    /// Genre of this work
+    pub genre: Option<String>,
+    /// Project description or summary
+    pub description: Option<String>,
+    /// Optional word count target for the project
+    pub word_target: Option<i32>,
+    /// Enabled reference types for this project
+    #[serde(default = "Project::default_reference_types")]
+    pub reference_types: Vec<String>,
+    /// Project type: "novel" or "screenplay"
+    #[serde(default = "Project::default_project_type")]
+    pub project_type: String,
+    /// Target page count (screenplay only, ~250 words/page)
+    pub target_page_count: Option<i32>,
+}
+
+impl Project {
+    pub fn default_reference_types() -> Vec<String> {
+        vec!["characters".to_string(), "locations".to_string()]
+    }
+
+    pub fn default_project_type() -> String {
+        "novel".to_string()
+    }
+
+    pub fn new(name: String, source_type: SourceType, source_path: Option<String>) -> Self {
+        let now = chrono::Utc::now().to_rfc3339();
+        Self {
+            id: Uuid::new_v4(),
+            name,
+            source_type,
+            source_path,
+            project_root: None,
+            created_at: now.clone(),
+            modified_at: now,
+            author_pen_name: None,
+            genre: None,
+            description: None,
+            word_target: None,
+            reference_types: Self::default_reference_types(),
+            project_type: Self::default_project_type(),
+            target_page_count: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_source_type_as_str() {
+        assert_eq!(SourceType::Scrivener.as_str(), "scrivener");
+        assert_eq!(SourceType::Plottr.as_str(), "plottr");
+        assert_eq!(SourceType::Markdown.as_str(), "markdown");
+        assert_eq!(SourceType::Longform.as_str(), "longform");
+    }
+
+    #[test]
+    fn test_source_type_parse() {
+        assert_eq!(SourceType::parse("scrivener"), Some(SourceType::Scrivener));
+        assert_eq!(SourceType::parse("PLOTTR"), Some(SourceType::Plottr));
+        assert_eq!(SourceType::parse("Markdown"), Some(SourceType::Markdown));
+        assert_eq!(SourceType::parse("LONGFORM"), Some(SourceType::Longform));
+        assert_eq!(SourceType::parse("unknown"), None);
+    }
+
+    #[test]
+    fn test_project_new() {
+        let project = Project::new(
+            "Test Project".to_string(),
+            SourceType::Plottr,
+            Some("/path/to/file.pltr".to_string()),
+        );
+
+        assert_eq!(project.name, "Test Project");
+        assert_eq!(project.source_type, SourceType::Plottr);
+        assert_eq!(project.source_path, Some("/path/to/file.pltr".to_string()));
+        assert!(!project.id.is_nil());
+    }
+
+    #[test]
+    fn test_project_serialization() {
+        let project = Project::new("Test".to_string(), SourceType::Markdown, None);
+
+        let json = serde_json::to_string(&project).unwrap();
+        assert!(json.contains("Test"));
+        assert!(json.contains("Markdown"));
+    }
+}

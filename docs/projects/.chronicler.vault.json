@@ -1,0 +1,33 @@
+{
+  "vaultSettings": {
+    "activeTheme": "All That Remains Noir",
+    "atmosphere": {
+      "icons": "core",
+      "buttons": "core",
+      "textures": "core",
+      "typography": "core",
+      "cursors": "core",
+      "borders": "core",
+      "frames": "core",
+      "uiElements": "core",
+      "soundscape": "core",
+      "clickEffects": "core",
+      "textureOpacity": 0.3
+    },
+    "headingFont": "\"Cinzel\", serif",
+    "bodyFont": "\"Open Sans\", sans-serif",
+    "fontSize": 100,
+    "sidebarWidth": 300,
+    "isSidebarVisible": true,
+    "isTocVisible": false,
+    "areInfoboxTagsVisible": true,
+    "areFooterTagsVisible": true,
+    "areLinkPreviewsEnabled": true,
+    "areMapPreviewsEnabled": true,
+    "showImages": true,
+    "showExternalFiles": false,
+    "imageImportLocation": "folder",
+    "imageImportDir": "images",
+    "promptForImageName": false
+  }
+}

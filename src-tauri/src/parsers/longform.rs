@@ -1,0 +1,3273 @@
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use serde::Deserialize;
+use thiserror::Error;
+use walkdir::WalkDir;
+
+use crate::models::{
+    Beat, Chapter, Character, EditorMode, Location, Project, ReferenceItem, Scene, SceneStatus,
+    SceneType, SourceType,
+};
+
+const LONGFORM_DEFAULT_CHAPTER_SOURCE_ID: &str = "longform:default";
+const LONGFORM_BEATS_MARKER: &str = "<!-- kindling: beats -->";
+
+#[derive(Debug, Error)]
+pub enum LongformError {
+    #[error("Failed to read file: {0}")]
+    IoError(#[from] std::io::Error),
+    #[error("Failed to parse YAML: {0}")]
+    YamlError(#[from] serde_yaml::Error),
+    #[error("Invalid Longform structure: {0}")]
+    InvalidStructure(String),
+}
+
+// ============================================================================
+// Parsed Output
+// ============================================================================
+
+pub struct ParsedLongform {
+    pub project: Project,
+    pub chapters: Vec<Chapter>,
+    pub scenes: Vec<Scene>,
+    pub beats: Vec<Beat>,
+    pub characters: Vec<Character>,
+    pub locations: Vec<Location>,
+    pub reference_items: Vec<ReferenceItem>,
+    pub scene_character_refs: Vec<(uuid::Uuid, uuid::Uuid)>,
+    pub scene_location_refs: Vec<(uuid::Uuid, uuid::Uuid)>,
+    pub scene_reference_item_refs: Vec<(uuid::Uuid, uuid::Uuid)>,
+}
+
+// ============================================================================
+// Longform Index Frontmatter
+// ============================================================================
+
+#[derive(Debug, Deserialize)]
+struct LongformFrontmatter {
+    longform: Option<LongformIndex>,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct LongformIndex {
+    format: Option<String>,
+    title: Option<String>,
+    #[serde(rename = "draftNumber")]
+    draft_number: Option<i32>,
+    workflow: Option<String>,
+    #[serde(rename = "sceneFolder")]
+    scene_folder: Option<String>,
+    scenes: Option<serde_yaml::Value>,
+    #[serde(rename = "sceneTemplate")]
+    scene_template: Option<String>,
+    #[serde(rename = "ignoredFiles")]
+    ignored_files: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct SceneFrontmatter {
+    synopsis: Option<String>,
+    status: Option<String>,
+    pov: Option<String>,
+    characters: Option<FrontmatterList>,
+    setting: Option<FrontmatterList>,
+    items: Option<FrontmatterList>,
+    objects: Option<FrontmatterList>,
+    objectives: Option<FrontmatterList>,
+    goals: Option<FrontmatterList>,
+    organizations: Option<FrontmatterList>,
+    factions: Option<FrontmatterList>,
+    groups: Option<FrontmatterList>,
+    teams: Option<FrontmatterList>,
+    timelines: Option<FrontmatterList>,
+    #[serde(alias = "notes")]
+    custom: Option<FrontmatterList>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(untagged)]
+enum FrontmatterList {
+    Single(String),
+    List(Vec<String>),
+}
+
+impl FrontmatterList {
+    fn into_vec(self) -> Vec<String> {
+        match self {
+            FrontmatterList::Single(value) => vec![value],
+            FrontmatterList::List(values) => values,
+        }
+    }
+}
+
+// ============================================================================
+// Scene Content Parsing
+// ============================================================================
+
+struct BeatContent {
+    content: String,
+    prose: Option<String>,
+}
+
+struct SceneContent {
+    editor_mode: EditorMode,
+    synopsis: Option<String>,
+    prose: Option<String>,
+    scene_type: SceneType,
+    scene_status: SceneStatus,
+    beats: Vec<BeatContent>,
+    characters: Vec<String>,
+    locations: Vec<String>,
+    items: Vec<String>,
+    objectives: Vec<String>,
+    organizations: Vec<String>,
+    timelines: Vec<String>,
+    custom: Vec<String>,
+}
+
+struct SceneEntry {
+    name: String,
+    _depth: usize,
+}
+
+#[derive(Debug)]
+struct ReferenceNote {
+    kind: ReferenceKind,
+    name: String,
+    file_stem: String,
+    description: Option<String>,
+    attributes: HashMap<String, String>,
+    source_id: Option<String>,
+}
+
+struct ReferenceNameIndex {
+    character_names: HashSet<String>,
+    location_names: HashSet<String>,
+    item_names: HashSet<String>,
+    objective_names: HashSet<String>,
+    organization_names: HashSet<String>,
+    timeline_names: HashSet<String>,
+    custom_names: HashSet<String>,
+}
+
+impl ReferenceNameIndex {
+    fn new(parsed: &ParsedLongform) -> Self {
+        Self {
+            timeline_names: parsed
+                .reference_items
+                .iter()
+                .filter(|item| item.reference_type == "timelines")
+                .map(|item| item.name.to_lowercase())
+                .collect(),
+            custom_names: parsed
+                .reference_items
+                .iter()
+                .filter(|item| item.reference_type == "custom")
+                .map(|item| item.name.to_lowercase())
+                .collect(),
+            character_names: parsed
+                .characters
+                .iter()
+                .map(|c| c.name.to_lowercase())
+                .collect(),
+            location_names: parsed
+                .locations
+                .iter()
+                .map(|l| l.name.to_lowercase())
+                .collect(),
+            item_names: parsed
+                .reference_items
+                .iter()
+                .filter(|item| item.reference_type == "items")
+                .map(|item| item.name.to_lowercase())
+                .collect(),
+            objective_names: parsed
+                .reference_items
+                .iter()
+                .filter(|item| item.reference_type == "objectives")
+                .map(|item| item.name.to_lowercase())
+                .collect(),
+            organization_names: parsed
+                .reference_items
+                .iter()
+                .filter(|item| item.reference_type == "organizations")
+                .map(|item| item.name.to_lowercase())
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct NoteFrontmatter {
+    #[serde(rename = "type")]
+    note_type: Option<String>,
+    name: Option<String>,
+    description: Option<String>,
+    role: Option<String>,
+    tags: Option<FrontmatterList>,
+    category: Option<String>,
+    categories: Option<FrontmatterList>,
+    #[serde(flatten)]
+    extra: HashMap<String, serde_yaml::Value>,
+}
+
+struct SceneBuildContext<'a> {
+    index_dir: &'a Path,
+    scene_dir: &'a Path,
+    /// Canonical vault root; scene files must resolve inside it.
+    vault: &'a Path,
+    scenes: &'a mut Vec<Scene>,
+    beats: &'a mut Vec<Beat>,
+    characters: &'a mut Vec<Character>,
+    locations: &'a mut Vec<Location>,
+    reference_items: &'a mut Vec<ReferenceItem>,
+    scene_character_refs: &'a mut Vec<(uuid::Uuid, uuid::Uuid)>,
+    scene_location_refs: &'a mut Vec<(uuid::Uuid, uuid::Uuid)>,
+    scene_reference_item_refs: &'a mut Vec<(uuid::Uuid, uuid::Uuid)>,
+    character_index: &'a mut HashMap<String, uuid::Uuid>,
+    location_index: &'a mut HashMap<String, uuid::Uuid>,
+    reference_item_index: &'a mut HashMap<String, uuid::Uuid>,
+}
+
+struct DataviewContext<'a> {
+    scene_status: &'a mut SceneStatus,
+    status_locked: bool,
+    synopsis: &'a mut Option<String>,
+    synopsis_locked: bool,
+    characters: &'a mut Vec<String>,
+    locations: &'a mut Vec<String>,
+    items: &'a mut Vec<String>,
+    objectives: &'a mut Vec<String>,
+    organizations: &'a mut Vec<String>,
+    timelines: &'a mut Vec<String>,
+    custom: &'a mut Vec<String>,
+}
+
+// ============================================================================
+// Parser Implementation
+// ============================================================================
+
+pub fn parse_longform_index<P: AsRef<Path>>(path: P) -> Result<ParsedLongform, LongformError> {
+    parse_longform_index_in(path.as_ref(), None)
+}
+
+/// Parse an index, reading only files inside `vault` (by default the vault
+/// that contains the index; see `vault_root`).
+fn parse_longform_index_in(
+    path: &Path,
+    vault: Option<PathBuf>,
+) -> Result<ParsedLongform, LongformError> {
+    let content = fs::read_to_string(path)?;
+
+    let (frontmatter_str, _) = split_frontmatter(&content)
+        .ok_or_else(|| LongformError::InvalidStructure("Missing YAML frontmatter".to_string()))?;
+
+    let frontmatter: LongformFrontmatter = serde_yaml::from_str(&frontmatter_str)?;
+    let longform = frontmatter.longform.ok_or_else(|| {
+        LongformError::InvalidStructure("Missing longform frontmatter entry".to_string())
+    })?;
+
+    let format = longform.format.as_deref().unwrap_or("").to_lowercase();
+    if format != "scenes" {
+        return Err(LongformError::InvalidStructure(
+            "Only multi-scene Longform projects are supported".to_string(),
+        ));
+    }
+
+    let scene_folder = longform.scene_folder.unwrap_or_else(|| "/".to_string());
+    let scene_folder = normalize_scene_folder(&scene_folder);
+
+    let scenes_value = longform.scenes.ok_or_else(|| {
+        LongformError::InvalidStructure("Missing longform.scenes list".to_string())
+    })?;
+
+    let scene_entries = parse_scene_entries(&scenes_value)?;
+    let ignored_patterns = longform.ignored_files.unwrap_or_default();
+
+    let project_name = longform
+        .title
+        .clone()
+        .filter(|t| !t.trim().is_empty())
+        .unwrap_or_else(|| {
+            path.file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("Untitled")
+                .to_string()
+        });
+
+    let project = Project::new(
+        project_name,
+        SourceType::Longform,
+        Some(path.to_string_lossy().to_string()),
+    );
+
+    let index_dir = path.parent().unwrap_or_else(|| Path::new("."));
+    let vault = match vault {
+        Some(vault) => vault,
+        None if index_dir.as_os_str().is_empty() => vault_root(Path::new("."))?,
+        None => vault_root(index_dir)?,
+    };
+    let scene_dir = resolve_scene_dir(index_dir, &scene_folder);
+    // A missing folder cannot leak anything; its scenes fail to read below.
+    if scene_dir.exists() {
+        resolve_in_vault(&vault, &scene_dir, || {
+            format!("The Longform sceneFolder \u{201c}{scene_folder}\u{201d}")
+        })?;
+    }
+
+    let mut parsed = build_longform_structure(
+        project,
+        scene_entries,
+        &ignored_patterns,
+        index_dir,
+        &scene_dir,
+        &vault,
+    )?;
+
+    let mut skip_paths = HashSet::new();
+    skip_paths.insert(path_key(path));
+    for entry in &parsed.scenes {
+        if let Some(ref source_id) = entry.source_id {
+            skip_paths.insert(path_key(&index_dir.join(source_id)));
+        }
+    }
+    let reference_names = ReferenceNameIndex::new(&parsed);
+    let notes = collect_reference_notes(index_dir, &vault, &skip_paths, &reference_names)?;
+    merge_reference_notes(&mut parsed, notes);
+    update_project_reference_types(&mut parsed.project, &parsed.reference_items);
+
+    Ok(parsed)
+}
+
+pub fn parse_longform_path<P: AsRef<Path>>(path: P) -> Result<ParsedLongform, LongformError> {
+    let path = path.as_ref();
+    if path.is_dir() {
+        let vault = vault_root(path)?;
+        let indexes = find_longform_indexes(path, &vault)?;
+        if indexes.is_empty() {
+            return Err(LongformError::InvalidStructure(
+                "No Longform index files found in vault".to_string(),
+            ));
+        }
+        if indexes.len() > 1 {
+            let list = indexes
+                .iter()
+                .map(|p| p.to_string_lossy().to_string())
+                .collect::<Vec<_>>()
+                .join("\n");
+            return Err(LongformError::InvalidStructure(format!(
+                "Multiple Longform index files found. Please pick one:\n{list}"
+            )));
+        }
+        return parse_longform_index_in(&indexes[0], Some(vault));
+    }
+
+    parse_longform_index(path)
+}
+
+/// The folder a Longform import may read from: the nearest ancestor of
+/// `start` that holds Obsidian's `.obsidian` settings folder (the vault), or
+/// `start` itself when there is none. Returned canonicalised.
+fn vault_root(start: &Path) -> Result<PathBuf, LongformError> {
+    let start = fs::canonicalize(start)?;
+    Ok(start
+        .ancestors()
+        .find(|dir| dir.join(".obsidian").is_dir())
+        .unwrap_or(&start)
+        .to_path_buf())
+}
+
+/// Resolve `path`, following `..` and symlinks, and refuse it when it lands
+/// outside `vault`. Scene names and `sceneFolder` come from the index file, so
+/// without this an index could pull any Markdown file on disk into a project.
+fn resolve_in_vault(
+    vault: &Path,
+    path: &Path,
+    describe: impl FnOnce() -> String,
+) -> Result<PathBuf, LongformError> {
+    let resolved = fs::canonicalize(path)?;
+    if resolved.starts_with(vault) {
+        return Ok(resolved);
+    }
+    Err(LongformError::InvalidStructure(format!(
+        "{} is outside the vault ({}), so kindling did not import it.",
+        describe(),
+        vault.display()
+    )))
+}
+
+/// Walk filter: keep entries inside `vault`, and report any that a symlink
+/// takes outside it instead of reading them.
+///
+/// Only symlinks are resolved. A walk can leave the vault only through one:
+/// any other entry sits inside its parent directory, which was either the
+/// walk root (inside the vault) or itself passed this filter on the way down,
+/// so symlinked directories are never followed out of the vault.
+fn stays_in_vault(vault: &Path, entry: &walkdir::DirEntry) -> bool {
+    if !entry.path_is_symlink() {
+        return true;
+    }
+    match fs::canonicalize(entry.path()) {
+        Ok(resolved) if resolved.starts_with(vault) => true,
+        Ok(_) => {
+            eprintln!(
+                "[kindling] Longform import skipped {}: it links outside the vault ({}).",
+                entry.path().display(),
+                vault.display()
+            );
+            false
+        }
+        // Broken links are skipped by the walk as before.
+        Err(_) => true,
+    }
+}
+
+fn find_longform_indexes(vault_dir: &Path, vault: &Path) -> Result<Vec<PathBuf>, LongformError> {
+    let mut indexes = Vec::new();
+
+    for entry in WalkDir::new(vault_dir)
+        .follow_links(true)
+        .into_iter()
+        .filter_entry(|entry| stays_in_vault(vault, entry))
+        .filter_map(Result::ok)
+    {
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        if entry.path().extension().and_then(|s| s.to_str()) != Some("md") {
+            continue;
+        }
+
+        let content = fs::read_to_string(entry.path())?;
+        let (frontmatter_str, _) = match split_frontmatter(&content) {
+            Some(parts) => parts,
+            None => continue,
+        };
+
+        let frontmatter: LongformFrontmatter = match serde_yaml::from_str(&frontmatter_str) {
+            Ok(parsed) => parsed,
+            Err(_) => continue,
+        };
+
+        if let Some(longform) = frontmatter.longform {
+            let format = longform.format.unwrap_or_default().to_lowercase();
+            if format == "scenes" || format == "single" {
+                indexes.push(entry.path().to_path_buf());
+            }
+        }
+    }
+
+    Ok(indexes)
+}
+
+fn parse_scene_entries(value: &serde_yaml::Value) -> Result<Vec<SceneEntry>, LongformError> {
+    let mut entries = Vec::new();
+    let scenes = value.as_sequence().ok_or_else(|| {
+        LongformError::InvalidStructure("longform.scenes must be a list".to_string())
+    })?;
+
+    collect_scene_entries(scenes, 0, &mut entries)?;
+
+    Ok(entries)
+}
+
+fn collect_scene_entries(
+    scenes: &[serde_yaml::Value],
+    depth: usize,
+    entries: &mut Vec<SceneEntry>,
+) -> Result<(), LongformError> {
+    for entry in scenes {
+        match entry {
+            serde_yaml::Value::Sequence(children) => {
+                collect_scene_entries(children, depth + 1, entries)?;
+            }
+            serde_yaml::Value::String(name) => entries.push(SceneEntry {
+                name: name.clone(),
+                _depth: depth,
+            }),
+            serde_yaml::Value::Number(num) => entries.push(SceneEntry {
+                name: num.to_string(),
+                _depth: depth,
+            }),
+            serde_yaml::Value::Bool(value) => entries.push(SceneEntry {
+                name: value.to_string(),
+                _depth: depth,
+            }),
+            _ => {
+                return Err(LongformError::InvalidStructure(
+                    "Scene names must be strings".to_string(),
+                ));
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn collect_reference_notes(
+    vault_dir: &Path,
+    vault: &Path,
+    skip_paths: &HashSet<String>,
+    reference_names: &ReferenceNameIndex,
+) -> Result<Vec<ReferenceNote>, LongformError> {
+    let mut notes = Vec::new();
+
+    for entry in WalkDir::new(vault_dir)
+        .follow_links(true)
+        .into_iter()
+        .filter_entry(|entry| stays_in_vault(vault, entry))
+        .filter_map(Result::ok)
+    {
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        if entry.path().extension().and_then(|s| s.to_str()) != Some("md") {
+            continue;
+        }
+
+        let entry_key = path_key(entry.path());
+        if skip_paths.contains(&entry_key) {
+            continue;
+        }
+
+        let content = fs::read_to_string(entry.path())?;
+        let (frontmatter, body) = match split_frontmatter(&content) {
+            Some((frontmatter_str, body)) => {
+                let parsed = serde_yaml::from_str::<NoteFrontmatter>(&frontmatter_str).ok();
+                (parsed, body)
+            }
+            None => (None, content),
+        };
+
+        let file_stem = entry
+            .path()
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("")
+            .trim()
+            .to_string();
+
+        let kind = resolve_note_kind(&frontmatter, entry.path(), &file_stem, reference_names);
+        let Some(kind) = kind else {
+            continue;
+        };
+
+        let (name, description, attributes) =
+            extract_note_details(&frontmatter, &file_stem, &body, kind);
+
+        let source_id = Some(build_scene_source_id(vault_dir, entry.path()));
+
+        notes.push(ReferenceNote {
+            kind,
+            name,
+            file_stem,
+            description,
+            attributes,
+            source_id,
+        });
+    }
+
+    Ok(notes)
+}
+
+fn resolve_note_kind(
+    frontmatter: &Option<NoteFrontmatter>,
+    path: &Path,
+    file_stem: &str,
+    reference_names: &ReferenceNameIndex,
+) -> Option<ReferenceKind> {
+    if let Some(frontmatter) = frontmatter {
+        if let Some(ref note_type) = frontmatter.note_type {
+            if let Some(kind) = reference_kind_from_label(note_type) {
+                return Some(kind);
+            }
+        }
+
+        if let Some(ref category) = frontmatter.category {
+            if let Some(kind) = reference_kind_from_label(category) {
+                return Some(kind);
+            }
+        }
+
+        if let Some(list) = frontmatter.categories.clone() {
+            for value in list.into_vec() {
+                if let Some(kind) = reference_kind_from_label(&value) {
+                    return Some(kind);
+                }
+            }
+        }
+
+        if let Some(list) = frontmatter.tags.clone() {
+            for value in list.into_vec() {
+                if let Some(kind) = reference_kind_from_label(&value) {
+                    return Some(kind);
+                }
+            }
+        }
+    }
+
+    if is_character_path(path) {
+        return Some(ReferenceKind::Character);
+    }
+    if is_location_path(path) {
+        return Some(ReferenceKind::Location);
+    }
+    if is_item_path(path) {
+        return Some(ReferenceKind::Item);
+    }
+    if is_objective_path(path) {
+        return Some(ReferenceKind::Objective);
+    }
+    if is_organization_path(path) {
+        return Some(ReferenceKind::Organization);
+    }
+
+    if path_contains_folder(path, &["timeline", "timelines"]) {
+        return Some(ReferenceKind::Timeline);
+    }
+    if path_contains_folder(path, &["notes", "custom"]) {
+        return Some(ReferenceKind::Custom);
+    }
+
+    let stem_key = file_stem.to_lowercase();
+    if reference_names.timeline_names.contains(&stem_key) {
+        return Some(ReferenceKind::Timeline);
+    }
+    if reference_names.custom_names.contains(&stem_key) {
+        return Some(ReferenceKind::Custom);
+    }
+    if reference_names.character_names.contains(&stem_key) {
+        return Some(ReferenceKind::Character);
+    }
+    if reference_names.location_names.contains(&stem_key) {
+        return Some(ReferenceKind::Location);
+    }
+    if reference_names.item_names.contains(&stem_key) {
+        return Some(ReferenceKind::Item);
+    }
+    if reference_names.objective_names.contains(&stem_key) {
+        return Some(ReferenceKind::Objective);
+    }
+    if reference_names.organization_names.contains(&stem_key) {
+        return Some(ReferenceKind::Organization);
+    }
+
+    None
+}
+
+fn extract_note_details(
+    frontmatter: &Option<NoteFrontmatter>,
+    file_stem: &str,
+    body: &str,
+    kind: ReferenceKind,
+) -> (String, Option<String>, HashMap<String, String>) {
+    let mut attributes = HashMap::new();
+    let extended_note = matches!(kind, ReferenceKind::Timeline | ReferenceKind::Custom);
+    let mut name = if extended_note {
+        body.lines()
+            .find_map(|line| line.strip_prefix("# "))
+            .unwrap_or(file_stem)
+            .trim()
+            .to_string()
+    } else {
+        file_stem.to_string()
+    };
+    let mut description = None;
+
+    if let Some(frontmatter) = frontmatter {
+        if let Some(ref raw_name) = frontmatter.name {
+            if let Some(cleaned) = normalize_reference_label(raw_name, kind) {
+                name = cleaned;
+            }
+        }
+
+        if let Some(ref front_desc) = frontmatter.description {
+            description = normalize_block(front_desc);
+        }
+
+        if let Some(ref front_role) = frontmatter.role {
+            if let Some(value) = normalize_block(front_role) {
+                attributes.insert("role".to_string(), value);
+            }
+        }
+
+        if let Some(list) = frontmatter.tags.clone() {
+            if let Some(value) = join_frontmatter_list(list) {
+                attributes.insert("tags".to_string(), value);
+            }
+        }
+        if let Some(ref category) = frontmatter.category {
+            if let Some(value) = normalize_block(category) {
+                attributes.insert("category".to_string(), value);
+            }
+        }
+        if let Some(list) = frontmatter.categories.clone() {
+            if let Some(value) = join_frontmatter_list(list) {
+                attributes.insert("categories".to_string(), value);
+            }
+        }
+
+        for (key, value) in &frontmatter.extra {
+            let normalized_key = key.trim().to_string();
+            if normalized_key.is_empty() {
+                continue;
+            }
+            if matches!(
+                normalized_key.as_str(),
+                "type" | "name" | "description" | "role"
+            ) {
+                continue;
+            }
+            if let Some(stringified) = yaml_value_to_string(value) {
+                attributes.insert(normalized_key, stringified);
+            }
+        }
+    }
+
+    if extended_note {
+        // Kindling's exported note sections carry multiline descriptions and
+        // notes separately from generated scene backlinks. Keep their contents.
+        if description.is_none() {
+            description = note_section(body, "Description").or_else(|| {
+                let prose = body
+                    .lines()
+                    .skip_while(|line| line.trim().is_empty() || line.starts_with("# "))
+                    .take_while(|line| {
+                        !matches!(line.trim(), "## Notes" | "## Scenes" | "## Appearances")
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                normalize_block(&prose)
+            });
+        }
+        if !attributes.contains_key("notes") {
+            if let Some(notes) = note_section(body, "Notes") {
+                attributes.insert("notes".into(), notes);
+            }
+        }
+    } else if description.is_none() {
+        description = extract_first_paragraph(body);
+    }
+
+    if let Some(cleaned) = normalize_reference_label(&name, kind) {
+        name = cleaned;
+    }
+
+    (name, description, attributes)
+}
+
+fn note_section(body: &str, title: &str) -> Option<String> {
+    let heading = format!("## {title}");
+    let mut lines = body.lines().skip_while(|line| line.trim() != heading);
+    lines.next()?;
+    normalize_block(
+        &lines
+            .take_while(|line| {
+                !matches!(
+                    line.trim(),
+                    "## Description" | "## Notes" | "## Scenes" | "## Appearances"
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n"),
+    )
+}
+
+fn join_frontmatter_list(list: FrontmatterList) -> Option<String> {
+    let values: Vec<String> = list
+        .into_vec()
+        .into_iter()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .collect();
+
+    if values.is_empty() {
+        None
+    } else {
+        Some(values.join(", "))
+    }
+}
+
+fn normalize_reference_label(value: &str, kind: ReferenceKind) -> Option<String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    if let Some((_, name)) = classify_reference(trimmed, kind) {
+        return Some(name);
+    }
+
+    normalize_reference_by_kind(trimmed, kind).map(|(_, name)| name)
+}
+
+fn yaml_value_to_string(value: &serde_yaml::Value) -> Option<String> {
+    match value {
+        serde_yaml::Value::Null => None,
+        serde_yaml::Value::Bool(b) => Some(b.to_string()),
+        serde_yaml::Value::Number(n) => Some(n.to_string()),
+        serde_yaml::Value::String(s) => normalize_block(s),
+        serde_yaml::Value::Sequence(seq) => {
+            let values: Vec<String> = seq.iter().filter_map(yaml_value_to_string).collect();
+            if values.is_empty() {
+                None
+            } else {
+                Some(values.join(", "))
+            }
+        }
+        serde_yaml::Value::Mapping(_) => serde_yaml::to_string(value)
+            .ok()
+            .and_then(|s| normalize_block(&s)),
+        _ => None,
+    }
+}
+
+fn extract_first_paragraph(body: &str) -> Option<String> {
+    let mut buffer = Vec::new();
+    let mut started = false;
+
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            if started {
+                break;
+            }
+            continue;
+        }
+        if trimmed.starts_with('#') {
+            if started {
+                break;
+            }
+            continue;
+        }
+        started = true;
+        buffer.push(trimmed.to_string());
+    }
+
+    if buffer.is_empty() {
+        None
+    } else {
+        Some(buffer.join(" "))
+    }
+}
+
+fn path_key(path: &Path) -> String {
+    fs::canonicalize(path)
+        .unwrap_or_else(|_| path.to_path_buf())
+        .to_string_lossy()
+        .to_string()
+}
+
+fn is_character_path(path: &Path) -> bool {
+    path_contains_folder(path, &["characters", "character", "people"])
+}
+
+fn is_location_path(path: &Path) -> bool {
+    path_contains_folder(
+        path,
+        &["locations", "location", "places", "settings", "setting"],
+    )
+}
+
+fn is_item_path(path: &Path) -> bool {
+    path_contains_folder(
+        path,
+        &[
+            "items",
+            "item",
+            "objects",
+            "object",
+            "artifacts",
+            "artifact",
+            "props",
+            "prop",
+        ],
+    )
+}
+
+fn is_objective_path(path: &Path) -> bool {
+    path_contains_folder(
+        path,
+        &[
+            "objectives",
+            "objective",
+            "goals",
+            "goal",
+            "quests",
+            "quest",
+            "missions",
+            "mission",
+            "tasks",
+            "task",
+        ],
+    )
+}
+
+fn is_organization_path(path: &Path) -> bool {
+    path_contains_folder(
+        path,
+        &[
+            "organizations",
+            "organisation",
+            "orgs",
+            "org",
+            "factions",
+            "faction",
+            "groups",
+            "group",
+            "teams",
+            "team",
+            "guilds",
+            "guild",
+            "companies",
+            "company",
+            "agencies",
+            "agency",
+            "crews",
+            "crew",
+        ],
+    )
+}
+
+fn path_contains_folder(path: &Path, names: &[&str]) -> bool {
+    path.components().any(|component| {
+        let std::path::Component::Normal(value) = component else {
+            return false;
+        };
+        let Some(text) = value.to_str() else {
+            return false;
+        };
+        let text = text.to_lowercase();
+        names.iter().any(|name| text == *name)
+    })
+}
+
+fn merge_reference_notes(parsed: &mut ParsedLongform, notes: Vec<ReferenceNote>) {
+    let mut character_index: HashMap<String, usize> = parsed
+        .characters
+        .iter()
+        .enumerate()
+        .map(|(idx, character)| (character.name.to_lowercase(), idx))
+        .collect();
+    let mut location_index: HashMap<String, usize> = parsed
+        .locations
+        .iter()
+        .enumerate()
+        .map(|(idx, location)| (location.name.to_lowercase(), idx))
+        .collect();
+    let mut reference_item_index: HashMap<String, usize> = parsed
+        .reference_items
+        .iter()
+        .enumerate()
+        .map(|(idx, item)| (reference_item_key(&item.reference_type, &item.name), idx))
+        .collect();
+
+    for note in notes {
+        match note.kind {
+            ReferenceKind::Character => merge_character_note(parsed, note, &mut character_index),
+            ReferenceKind::Location => merge_location_note(parsed, note, &mut location_index),
+            ReferenceKind::Item
+            | ReferenceKind::Objective
+            | ReferenceKind::Organization
+            | ReferenceKind::Timeline
+            | ReferenceKind::Custom => {
+                merge_reference_item_note(parsed, note, &mut reference_item_index);
+            }
+        }
+    }
+}
+
+fn update_project_reference_types(project: &mut Project, reference_items: &[ReferenceItem]) {
+    let mut types = project.reference_types.clone();
+    let mut seen: HashSet<String> = types.iter().cloned().collect();
+
+    for item in reference_items {
+        if seen.insert(item.reference_type.clone()) {
+            types.push(item.reference_type.clone());
+        }
+    }
+
+    project.reference_types = types;
+}
+
+fn merge_character_note(
+    parsed: &mut ParsedLongform,
+    note: ReferenceNote,
+    index: &mut HashMap<String, usize>,
+) {
+    let name_key = note.name.to_lowercase();
+    let stem_key = note.file_stem.to_lowercase();
+
+    let mut matched_idx = index.get(&name_key).copied();
+    if matched_idx.is_none() && stem_key != name_key {
+        matched_idx = index.get(&stem_key).copied();
+    }
+
+    if let Some(idx) = matched_idx {
+        let character = &mut parsed.characters[idx];
+        if character.name != note.name {
+            character.name = note.name.clone();
+            index.remove(&stem_key);
+            index.insert(name_key.clone(), idx);
+        }
+        if character.description.is_none() {
+            character.description = note.description;
+        }
+        if character.source_id.is_none() {
+            character.source_id = note.source_id;
+        }
+        for (key, value) in note.attributes {
+            character.attributes.insert(key, value);
+        }
+    } else {
+        let mut character = Character::new(
+            parsed.project.id,
+            note.name,
+            note.description,
+            note.source_id,
+        );
+        character.attributes = note.attributes;
+        let idx = parsed.characters.len();
+        parsed.characters.push(character);
+        index.insert(name_key, idx);
+    }
+}
+
+fn merge_location_note(
+    parsed: &mut ParsedLongform,
+    note: ReferenceNote,
+    index: &mut HashMap<String, usize>,
+) {
+    let name_key = note.name.to_lowercase();
+    let stem_key = note.file_stem.to_lowercase();
+
+    let mut matched_idx = index.get(&name_key).copied();
+    if matched_idx.is_none() && stem_key != name_key {
+        matched_idx = index.get(&stem_key).copied();
+    }
+
+    if let Some(idx) = matched_idx {
+        let location = &mut parsed.locations[idx];
+        if location.name != note.name {
+            location.name = note.name.clone();
+            index.remove(&stem_key);
+            index.insert(name_key.clone(), idx);
+        }
+        if location.description.is_none() {
+            location.description = note.description;
+        }
+        if location.source_id.is_none() {
+            location.source_id = note.source_id;
+        }
+        for (key, value) in note.attributes {
+            location.attributes.insert(key, value);
+        }
+    } else {
+        let mut location = Location::new(
+            parsed.project.id,
+            note.name,
+            note.description,
+            note.source_id,
+        );
+        location.attributes = note.attributes;
+        let idx = parsed.locations.len();
+        parsed.locations.push(location);
+        index.insert(name_key, idx);
+    }
+}
+
+fn merge_reference_item_note(
+    parsed: &mut ParsedLongform,
+    note: ReferenceNote,
+    index: &mut HashMap<String, usize>,
+) {
+    let Some(reference_type) = reference_type_for_kind(note.kind) else {
+        return;
+    };
+
+    let name_key = reference_item_key(reference_type, &note.name);
+    let stem_key = reference_item_key(reference_type, &note.file_stem);
+
+    let mut matched_idx = index.get(&name_key).copied();
+    if matched_idx.is_none() && stem_key != name_key {
+        matched_idx = index.get(&stem_key).copied();
+    }
+
+    if let Some(idx) = matched_idx {
+        let item = &mut parsed.reference_items[idx];
+        if item.name != note.name {
+            item.name = note.name.clone();
+            index.remove(&stem_key);
+            index.insert(name_key.clone(), idx);
+        }
+        if item.description.is_none() {
+            item.description = note.description;
+        }
+        if item.source_id.is_none() {
+            item.source_id = note.source_id;
+        }
+        for (key, value) in note.attributes {
+            item.attributes.insert(key, value);
+        }
+    } else {
+        let mut item = ReferenceItem::new(
+            parsed.project.id,
+            reference_type.to_string(),
+            note.name,
+            note.description,
+            note.source_id,
+        );
+        item.attributes = note.attributes;
+        let idx = parsed.reference_items.len();
+        parsed.reference_items.push(item);
+        index.insert(name_key, idx);
+    }
+}
+
+fn parse_scene_file(path: &Path) -> Result<SceneContent, LongformError> {
+    let content = fs::read_to_string(path)?;
+    let (frontmatter, body) = match split_frontmatter(&content) {
+        Some((frontmatter_str, body)) => {
+            let parsed = serde_yaml::from_str::<SceneFrontmatter>(&frontmatter_str).ok();
+            (parsed, body)
+        }
+        None => (None, content),
+    };
+
+    let mut scene_content = parse_scene_body(&body);
+    if let Some(frontmatter) = frontmatter {
+        if scene_content.synopsis.is_none() {
+            if let Some(synopsis) = normalize_block(frontmatter.synopsis.as_deref().unwrap_or("")) {
+                scene_content.synopsis = Some(synopsis);
+            }
+        }
+        if let Some(status) = frontmatter.status {
+            scene_content.scene_status = parse_obsidian_status(&status);
+        }
+        let mut characters = std::mem::take(&mut scene_content.characters);
+        let mut locations = std::mem::take(&mut scene_content.locations);
+        let mut items = std::mem::take(&mut scene_content.items);
+        let mut objectives = std::mem::take(&mut scene_content.objectives);
+        let mut organizations = std::mem::take(&mut scene_content.organizations);
+        let mut timelines = std::mem::take(&mut scene_content.timelines);
+        let mut custom = std::mem::take(&mut scene_content.custom);
+        if let Some(list) = frontmatter.characters {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Character,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(pov) = frontmatter.pov {
+            push_reference(
+                &pov,
+                ReferenceKind::Character,
+                [
+                    &mut characters,
+                    &mut locations,
+                    &mut items,
+                    &mut objectives,
+                    &mut organizations,
+                    &mut timelines,
+                    &mut custom,
+                ],
+            );
+        }
+        if let Some(list) = frontmatter.setting {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Location,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(list) = frontmatter.items {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Item,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(list) = frontmatter.objects {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Item,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(list) = frontmatter.objectives {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Objective,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(list) = frontmatter.goals {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Objective,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(list) = frontmatter.organizations {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Organization,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(list) = frontmatter.factions {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Organization,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(list) = frontmatter.groups {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Organization,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        if let Some(list) = frontmatter.teams {
+            for value in list.into_vec() {
+                push_reference(
+                    &value,
+                    ReferenceKind::Organization,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+        }
+        for (list, kind) in [
+            (frontmatter.timelines, ReferenceKind::Timeline),
+            (frontmatter.custom, ReferenceKind::Custom),
+        ] {
+            if let Some(list) = list {
+                for value in list.into_vec() {
+                    push_reference(
+                        &value,
+                        kind,
+                        [
+                            &mut characters,
+                            &mut locations,
+                            &mut items,
+                            &mut objectives,
+                            &mut organizations,
+                            &mut timelines,
+                            &mut custom,
+                        ],
+                    );
+                }
+            }
+        }
+        scene_content.timelines = normalize_reference_list(timelines);
+        scene_content.custom = normalize_reference_list(custom);
+        scene_content.characters = normalize_reference_list(characters);
+        scene_content.locations = normalize_reference_list(locations);
+        scene_content.items = normalize_reference_list(items);
+        scene_content.objectives = normalize_reference_list(objectives);
+        scene_content.organizations = normalize_reference_list(organizations);
+    }
+
+    Ok(scene_content)
+}
+
+fn parse_scene_body(content: &str) -> SceneContent {
+    let mut editor_mode = EditorMode::Beat;
+    let mut scene_type = SceneType::Normal;
+    let mut scene_status = SceneStatus::Draft;
+    let mut synopsis = None;
+    let mut body_lines = Vec::new();
+    let mut beat_lines = Vec::new();
+    let mut in_beats = false;
+    let mut metadata_parsed = false;
+    let mut status_locked = false;
+    let mut synopsis_locked = false;
+    let mut skipped_heading = false;
+    let mut characters = Vec::new();
+    let mut locations = Vec::new();
+    let mut items = Vec::new();
+    let mut objectives = Vec::new();
+    let mut organizations = Vec::new();
+    let mut timelines = Vec::new();
+    let mut custom = Vec::new();
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        let trimmed_start = line.trim_start();
+
+        if !in_beats && trimmed.eq_ignore_ascii_case(LONGFORM_BEATS_MARKER) {
+            in_beats = true;
+            continue;
+        }
+
+        if !in_beats && !metadata_parsed {
+            if let Some(meta) = parse_kindling_comment(trimmed) {
+                if let Some(value) = meta.get("editor_mode") {
+                    editor_mode = EditorMode::parse(value);
+                }
+                if let Some(value) = meta.get("scene_type") {
+                    scene_type = SceneType::parse(value);
+                }
+                if let Some(value) = meta.get("scene_status") {
+                    scene_status = SceneStatus::parse(value);
+                    status_locked = true;
+                }
+                if let Some(value) = meta.get("synopsis") {
+                    let synopsis_value = value.trim();
+                    if !synopsis_value.is_empty() {
+                        synopsis = Some(synopsis_value.to_string());
+                        synopsis_locked = true;
+                    }
+                }
+                metadata_parsed = true;
+                continue;
+            }
+        }
+
+        if in_beats {
+            beat_lines.push(line);
+        } else {
+            if let Some(field) = parse_dataview_field(trimmed_start) {
+                let mut context = DataviewContext {
+                    scene_status: &mut scene_status,
+                    status_locked,
+                    synopsis: &mut synopsis,
+                    synopsis_locked,
+                    characters: &mut characters,
+                    locations: &mut locations,
+                    items: &mut items,
+                    objectives: &mut objectives,
+                    organizations: &mut organizations,
+                    timelines: &mut timelines,
+                    custom: &mut custom,
+                };
+                // Mapped keys are applied; other fields (`mood:: tense`,
+                // `up:: [[Chapter One]]`) are metadata Kindling has no home
+                // for, consumed as 1.2 did and never turned into references.
+                // Unspaced `key::text` is only a field for a mapped key or a
+                // link value, so text like `std::vector` stays prose. A
+                // capitalised key with a plain value is a field only when it
+                // is mapped.
+                let mapped = apply_dataview_field(&field.key, &field.value, &mut context);
+                if mapped || (!field.capitalized && (field.spaced || field.links_only)) {
+                    continue;
+                }
+            }
+            if !status_locked {
+                if let Some(status) = parse_status_from_tags(trimmed_start) {
+                    scene_status = status;
+                }
+            }
+            for link in extract_wikilink_targets(trimmed_start) {
+                push_reference(
+                    &link,
+                    ReferenceKind::Character,
+                    [
+                        &mut characters,
+                        &mut locations,
+                        &mut items,
+                        &mut objectives,
+                        &mut organizations,
+                        &mut timelines,
+                        &mut custom,
+                    ],
+                );
+            }
+            if !skipped_heading && trimmed_start.starts_with("# ") {
+                skipped_heading = true;
+                continue;
+            }
+            body_lines.push(line);
+        }
+    }
+
+    let prose = normalize_block(&body_lines.join("\n"));
+    let beats = parse_beats_block(&beat_lines.join("\n"));
+
+    SceneContent {
+        editor_mode,
+        synopsis,
+        prose,
+        scene_type,
+        scene_status,
+        beats,
+        characters: normalize_reference_list(characters),
+        locations: normalize_reference_list(locations),
+        items: normalize_reference_list(items),
+        objectives: normalize_reference_list(objectives),
+        organizations: normalize_reference_list(organizations),
+        timelines: normalize_reference_list(timelines),
+        custom: normalize_reference_list(custom),
+    }
+}
+
+fn parse_beats_block(content: &str) -> Vec<BeatContent> {
+    let mut beats = Vec::new();
+    let mut current_content: Option<String> = None;
+    let mut prose_lines: Vec<String> = Vec::new();
+
+    for line in content.lines() {
+        let trimmed = line.trim_end();
+        let trimmed_start = trimmed.trim_start();
+        let bullet = trimmed_start
+            .strip_prefix("- ")
+            .or_else(|| trimmed_start.strip_prefix("* "));
+
+        if let Some(bullet_content) = bullet {
+            if let Some(existing) = current_content.take() {
+                let prose = normalize_block(&prose_lines.join("\n"));
+                beats.push(BeatContent {
+                    content: existing,
+                    prose,
+                });
+                prose_lines.clear();
+            }
+            let beat_title = bullet_content.trim().to_string();
+            if !beat_title.is_empty() {
+                current_content = Some(beat_title);
+            }
+        } else if current_content.is_some() {
+            prose_lines.push(trimmed.trim_start().to_string());
+        }
+    }
+
+    if let Some(existing) = current_content.take() {
+        let prose = normalize_block(&prose_lines.join("\n"));
+        beats.push(BeatContent {
+            content: existing,
+            prose,
+        });
+    }
+
+    beats
+}
+
+fn normalize_block(content: &str) -> Option<String> {
+    let trimmed = content.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
+}
+
+fn normalize_scene_name(name: &str) -> String {
+    name.trim().to_string()
+}
+
+fn chapter_source_id_from_title(title: &str) -> String {
+    format!("longform:chapter:{}", normalize_scene_name(title))
+}
+
+fn should_ignore_scene(name: &str, patterns: &[String]) -> bool {
+    let trimmed = normalize_scene_name(name);
+    if trimmed.is_empty() {
+        return true;
+    }
+    let file_name = format!("{trimmed}.md");
+    patterns
+        .iter()
+        .any(|pattern| wildcard_match(pattern, &trimmed) || wildcard_match(pattern, &file_name))
+}
+
+fn wildcard_match(pattern: &str, text: &str) -> bool {
+    let pattern_chars: Vec<char> = pattern.chars().collect();
+    let text_chars: Vec<char> = text.chars().collect();
+    let mut p = 0;
+    let mut t = 0;
+    let mut star_index: Option<usize> = None;
+    let mut match_index = 0;
+
+    while t < text_chars.len() {
+        if p < pattern_chars.len() && (pattern_chars[p] == '?' || pattern_chars[p] == text_chars[t])
+        {
+            p += 1;
+            t += 1;
+        } else if p < pattern_chars.len() && pattern_chars[p] == '*' {
+            star_index = Some(p);
+            match_index = t;
+            p += 1;
+        } else if let Some(star_pos) = star_index {
+            p = star_pos + 1;
+            match_index += 1;
+            t = match_index;
+        } else {
+            return false;
+        }
+    }
+
+    while p < pattern_chars.len() && pattern_chars[p] == '*' {
+        p += 1;
+    }
+
+    p == pattern_chars.len()
+}
+
+fn parse_obsidian_status(raw: &str) -> SceneStatus {
+    match raw.trim().to_lowercase().as_str() {
+        "revised" => SceneStatus::Revised,
+        "final" => SceneStatus::Final,
+        "idea" | "outline" | "draft" => SceneStatus::Draft,
+        _ => SceneStatus::Draft,
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum ReferenceKind {
+    Character,
+    Location,
+    Item,
+    Objective,
+    Organization,
+    Timeline,
+    Custom,
+}
+
+fn reference_kind_from_label(label: &str) -> Option<ReferenceKind> {
+    let trimmed = label.trim().trim_start_matches('#');
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let normalized = trimmed
+        .split('/')
+        .next()
+        .unwrap_or(trimmed)
+        .trim()
+        .to_lowercase();
+
+    if matches!(normalized.as_str(), "timeline" | "timelines") {
+        return Some(ReferenceKind::Timeline);
+    }
+    if matches!(normalized.as_str(), "custom" | "note" | "notes") {
+        return Some(ReferenceKind::Custom);
+    }
+    if normalized.contains("character")
+        || matches!(normalized.as_str(), "person" | "people" | "npc" | "cast")
+    {
+        return Some(ReferenceKind::Character);
+    }
+    if normalized.contains("location")
+        || normalized.contains("place")
+        || normalized.contains("setting")
+    {
+        return Some(ReferenceKind::Location);
+    }
+    if normalized.contains("objective")
+        || normalized.contains("goal")
+        || normalized.contains("quest")
+        || normalized.contains("mission")
+        || normalized.contains("task")
+    {
+        return Some(ReferenceKind::Objective);
+    }
+    if normalized.contains("organization")
+        || normalized.contains("organisation")
+        || normalized.contains("faction")
+        || normalized.contains("group")
+        || normalized.contains("team")
+        || normalized.contains("guild")
+        || normalized.contains("company")
+        || normalized.contains("agency")
+        || normalized.contains("crew")
+    {
+        return Some(ReferenceKind::Organization);
+    }
+    if normalized.contains("item")
+        || normalized.contains("object")
+        || normalized.contains("artifact")
+        || normalized.contains("prop")
+    {
+        return Some(ReferenceKind::Item);
+    }
+
+    None
+}
+
+fn reference_type_for_kind(kind: ReferenceKind) -> Option<&'static str> {
+    match kind {
+        ReferenceKind::Item => Some("items"),
+        ReferenceKind::Objective => Some("objectives"),
+        ReferenceKind::Organization => Some("organizations"),
+        ReferenceKind::Timeline => Some("timelines"),
+        ReferenceKind::Custom => Some("custom"),
+        _ => None,
+    }
+}
+
+/// Apply a Dataview field Kindling understands. Returns `false` for keys it
+/// does not map, leaving the context untouched. A mapped key returns `true`
+/// even when Kindling metadata locks it, so the line is still metadata.
+fn apply_dataview_field(key: &str, value: &str, context: &mut DataviewContext<'_>) -> bool {
+    let normalized_key = key.trim().to_lowercase();
+    match normalized_key.as_str() {
+        "pov" => {
+            push_reference(
+                value,
+                ReferenceKind::Character,
+                [
+                    context.characters,
+                    context.locations,
+                    context.items,
+                    context.objectives,
+                    context.organizations,
+                    context.timelines,
+                    context.custom,
+                ],
+            );
+        }
+        "characters" => {
+            for entry in split_inline_list(value) {
+                push_reference(
+                    &entry,
+                    ReferenceKind::Character,
+                    [
+                        context.characters,
+                        context.locations,
+                        context.items,
+                        context.objectives,
+                        context.organizations,
+                        context.timelines,
+                        context.custom,
+                    ],
+                );
+            }
+        }
+        "setting" | "location" | "locations" | "places" => {
+            for entry in split_inline_list(value) {
+                push_reference(
+                    &entry,
+                    ReferenceKind::Location,
+                    [
+                        context.characters,
+                        context.locations,
+                        context.items,
+                        context.objectives,
+                        context.organizations,
+                        context.timelines,
+                        context.custom,
+                    ],
+                );
+            }
+        }
+        "items" | "item" | "objects" | "object" | "props" | "prop" | "artifacts" | "artifact" => {
+            for entry in split_inline_list(value) {
+                push_reference(
+                    &entry,
+                    ReferenceKind::Item,
+                    [
+                        context.characters,
+                        context.locations,
+                        context.items,
+                        context.objectives,
+                        context.organizations,
+                        context.timelines,
+                        context.custom,
+                    ],
+                );
+            }
+        }
+        "objectives" | "objective" | "goals" | "goal" | "quests" | "quest" | "missions"
+        | "mission" | "tasks" | "task" => {
+            for entry in split_inline_list(value) {
+                push_reference(
+                    &entry,
+                    ReferenceKind::Objective,
+                    [
+                        context.characters,
+                        context.locations,
+                        context.items,
+                        context.objectives,
+                        context.organizations,
+                        context.timelines,
+                        context.custom,
+                    ],
+                );
+            }
+        }
+        "organizations" | "organisation" | "orgs" | "org" | "factions" | "faction" | "groups"
+        | "group" | "teams" | "team" | "guilds" | "guild" | "companies" | "company"
+        | "agencies" | "agency" | "crews" | "crew" => {
+            for entry in split_inline_list(value) {
+                push_reference(
+                    &entry,
+                    ReferenceKind::Organization,
+                    [
+                        context.characters,
+                        context.locations,
+                        context.items,
+                        context.objectives,
+                        context.organizations,
+                        context.timelines,
+                        context.custom,
+                    ],
+                );
+            }
+        }
+        "timeline" | "timelines" | "notes" | "custom" => {
+            let kind = if normalized_key.starts_with("timeline") {
+                ReferenceKind::Timeline
+            } else {
+                ReferenceKind::Custom
+            };
+            for entry in split_inline_list(value) {
+                push_reference(
+                    &entry,
+                    kind,
+                    [
+                        context.characters,
+                        context.locations,
+                        context.items,
+                        context.objectives,
+                        context.organizations,
+                        context.timelines,
+                        context.custom,
+                    ],
+                );
+            }
+        }
+        "status" => {
+            if !context.status_locked {
+                *context.scene_status = parse_obsidian_status(value);
+            }
+        }
+        "synopsis" => {
+            if !context.synopsis_locked {
+                if let Some(text) = normalize_block(value) {
+                    *context.synopsis = Some(text);
+                }
+            }
+        }
+        _ => return false,
+    }
+    true
+}
+
+/// A line that is exactly one Dataview inline field, `key:: value`.
+struct DataviewField {
+    key: String,
+    value: String,
+    /// `::` was followed by whitespace or ended the line, as Dataview
+    /// fields are normally written.
+    spaced: bool,
+    /// The value is only wikilinks (`[[A]]` or `[[A]], [[B]]`).
+    links_only: bool,
+    /// A capitalised key with a plain value (`POV:: Zoe`). Only a field when
+    /// Kindling maps the key, as 1.2 read it; `Meanwhile:: the ship sank.`
+    /// stays prose.
+    capitalized: bool,
+}
+
+/// Parse a scene line as a Dataview inline field.
+///
+/// Field lines never reach the prose, so this errs towards keeping text. A
+/// line is a field only when it is exactly `key:: value` and either
+///
+/// - the key follows the Dataview convention of a lowercase-initial name,
+///   `^[a-z][A-Za-z0-9_-]*$` (`mood:: tense`, `characters:: [[John]]`), or
+/// - the value is only wikilinks, whatever the key's case
+///   (`Characters:: [[John]]`, `Next:: [[Scene 4]]`).
+///
+/// Everything else is prose, including sentences that start with a
+/// capitalised word and `::` ("Meanwhile:: the ship sank.", "Crew:: all
+/// hands stood silent."), multi-word keys, list items and quotes.
+fn parse_dataview_field(line: &str) -> Option<DataviewField> {
+    let (key, rest) = line.trim().split_once("::")?;
+    let key = key.trim_end();
+    let value = rest.trim();
+    let links_only = is_wikilink_list(value);
+    let mut key_chars = key.chars();
+    let is_field = if links_only {
+        key_chars.next().is_some_and(char::is_alphabetic)
+            && key_chars.all(|ch| ch.is_alphanumeric() || ch == '_' || ch == '-')
+    } else {
+        key_chars.next().is_some_and(|ch| ch.is_ascii_alphabetic())
+            && key_chars.all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '-')
+    };
+    if !is_field {
+        return None;
+    }
+    Some(DataviewField {
+        key: key.to_string(),
+        value: value.to_string(),
+        spaced: rest.is_empty() || rest.starts_with(char::is_whitespace),
+        links_only,
+        capitalized: !links_only && key.starts_with(|ch: char| ch.is_ascii_uppercase()),
+    })
+}
+
+/// Whether `value` is one wikilink (or embed) or a comma list of them, and
+/// nothing else. Commas inside a link's alias don't separate entries.
+fn is_wikilink_list(value: &str) -> bool {
+    let mut rest = value.trim();
+    if rest.is_empty() {
+        return false;
+    }
+    loop {
+        let link = rest.strip_prefix('!').unwrap_or(rest);
+        let Some(inner) = link.strip_prefix("[[") else {
+            return false;
+        };
+        let Some(end) = inner.find("]]") else {
+            return false;
+        };
+        if inner[..end].trim().is_empty() {
+            return false;
+        }
+        rest = inner[end + 2..].trim_start();
+        if rest.is_empty() {
+            return true;
+        }
+        let Some(next) = rest.strip_prefix(',') else {
+            return false;
+        };
+        rest = next.trim_start();
+    }
+}
+
+fn split_inline_list(value: &str) -> Vec<String> {
+    value
+        .split(',')
+        .map(|entry| entry.trim())
+        .filter(|entry| !entry.is_empty())
+        .map(|entry| entry.to_string())
+        .collect()
+}
+
+fn parse_status_from_tags(line: &str) -> Option<SceneStatus> {
+    let tag_marker = "#status/";
+    let idx = line.find(tag_marker)?;
+    let tag = &line[idx + tag_marker.len()..];
+    let value = tag
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+        .trim_matches(|ch: char| ch.is_ascii_punctuation());
+
+    if value.is_empty() {
+        return None;
+    }
+
+    Some(parse_obsidian_status(value))
+}
+
+fn extract_wikilink_targets(line: &str) -> Vec<String> {
+    let mut targets = Vec::new();
+    let mut remainder = line;
+
+    while let Some(start) = remainder.find("[[") {
+        let after_start = &remainder[start + 2..];
+        let Some(end) = after_start.find("]]") else {
+            break;
+        };
+        let inner = &after_start[..end];
+        let target = inner.split('|').next().unwrap_or("").trim();
+        if !target.is_empty() {
+            targets.push(target.to_string());
+        }
+        remainder = &after_start[end + 2..];
+    }
+
+    targets
+}
+
+fn push_reference(
+    value: &str,
+    default_kind: ReferenceKind,
+    [characters, locations, items, objectives, organizations, timelines, custom]: [&mut Vec<String>;
+        7],
+) {
+    if let Some((kind, name)) = classify_reference(value, default_kind) {
+        match kind {
+            ReferenceKind::Character => characters.push(name),
+            ReferenceKind::Location => locations.push(name),
+            ReferenceKind::Item => items.push(name),
+            ReferenceKind::Objective => objectives.push(name),
+            ReferenceKind::Organization => organizations.push(name),
+            ReferenceKind::Timeline => timelines.push(name),
+            ReferenceKind::Custom => custom.push(name),
+        }
+    }
+}
+
+fn classify_reference(value: &str, default_kind: ReferenceKind) -> Option<(ReferenceKind, String)> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let name = parse_wikilink_target(trimmed).unwrap_or_else(|| trimmed.to_string());
+    let cleaned = name.trim();
+    if cleaned.is_empty() {
+        return None;
+    }
+
+    if let Some(stripped) = cleaned.strip_prefix(';') {
+        return normalize_reference_by_kind(stripped, ReferenceKind::Character);
+    }
+
+    if let Some(stripped) = cleaned.strip_prefix('~') {
+        return normalize_reference_by_kind(stripped, ReferenceKind::Location);
+    }
+
+    normalize_reference_by_kind(cleaned, default_kind)
+}
+
+fn normalize_reference_by_kind(
+    value: &str,
+    kind: ReferenceKind,
+) -> Option<(ReferenceKind, String)> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some((kind, trimmed.to_string()))
+    }
+}
+
+fn parse_wikilink_target(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if !trimmed.starts_with("[[") || !trimmed.ends_with("]]") {
+        return None;
+    }
+
+    let inner = &trimmed[2..trimmed.len() - 2];
+    let target = inner.split('|').next()?.trim();
+    if target.is_empty() {
+        None
+    } else {
+        Some(target.to_string())
+    }
+}
+
+fn normalize_reference_list(values: Vec<String>) -> Vec<String> {
+    let mut normalized = Vec::new();
+    let mut seen = HashSet::new();
+
+    for value in values {
+        let trimmed = value.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let key = trimmed.to_lowercase();
+        if seen.insert(key) {
+            normalized.push(trimmed.to_string());
+        }
+    }
+
+    normalized
+}
+
+fn build_longform_structure(
+    project: Project,
+    scene_entries: Vec<SceneEntry>,
+    ignored_patterns: &[String],
+    index_dir: &Path,
+    scene_dir: &Path,
+    vault: &Path,
+) -> Result<ParsedLongform, LongformError> {
+    let mut chapters = Vec::new();
+    let mut scenes = Vec::new();
+    let mut beats = Vec::new();
+    let mut characters = Vec::new();
+    let mut locations = Vec::new();
+    let mut reference_items = Vec::new();
+    let mut scene_character_refs = Vec::new();
+    let mut scene_location_refs = Vec::new();
+    let mut scene_reference_item_refs = Vec::new();
+    let mut character_index: HashMap<String, uuid::Uuid> = HashMap::new();
+    let mut location_index: HashMap<String, uuid::Uuid> = HashMap::new();
+    let mut reference_item_index: HashMap<String, uuid::Uuid> = HashMap::new();
+    let mut build_context = SceneBuildContext {
+        index_dir,
+        scene_dir,
+        vault,
+        scenes: &mut scenes,
+        beats: &mut beats,
+        characters: &mut characters,
+        locations: &mut locations,
+        reference_items: &mut reference_items,
+        scene_character_refs: &mut scene_character_refs,
+        scene_location_refs: &mut scene_location_refs,
+        scene_reference_item_refs: &mut scene_reference_item_refs,
+        character_index: &mut character_index,
+        location_index: &mut location_index,
+        reference_item_index: &mut reference_item_index,
+    };
+
+    let has_hierarchy = scene_entries.iter().any(|entry| entry._depth > 0);
+
+    if !has_hierarchy {
+        let chapter = Chapter::new(project.id, "Chapter 1".to_string(), 0)
+            .with_source_id(Some(LONGFORM_DEFAULT_CHAPTER_SOURCE_ID.to_string()));
+        let mut scene_position = 0;
+
+        for entry in scene_entries {
+            if should_ignore_scene(&entry.name, ignored_patterns) {
+                continue;
+            }
+            add_scene_from_entry(&chapter, entry, scene_position, &mut build_context)?;
+            scene_position += 1;
+        }
+
+        chapters.push(chapter);
+    } else {
+        let mut current_chapter: Option<Chapter> = None;
+        let mut chapter_position = 0;
+        let mut scene_position = 0;
+        let mut chapter_has_scenes = false;
+
+        for entry in scene_entries {
+            if entry._depth == 0 {
+                if let Some(chapter) = current_chapter.take() {
+                    if chapter_has_scenes {
+                        chapters.push(chapter);
+                    }
+                }
+                chapter_has_scenes = false;
+                scene_position = 0;
+
+                current_chapter = Some(
+                    Chapter::new(project.id, entry.name.clone(), chapter_position)
+                        .with_source_id(Some(chapter_source_id_from_title(&entry.name))),
+                );
+                chapter_position += 1;
+
+                if !should_ignore_scene(&entry.name, ignored_patterns) {
+                    if let Some(ref chapter) = current_chapter {
+                        add_scene_from_entry(chapter, entry, scene_position, &mut build_context)?;
+                        scene_position += 1;
+                        chapter_has_scenes = true;
+                    }
+                }
+            } else {
+                if current_chapter.is_none() {
+                    current_chapter = Some(
+                        Chapter::new(project.id, "Chapter 1".to_string(), chapter_position)
+                            .with_source_id(Some(LONGFORM_DEFAULT_CHAPTER_SOURCE_ID.to_string())),
+                    );
+                    chapter_position += 1;
+                    scene_position = 0;
+                }
+                if !should_ignore_scene(&entry.name, ignored_patterns) {
+                    if let Some(ref chapter) = current_chapter {
+                        add_scene_from_entry(chapter, entry, scene_position, &mut build_context)?;
+                        scene_position += 1;
+                        chapter_has_scenes = true;
+                    }
+                }
+            }
+        }
+
+        if let Some(chapter) = current_chapter.take() {
+            if chapter_has_scenes {
+                chapters.push(chapter);
+            }
+        }
+    }
+
+    Ok(ParsedLongform {
+        project,
+        chapters,
+        scenes,
+        beats,
+        characters,
+        locations,
+        reference_items,
+        scene_character_refs,
+        scene_location_refs,
+        scene_reference_item_refs,
+    })
+}
+
+fn add_scene_from_entry(
+    chapter: &Chapter,
+    entry: SceneEntry,
+    scene_position: i32,
+    context: &mut SceneBuildContext<'_>,
+) -> Result<(), LongformError> {
+    let scene_name = normalize_scene_name(&entry.name);
+    let scene_file_name = ensure_markdown_extension(&scene_name);
+    let scene_path = context.scene_dir.join(&scene_file_name);
+    let scene_source_id = build_scene_source_id(context.index_dir, &scene_path);
+
+    let scene_file = resolve_in_vault(context.vault, &scene_path, || {
+        format!("Scene \u{201c}{}\u{201d}", entry.name.trim())
+    })?;
+    let scene_content = parse_scene_file(&scene_file)?;
+
+    let mut scene = Scene::new(
+        chapter.id,
+        scene_name,
+        scene_content.synopsis,
+        scene_position,
+    )
+    .with_source_id(Some(scene_source_id));
+    scene.editor_mode = scene_content.editor_mode;
+    scene.prose = scene_content.prose;
+    scene.scene_type = scene_content.scene_type;
+    scene.scene_status = scene_content.scene_status;
+
+    register_scene_characters(
+        chapter.project_id,
+        scene.id,
+        &scene_content.characters,
+        context.characters,
+        context.scene_character_refs,
+        context.character_index,
+    );
+    register_scene_locations(
+        chapter.project_id,
+        scene.id,
+        &scene_content.locations,
+        context.locations,
+        context.scene_location_refs,
+        context.location_index,
+    );
+    register_scene_reference_items(
+        chapter.project_id,
+        scene.id,
+        ReferenceKind::Item,
+        &scene_content.items,
+        context.reference_items,
+        context.reference_item_index,
+        context.scene_reference_item_refs,
+    );
+    register_scene_reference_items(
+        chapter.project_id,
+        scene.id,
+        ReferenceKind::Objective,
+        &scene_content.objectives,
+        context.reference_items,
+        context.reference_item_index,
+        context.scene_reference_item_refs,
+    );
+    register_scene_reference_items(
+        chapter.project_id,
+        scene.id,
+        ReferenceKind::Organization,
+        &scene_content.organizations,
+        context.reference_items,
+        context.reference_item_index,
+        context.scene_reference_item_refs,
+    );
+
+    for (kind, names) in [
+        (ReferenceKind::Timeline, &scene_content.timelines),
+        (ReferenceKind::Custom, &scene_content.custom),
+    ] {
+        register_scene_reference_items(
+            chapter.project_id,
+            scene.id,
+            kind,
+            names,
+            context.reference_items,
+            context.reference_item_index,
+            context.scene_reference_item_refs,
+        );
+    }
+
+    for (beat_position, beat) in scene_content.beats.into_iter().enumerate() {
+        let mut new_beat = Beat::new(scene.id, beat.content, beat_position as i32);
+        new_beat.prose = beat.prose;
+        context.beats.push(new_beat);
+    }
+
+    context.scenes.push(scene);
+    Ok(())
+}
+
+fn register_scene_characters(
+    project_id: uuid::Uuid,
+    scene_id: uuid::Uuid,
+    names: &[String],
+    characters: &mut Vec<Character>,
+    scene_character_refs: &mut Vec<(uuid::Uuid, uuid::Uuid)>,
+    character_index: &mut HashMap<String, uuid::Uuid>,
+) {
+    for name in names {
+        let key = name.to_lowercase();
+        let character_id = match character_index.get(&key) {
+            Some(existing) => *existing,
+            None => {
+                let character = Character::new(project_id, name.clone(), None, None);
+                let id = character.id;
+                characters.push(character);
+                character_index.insert(key, id);
+                id
+            }
+        };
+        scene_character_refs.push((scene_id, character_id));
+    }
+}
+
+fn register_scene_locations(
+    project_id: uuid::Uuid,
+    scene_id: uuid::Uuid,
+    names: &[String],
+    locations: &mut Vec<Location>,
+    scene_location_refs: &mut Vec<(uuid::Uuid, uuid::Uuid)>,
+    location_index: &mut HashMap<String, uuid::Uuid>,
+) {
+    for name in names {
+        let key = name.to_lowercase();
+        let location_id = match location_index.get(&key) {
+            Some(existing) => *existing,
+            None => {
+                let location = Location::new(project_id, name.clone(), None, None);
+                let id = location.id;
+                locations.push(location);
+                location_index.insert(key, id);
+                id
+            }
+        };
+        scene_location_refs.push((scene_id, location_id));
+    }
+}
+
+fn register_scene_reference_items(
+    project_id: uuid::Uuid,
+    scene_id: uuid::Uuid,
+    reference_kind: ReferenceKind,
+    names: &[String],
+    reference_items: &mut Vec<ReferenceItem>,
+    reference_item_index: &mut HashMap<String, uuid::Uuid>,
+    scene_reference_item_refs: &mut Vec<(uuid::Uuid, uuid::Uuid)>,
+) {
+    if names.is_empty() {
+        return;
+    }
+
+    register_reference_items(
+        project_id,
+        reference_kind,
+        names,
+        reference_items,
+        reference_item_index,
+    );
+
+    let Some(reference_type) = reference_type_for_kind(reference_kind) else {
+        return;
+    };
+    for name in names {
+        let key = reference_item_key(reference_type, name);
+        if let Some(reference_item_id) = reference_item_index.get(&key) {
+            scene_reference_item_refs.push((scene_id, *reference_item_id));
+        }
+    }
+}
+
+fn reference_item_key(reference_type: &str, name: &str) -> String {
+    format!("{}:{}", reference_type, name.trim().to_lowercase())
+}
+
+fn register_reference_items(
+    project_id: uuid::Uuid,
+    kind: ReferenceKind,
+    names: &[String],
+    reference_items: &mut Vec<ReferenceItem>,
+    reference_item_index: &mut HashMap<String, uuid::Uuid>,
+) {
+    let Some(reference_type) = reference_type_for_kind(kind) else {
+        return;
+    };
+    for name in names {
+        let key = reference_item_key(reference_type, name);
+        if reference_item_index.contains_key(&key) {
+            continue;
+        }
+        let item = ReferenceItem::new(
+            project_id,
+            reference_type.to_string(),
+            name.clone(),
+            None,
+            None,
+        );
+        reference_item_index.insert(key, item.id);
+        reference_items.push(item);
+    }
+}
+
+fn parse_kindling_comment(line: &str) -> Option<HashMap<String, String>> {
+    if !line.starts_with("<!--") || !line.ends_with("-->") {
+        return None;
+    }
+
+    let inner = line
+        .trim_start_matches("<!--")
+        .trim_end_matches("-->")
+        .trim();
+
+    let payload = inner.strip_prefix("kindling:")?.trim();
+    if payload.eq_ignore_ascii_case("beats") {
+        return None;
+    }
+
+    Some(parse_key_values(payload))
+}
+
+fn parse_key_values(input: &str) -> HashMap<String, String> {
+    let mut values = HashMap::new();
+    let mut chars = input.chars().peekable();
+
+    while let Some(next) = chars.peek() {
+        if next.is_whitespace() {
+            chars.next();
+            continue;
+        }
+
+        let mut key = String::new();
+        while let Some(&ch) = chars.peek() {
+            if ch == '=' || ch.is_whitespace() {
+                break;
+            }
+            key.push(ch);
+            chars.next();
+        }
+
+        while let Some(&ch) = chars.peek() {
+            if ch == '=' {
+                chars.next();
+                break;
+            }
+            if !ch.is_whitespace() {
+                break;
+            }
+            chars.next();
+        }
+
+        if key.is_empty() {
+            break;
+        }
+
+        let value = if let Some(&'"') = chars.peek() {
+            chars.next();
+            parse_quoted_value(&mut chars)
+        } else {
+            let mut raw = String::new();
+            while let Some(&ch) = chars.peek() {
+                if ch.is_whitespace() {
+                    break;
+                }
+                raw.push(ch);
+                chars.next();
+            }
+            raw
+        };
+
+        if !value.is_empty() {
+            values.insert(key, value);
+        }
+    }
+
+    values
+}
+
+fn parse_quoted_value<I>(chars: &mut std::iter::Peekable<I>) -> String
+where
+    I: Iterator<Item = char>,
+{
+    let mut value = String::new();
+    let mut escaped = false;
+
+    for ch in chars.by_ref() {
+        if escaped {
+            match ch {
+                'n' => value.push('\n'),
+                't' => value.push('\t'),
+                '\\' => value.push('\\'),
+                '"' => value.push('"'),
+                other => value.push(other),
+            }
+            escaped = false;
+            continue;
+        }
+
+        if ch == '\\' {
+            escaped = true;
+            continue;
+        }
+
+        if ch == '"' {
+            break;
+        }
+
+        value.push(ch);
+    }
+
+    value
+}
+
+fn split_frontmatter(content: &str) -> Option<(String, String)> {
+    let mut lines = content.lines();
+    let first = lines.next()?;
+    if first.trim() != "---" {
+        return None;
+    }
+
+    let mut frontmatter_lines = Vec::new();
+    let mut body_lines = Vec::new();
+    let mut in_frontmatter = true;
+
+    for line in lines {
+        if in_frontmatter && line.trim() == "---" {
+            in_frontmatter = false;
+            continue;
+        }
+
+        if in_frontmatter {
+            frontmatter_lines.push(line);
+        } else {
+            body_lines.push(line);
+        }
+    }
+
+    if in_frontmatter {
+        return None;
+    }
+
+    Some((frontmatter_lines.join("\n"), body_lines.join("\n")))
+}
+
+fn normalize_scene_folder(raw: &str) -> String {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() || trimmed == "/" {
+        "/".to_string()
+    } else {
+        trimmed.trim_start_matches('/').to_string()
+    }
+}
+
+fn resolve_scene_dir(index_dir: &Path, scene_folder: &str) -> PathBuf {
+    if scene_folder == "/" || scene_folder == "." || scene_folder == "./" {
+        index_dir.to_path_buf()
+    } else {
+        index_dir.join(scene_folder)
+    }
+}
+
+fn ensure_markdown_extension(name: &str) -> String {
+    if name.to_lowercase().ends_with(".md") {
+        name.to_string()
+    } else {
+        format!("{name}.md")
+    }
+}
+
+fn build_scene_source_id(index_dir: &Path, scene_path: &Path) -> String {
+    let relative = scene_path
+        .strip_prefix(index_dir)
+        .unwrap_or(scene_path)
+        .to_string_lossy()
+        .to_string();
+    relative.replace('\\', "/")
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn imports_timeline_and_custom_notes_from_folders_and_metadata() {
+        let temp = tempfile::tempdir().unwrap();
+        let index = temp.path().join("Index.md");
+        fs::write(
+            &index,
+            "---\nlongform:\n  format: scenes\n  title: Notes Test\n  scenes: [Opening]\n---\n",
+        )
+        .unwrap();
+        fs::write(temp.path().join("Opening.md"), "---\ntimelines: ['[[Past]]']\nnotes: ['[[Research]]']\n---\ntimelines:: [[Future]]\ncustom:: [[Motif]]\n\nScene prose.").unwrap();
+        for folder in ["timelines", "notes", "misc"] {
+            fs::create_dir(temp.path().join(folder)).unwrap();
+        }
+        for (path, body) in [
+            (
+                "timelines/Past.md",
+                "# Past\n\nFirst paragraph.\n\nSecond paragraph.",
+            ),
+            ("notes/Research.md", "# Research\n\nResearch body."),
+            (
+                "misc/Future.md",
+                "---\ntags: [timeline]\nEra: Tomorrow\n---\n# Future\n\nFuture body.",
+            ),
+            (
+                "misc/Motif.md",
+                "---\ncategory: custom\nColour: Green\n---\n# Motif\n\nMotif body.",
+            ),
+            (
+                "notes/unlinked.md",
+                "# Display: Name\n\nUnlinked note body.",
+            ),
+            (
+                "notes/character.md",
+                "---\ntype: character\nname: Jane\n---\nA character despite the notes folder.",
+            ),
+        ] {
+            fs::write(temp.path().join(path), body).unwrap();
+        }
+        let parsed = parse_longform_index(&index).unwrap();
+        assert_eq!(parsed.reference_items.len(), 5);
+        assert_eq!(parsed.scene_reference_item_refs.len(), 4);
+        assert_eq!(parsed.characters.len(), 1);
+        assert_eq!(parsed.characters[0].name, "Jane");
+        for (name, kind) in [
+            ("Past", "timelines"),
+            ("Future", "timelines"),
+            ("Research", "custom"),
+            ("Motif", "custom"),
+            ("Display: Name", "custom"),
+        ] {
+            let note = parsed
+                .reference_items
+                .iter()
+                .find(|item| item.name == name)
+                .unwrap();
+            assert_eq!(note.reference_type, kind);
+            assert!(note.description.is_some());
+            assert!(note.source_id.is_some());
+        }
+        let past = parsed
+            .reference_items
+            .iter()
+            .find(|item| item.name == "Past")
+            .unwrap();
+        assert_eq!(
+            past.description.as_deref(),
+            Some("First paragraph.\n\nSecond paragraph.")
+        );
+        assert_eq!(
+            parsed
+                .reference_items
+                .iter()
+                .find(|item| item.name == "Future")
+                .unwrap()
+                .attributes["Era"],
+            "Tomorrow"
+        );
+        assert_eq!(
+            parsed
+                .reference_items
+                .iter()
+                .find(|item| item.name == "Motif")
+                .unwrap()
+                .attributes["Colour"],
+            "Green"
+        );
+    }
+
+    use super::*;
+    use std::fs;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_parse_longform_index_and_scenes() {
+        let dir = tempdir().unwrap();
+        let scenes_dir = dir.path().join("Scenes");
+        fs::create_dir_all(&scenes_dir).unwrap();
+
+        let index_path = dir.path().join("Project.md");
+        let index_content = r#"---
+longform:
+  format: scenes
+  title: Test Project
+  workflow: Default Workflow
+  sceneFolder: Scenes
+  scenes:
+    - first scene
+    - - second scene
+---"#;
+        fs::write(&index_path, index_content).unwrap();
+
+        let scene_one = r#"<!-- kindling: scene_type=notes scene_status=final synopsis="First scene" -->
+This is some prose.
+
+<!-- kindling: beats -->
+- Beat one
+  Beat prose line
+- Beat two
+"#;
+        let scene_two = "Just prose.";
+
+        fs::write(scenes_dir.join("first scene.md"), scene_one).unwrap();
+        fs::write(scenes_dir.join("second scene.md"), scene_two).unwrap();
+
+        let parsed = parse_longform_index(&index_path).unwrap();
+
+        assert_eq!(parsed.project.name, "Test Project");
+        assert_eq!(parsed.project.source_type, SourceType::Longform);
+        assert_eq!(parsed.chapters.len(), 1);
+        assert_eq!(parsed.scenes.len(), 2);
+        assert_eq!(parsed.beats.len(), 2);
+
+        let first_scene = &parsed.scenes[0];
+        assert_eq!(first_scene.title, "first scene");
+        assert_eq!(first_scene.scene_type, SceneType::Notes);
+        assert_eq!(first_scene.scene_status, SceneStatus::Final);
+        assert_eq!(first_scene.synopsis.as_deref(), Some("First scene"));
+        assert!(first_scene.prose.as_deref().unwrap().contains("some prose"));
+
+        let second_scene = &parsed.scenes[1];
+        assert_eq!(second_scene.title, "second scene");
+        assert_eq!(second_scene.scene_type, SceneType::Normal);
+        assert_eq!(second_scene.scene_status, SceneStatus::Draft);
+        assert_eq!(second_scene.prose.as_deref(), Some("Just prose."));
+    }
+
+    #[test]
+    fn test_parse_scene_list_with_numbers() {
+        let yaml = serde_yaml::from_str::<serde_yaml::Value>(
+            r#"
+- "1"
+- 2
+        "#,
+        )
+        .unwrap();
+
+        let entries = parse_scene_entries(&yaml).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].name, "1");
+        assert_eq!(entries[1].name, "2");
+    }
+
+    #[test]
+    fn test_parse_scene_frontmatter_status_and_synopsis() {
+        let dir = tempdir().unwrap();
+        let index_path = dir.path().join("Project.md");
+        let index_content = r#"---
+longform:
+  format: scenes
+  title: Test Project
+  workflow: Default Workflow
+  sceneFolder: /
+  scenes:
+    - frontmatter scene
+---"#;
+        fs::write(&index_path, index_content).unwrap();
+
+        let scene_content = r#"---
+status: revised
+synopsis: Frontmatter synopsis
+---
+
+Scene prose."#;
+        fs::write(dir.path().join("frontmatter scene.md"), scene_content).unwrap();
+
+        let parsed = parse_longform_index(&index_path).unwrap();
+        assert_eq!(parsed.scenes.len(), 1);
+        assert_eq!(
+            parsed.scenes[0].synopsis.as_deref(),
+            Some("Frontmatter synopsis")
+        );
+        assert_eq!(parsed.scenes[0].scene_status, SceneStatus::Revised);
+    }
+
+    #[test]
+    fn test_parse_scene_frontmatter_references() {
+        let dir = tempdir().unwrap();
+        let index_path = dir.path().join("Project.md");
+        let index_content = r#"---
+longform:
+  format: scenes
+  title: Test Project
+  workflow: Default Workflow
+  sceneFolder: /
+  scenes:
+    - reference scene
+---"#;
+        fs::write(&index_path, index_content).unwrap();
+
+        let scene_content = r#"---
+characters:
+  - "[[;Sarah]]"
+  - "John"
+setting: "[[~Downtown Cafe|Cafe]]"
+pov: "[[;Sarah]]"
+---
+
+Scene prose."#;
+        fs::write(dir.path().join("reference scene.md"), scene_content).unwrap();
+
+        let parsed = parse_longform_index(&index_path).unwrap();
+        assert_eq!(parsed.characters.len(), 2);
+        assert!(parsed.characters.iter().any(|c| c.name == "Sarah"));
+        assert!(parsed.characters.iter().any(|c| c.name == "John"));
+        assert_eq!(parsed.locations.len(), 1);
+        assert_eq!(parsed.locations[0].name, "Downtown Cafe");
+        assert_eq!(parsed.scene_character_refs.len(), 2);
+        assert_eq!(parsed.scene_location_refs.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_scene_dataview_and_content_links() {
+        let dir = tempdir().unwrap();
+        let index_path = dir.path().join("Project.md");
+        let index_content = r#"---
+longform:
+  format: scenes
+  title: Test Project
+  workflow: Default Workflow
+  sceneFolder: /
+  scenes:
+    - dataview scene
+---"#;
+        fs::write(&index_path, index_content).unwrap();
+
+        let scene_content = r#"pov:: [[;Sarah]]
+characters:: [[John]], ;Zoe
+setting:: [[~Dock]]
+items:: [[Magic Sword]], relic
+objectives:: Find the relic
+organizations:: [[Guild]]
+#status/final
+
+Scene prose with [[;Mila]] and [[~Warehouse]]."#;
+        fs::write(dir.path().join("dataview scene.md"), scene_content).unwrap();
+
+        let parsed = parse_longform_index(&index_path).unwrap();
+        assert_eq!(parsed.scenes.len(), 1);
+        assert_eq!(parsed.scenes[0].scene_status, SceneStatus::Final);
+
+        let character_names: Vec<_> = parsed.characters.iter().map(|c| c.name.as_str()).collect();
+        assert!(character_names.contains(&"Sarah"));
+        assert!(character_names.contains(&"John"));
+        assert!(character_names.contains(&"Zoe"));
+        assert!(character_names.contains(&"Mila"));
+
+        let location_names: Vec<_> = parsed.locations.iter().map(|l| l.name.as_str()).collect();
+        assert!(location_names.contains(&"Dock"));
+        assert!(location_names.contains(&"Warehouse"));
+
+        let item_names: Vec<_> = parsed
+            .reference_items
+            .iter()
+            .filter(|item| item.reference_type == "items")
+            .map(|item| item.name.as_str())
+            .collect();
+        assert!(item_names.contains(&"Magic Sword"));
+        assert!(item_names.contains(&"relic"));
+
+        let objective_names: Vec<_> = parsed
+            .reference_items
+            .iter()
+            .filter(|item| item.reference_type == "objectives")
+            .map(|item| item.name.as_str())
+            .collect();
+        assert!(objective_names.contains(&"Find the relic"));
+
+        let organization_names: Vec<_> = parsed
+            .reference_items
+            .iter()
+            .filter(|item| item.reference_type == "organizations")
+            .map(|item| item.name.as_str())
+            .collect();
+        assert!(organization_names.contains(&"Guild"));
+        assert_eq!(parsed.scene_reference_item_refs.len(), 4);
+    }
+
+    #[test]
+    fn test_parse_scene_body_keeps_prose_lines_containing_double_colon() {
+        let content = "pov:: [[;Sarah]]\n\
+mood:: tense\n\
+\n\
+The ratio was 3::1 against them.\n\
+She read the label aloud: Warning:: do not open.\n\
+std::vector was the only word on the screen.\n\
+Night falls:: the long wait begins.\n\
+- characters:: [[John]]\n\
+> Aside:: a quoted line.";
+        let scene = parse_scene_body(content);
+        assert!(scene.characters.contains(&"Sarah".to_string()));
+        let prose = scene.prose.expect("prose kept");
+        for line in [
+            "The ratio was 3::1 against them.",
+            "She read the label aloud: Warning:: do not open.",
+            "std::vector was the only word on the screen.",
+            "Night falls:: the long wait begins.",
+            "- characters:: [[John]]",
+            "> Aside:: a quoted line.",
+        ] {
+            assert!(prose.contains(line), "lost {line:?} from {prose:?}");
+        }
+        // Genuine field lines (lowercase keys) are metadata, not prose.
+        assert!(!prose.contains("pov::"), "{prose:?}");
+        assert!(!prose.contains("mood::"), "{prose:?}");
+    }
+
+    #[test]
+    fn test_parse_scene_body_keeps_sentences_that_look_like_fields() {
+        // Capitalised words before `::` that kindling doesn't map are prose.
+        let scene = parse_scene_body(
+            "Meanwhile:: the ship sank.\n\
+Later:: she remembered.\n\
+characters:: [[John]]\n\
+Characters:: [[Mila]]\n\
+pov:: Zoe",
+        );
+        assert_eq!(
+            scene.prose.as_deref(),
+            Some("Meanwhile:: the ship sank.\nLater:: she remembered.")
+        );
+        let mut characters = scene.characters.clone();
+        characters.sort();
+        assert_eq!(characters, ["John", "Mila", "Zoe"]);
+    }
+
+    #[test]
+    fn test_parse_scene_body_reads_capitalised_mapped_keys_with_plain_values() {
+        // `POV:: Zoe` is how many writers type a mapped field; it stays
+        // metadata as in 1.2. A capitalised unmapped key is prose, and a
+        // link-only value is a breadcrumb even with a comma in an alias.
+        let scene = parse_scene_body(
+            "POV:: Zoe\n\
+Crew:: Night watch\n\
+Synopsis:: She arrives at the dock.\n\
+Later:: she remembered\n\
+Next:: [[Scene 5|the next, one]], ![[Chapter One]]",
+        );
+        assert_eq!(scene.prose.as_deref(), Some("Later:: she remembered"));
+        assert_eq!(scene.characters, ["Zoe"]);
+        assert_eq!(scene.organizations, ["Night watch"]);
+        assert_eq!(scene.synopsis.as_deref(), Some("She arrives at the dock."));
+    }
+
+    #[test]
+    fn test_parse_scene_body_consumes_dataview_breadcrumbs() {
+        // Navigation fields link scenes, not characters: consumed, no references.
+        let scene = parse_scene_body(
+            "up:: [[Chapter One]]\n\
+prev::[[Scene 2]]\n\
+Next:: [[Scene 4]], [[Scene 5|the next one]]\n\
+\n\
+Body.",
+        );
+        assert_eq!(scene.prose.as_deref(), Some("Body."));
+        assert!(scene.characters.is_empty(), "{:?}", scene.characters);
+        assert!(scene.locations.is_empty(), "{:?}", scene.locations);
+    }
+
+    #[test]
+    fn test_parse_scene_body_dataview_field_forms() {
+        // Mapped keys work without a space after `::` or with one before it,
+        // and an unmapped field with no value is still metadata.
+        let scene = parse_scene_body("setting::[[~Dock]]\npov :: Zoe\nmood::\n\nBody.");
+        assert_eq!(scene.locations, vec!["Dock".to_string()]);
+        assert_eq!(scene.characters, vec!["Zoe".to_string()]);
+        assert_eq!(scene.prose.as_deref(), Some("Body."));
+    }
+
+    #[test]
+    fn test_parse_scene_body_locked_field_is_still_metadata() {
+        // A recognised key ignored because Kindling metadata locks it is still a
+        // field line, with or without a space after `::`.
+        let scene = parse_scene_body(
+            "<!-- kindling: scene_status=final synopsis=\"Locked\" -->\n\
+synopsis::Unspaced override\n\
+status::draft\n\
+\n\
+Body.",
+        );
+        assert_eq!(scene.synopsis.as_deref(), Some("Locked"));
+        assert_eq!(scene.scene_status, SceneStatus::Final);
+        assert_eq!(scene.prose.as_deref(), Some("Body."));
+    }
+
+    #[test]
+    fn test_import_reference_notes_from_vault() {
+        let dir = tempdir().unwrap();
+        let index_path = dir.path().join("Project.md");
+        let index_content = r#"---
+longform:
+  format: scenes
+  title: Test Project
+  workflow: Default Workflow
+  sceneFolder: /
+  scenes:
+    - intro scene
+---"#;
+        fs::write(&index_path, index_content).unwrap();
+
+        let scene_content = r#"---
+characters:
+  - "Sarah"
+---
+
+Scene prose."#;
+        fs::write(dir.path().join("intro scene.md"), scene_content).unwrap();
+
+        let characters_dir = dir.path().join("characters");
+        fs::create_dir_all(&characters_dir).unwrap();
+        let character_note = r#"---
+type: character
+name: Sarah Smith
+description: Lead detective.
+role: protagonist
+age: 32
+---
+
+# Sarah Smith
+
+Additional notes."#;
+        fs::write(characters_dir.join("Sarah.md"), character_note).unwrap();
+
+        let locations_dir = dir.path().join("locations");
+        fs::create_dir_all(&locations_dir).unwrap();
+        let location_note = r#"# Downtown Cafe
+
+A cozy corner cafe on Main Street."#;
+        fs::write(locations_dir.join("downtown cafe.md"), location_note).unwrap();
+
+        let items_dir = dir.path().join("items");
+        fs::create_dir_all(&items_dir).unwrap();
+        let item_note = r#"---
+type: item
+name: Magic Sword
+description: Ancient blade.
+rarity: legendary
+---
+
+# Magic Sword
+
+It hums softly."#;
+        fs::write(items_dir.join("magic sword.md"), item_note).unwrap();
+
+        let parsed = parse_longform_index(&index_path).unwrap();
+        let sarah = parsed
+            .characters
+            .iter()
+            .find(|c| c.name == "Sarah Smith")
+            .unwrap();
+        assert_eq!(sarah.description.as_deref(), Some("Lead detective."));
+        assert_eq!(
+            sarah.attributes.get("role").map(|s| s.as_str()),
+            Some("protagonist")
+        );
+        assert_eq!(sarah.attributes.get("age").map(|s| s.as_str()), Some("32"));
+
+        assert!(parsed.locations.iter().any(|l| l.name == "downtown cafe"));
+        let cafe = parsed
+            .locations
+            .iter()
+            .find(|l| l.name == "downtown cafe")
+            .unwrap();
+        assert_eq!(
+            cafe.description.as_deref(),
+            Some("A cozy corner cafe on Main Street.")
+        );
+
+        let item = parsed
+            .reference_items
+            .iter()
+            .find(|reference| {
+                reference.reference_type == "items" && reference.name == "Magic Sword"
+            })
+            .unwrap();
+        assert_eq!(item.description.as_deref(), Some("Ancient blade."));
+        assert_eq!(
+            item.attributes.get("rarity").map(|s| s.as_str()),
+            Some("legendary")
+        );
+    }
+
+    #[test]
+    fn test_ignored_files_patterns() {
+        let dir = tempdir().unwrap();
+        let index_path = dir.path().join("Project.md");
+        let index_content = r#"---
+longform:
+  format: scenes
+  title: Test Project
+  workflow: Default Workflow
+  sceneFolder: /
+  scenes:
+    - keep scene
+    - skip-scratch
+  ignoredFiles:
+    - "*-scratch"
+---"#;
+        fs::write(&index_path, index_content).unwrap();
+
+        fs::write(dir.path().join("keep scene.md"), "Content").unwrap();
+        fs::write(dir.path().join("skip-scratch.md"), "Content").unwrap();
+
+        let parsed = parse_longform_index(&index_path).unwrap();
+        assert_eq!(parsed.scenes.len(), 1);
+        assert_eq!(parsed.scenes[0].title, "keep scene");
+    }
+
+    #[test]
+    fn test_nested_scene_list_creates_chapters() {
+        let dir = tempdir().unwrap();
+        let index_path = dir.path().join("Project.md");
+        let index_content = r#"---
+longform:
+  format: scenes
+  title: Test Project
+  workflow: Default Workflow
+  sceneFolder: /
+  scenes:
+    - first scene
+    - - second scene
+      - third scene
+    - fourth scene
+---"#;
+        fs::write(&index_path, index_content).unwrap();
+
+        fs::write(dir.path().join("first scene.md"), "First").unwrap();
+        fs::write(dir.path().join("second scene.md"), "Second").unwrap();
+        fs::write(dir.path().join("third scene.md"), "Third").unwrap();
+        fs::write(dir.path().join("fourth scene.md"), "Fourth").unwrap();
+
+        let parsed = parse_longform_index(&index_path).unwrap();
+        assert_eq!(parsed.chapters.len(), 2);
+        assert_eq!(parsed.scenes.len(), 4);
+        assert_eq!(parsed.chapters[0].title, "first scene");
+        assert_eq!(parsed.chapters[1].title, "fourth scene");
+    }
+
+    #[test]
+    fn test_parse_longform_path_directory() {
+        let dir = tempdir().unwrap();
+        let index_path = dir.path().join("Project.md");
+        let index_content = r#"---
+longform:
+  format: scenes
+  title: Test Project
+  workflow: Default Workflow
+  sceneFolder: /
+  scenes:
+    - single scene
+---"#;
+        fs::write(&index_path, index_content).unwrap();
+        fs::write(dir.path().join("single scene.md"), "Scene content").unwrap();
+
+        let parsed = parse_longform_path(dir.path()).unwrap();
+        assert_eq!(parsed.project.name, "Test Project");
+        assert_eq!(parsed.scenes.len(), 1);
+    }
+}
+
+#[cfg(test)]
+mod vault_boundary_tests {
+    use super::*;
+
+    /// `root/vault` is an Obsidian vault (it has `.obsidian/`) holding a
+    /// Longform index in `Book/`; `root/outside` is elsewhere on disk and
+    /// `{outside}` in a scene name expands to its absolute path.
+    fn vault_with_index(scenes: &[&str], scene_folder: &str) -> (tempfile::TempDir, PathBuf) {
+        let root = tempfile::tempdir().unwrap();
+        let vault = root.path().join("vault");
+        fs::create_dir_all(vault.join(".obsidian")).unwrap();
+        fs::create_dir_all(vault.join("Book")).unwrap();
+        fs::create_dir_all(root.path().join("outside")).unwrap();
+        fs::write(
+            root.path().join("outside/secret.md"),
+            "Private text from outside the vault.",
+        )
+        .unwrap();
+        let outside = root.path().join("outside");
+        let list: String = scenes
+            .iter()
+            .map(|s| s.replace("{outside}", outside.to_str().unwrap()))
+            .map(|s| format!("    - {}\n", serde_yaml::to_string(&s).unwrap().trim()))
+            .collect();
+        let index = vault.join("Book/Index.md");
+        fs::write(
+            &index,
+            format!(
+                "---\nlongform:\n  format: scenes\n  title: Book\n  sceneFolder: {scene_folder}\n  scenes:\n{list}---\n"
+            ),
+        )
+        .unwrap();
+        (root, index)
+    }
+
+    fn outside_vault_error(result: Result<ParsedLongform, LongformError>) -> String {
+        match result {
+            Err(LongformError::InvalidStructure(message)) => message,
+            Err(other) => panic!("expected an outside-the-vault error, got {other}"),
+            Ok(parsed) => panic!(
+                "outside file was imported: {:?}",
+                parsed.scenes.iter().map(|s| &s.prose).collect::<Vec<_>>()
+            ),
+        }
+    }
+
+    #[test]
+    fn scene_names_with_parent_segments_cannot_leave_the_vault() {
+        let (_root, index) = vault_with_index(&["../../outside/secret"], "/");
+        let message = outside_vault_error(parse_longform_index(&index));
+        assert!(message.contains("outside the vault"), "{message}");
+        assert!(message.contains("../../outside/secret"), "{message}");
+    }
+
+    #[test]
+    fn parent_segments_that_stay_inside_the_vault_still_import() {
+        let (root, index) = vault_with_index(&["../Shared/Opening"], "/");
+        fs::create_dir_all(root.path().join("vault/Shared")).unwrap();
+        fs::write(root.path().join("vault/Shared/Opening.md"), "Shared prose.").unwrap();
+        let parsed = parse_longform_index(&index).unwrap();
+        assert_eq!(parsed.scenes.len(), 1);
+        assert_eq!(parsed.scenes[0].prose.as_deref(), Some("Shared prose."));
+    }
+
+    #[test]
+    fn absolute_scene_paths_cannot_leave_the_vault() {
+        let (_root, index) = vault_with_index(&["{outside}/secret"], "/");
+        let message = outside_vault_error(parse_longform_index(&index));
+        assert!(message.contains("outside the vault"), "{message}");
+    }
+
+    #[test]
+    fn scene_folder_cannot_leave_the_vault() {
+        let (_root, index) = vault_with_index(&["secret"], "../../outside");
+        let message = outside_vault_error(parse_longform_index(&index));
+        assert!(message.contains("sceneFolder"), "{message}");
+        assert!(message.contains("outside the vault"), "{message}");
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn symlinked_scene_cannot_leave_the_vault() {
+        let (root, index) = vault_with_index(&["Opening"], "/");
+        std::os::unix::fs::symlink(
+            root.path().join("outside/secret.md"),
+            root.path().join("vault/Book/Opening.md"),
+        )
+        .unwrap();
+        let message = outside_vault_error(parse_longform_index(&index));
+        assert!(message.contains("Opening"), "{message}");
+        assert!(message.contains("outside the vault"), "{message}");
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn symlinked_notes_and_indexes_outside_the_vault_are_skipped() {
+        let (root, index) = vault_with_index(&["Opening"], "/");
+        fs::write(root.path().join("vault/Book/Opening.md"), "Scene prose.").unwrap();
+        let outside = root.path().join("outside");
+        fs::write(
+            outside.join("Mallory.md"),
+            "---\ntype: character\nname: Mallory\n---\nOutside notes.",
+        )
+        .unwrap();
+        fs::write(
+            outside.join("Other.md"),
+            "---\nlongform:\n  format: scenes\n  title: Other\n  scenes: [secret]\n---\n",
+        )
+        .unwrap();
+        std::os::unix::fs::symlink(&outside, root.path().join("vault/Book/characters")).unwrap();
+
+        let parsed = parse_longform_index(&index).unwrap();
+        assert!(
+            parsed.characters.iter().all(|c| c.name != "Mallory"),
+            "outside note imported"
+        );
+        // Picking the vault finds only the index inside it.
+        let parsed = parse_longform_path(root.path().join("vault")).unwrap();
+        assert_eq!(parsed.project.name, "Book");
+    }
+}

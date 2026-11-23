@@ -1,0 +1,84 @@
+{
+    "$schema":  "https://schema.tauri.app/config/2",
+    "productName":  "LithoMark",
+    "version":  "0.1.0",
+    "identifier":  "com.lithomark.writer",
+    "build":  {
+                  "beforeDevCommand":  "npm run dev",
+                  "devUrl":  "http://localhost:1420",
+                  "beforeBuildCommand":  "npm run build",
+                  "frontendDist":  "../dist"
+              },
+    "app":  {
+                "windows":  [
+                                {
+                                    "title":  "LithoMark",
+                                    "visible":  false,
+                                    "width":  1600,
+                                    "height":  1000,
+                                    "minWidth":  1360,
+                                    "minHeight":  800,
+                                    "resizable":  true,
+                                    "fullscreen":  false
+                                }
+                            ],
+                "security":  {
+                                 "csp":  "default-src \u0027self\u0027; script-src \u0027self\u0027; style-src \u0027self\u0027 \u0027unsafe-inline\u0027; img-src \u0027self\u0027 data: asset: https://asset.localhost; connect-src ipc: http://ipc.localhost https://github.com"
+                             }
+            },
+    "bundle":  {
+                   "active":  true,
+                   "targets":  "all",
+                   "createUpdaterArtifacts":  true,
+                   "macOS":  {
+                                 "signingIdentity":  null,
+                                 "entitlements":  "./Entitlements.plist",
+                                 "infoPlist":  "EditorialDocuments.plist"
+                             },
+                   "icon":  [
+                                "icons/32x32.png",
+                                "icons/128x128.png",
+                                "icons/128x128@2x.png",
+                                "icons/icon.icns",
+                                "icons/icon.ico"
+                            ],
+                   "category":  "Productivity",
+                   "shortDescription":  "LithoMark Writer OS",
+                   "longDescription":  "A local-first writing and story development environment.",
+                   "fileAssociations":  [
+                                            {
+                                                "ext":  [
+                                                            "lithomark-review"
+                                                        ],
+                                                "name":  "LithoMark Review",
+                                                "description":  "LithoMark editorial review package",
+                                                "role":  "Editor",
+                                                "mimeType":  "application/x-lithomark-review",
+                                                "exportedType":  {
+                                                                     "identifier":  "com.lithomark.writer.lithomark-review",
+                                                                     "conformsTo":  [
+                                                                                        "public.json"
+                                                                                    ]
+                                                                 }
+                                            },
+                                            {
+                                                "ext":  [
+                                                            "lithomark-feedback"
+                                                        ],
+                                                "name":  "LithoMark Feedback",
+                                                "description":  "LithoMark editorial feedback",
+                                                "role":  "Editor",
+                                                "mimeType":  "application/x-lithomark-feedback",
+                                                "exportedType":  {
+                                                                     "identifier":  "com.lithomark.writer.lithomark-feedback",
+                                                                     "conformsTo":  [
+                                                                                        "public.json"
+                                                                                    ]
+                                                                 }
+                                            }
+                                        ]
+               },
+    "plugins":  {
+
+                }
+}

@@ -1,0 +1,510 @@
+    const flush = vi.spyOn(session, "flush").mockImplementation(async () => {
+      await new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      if (fails) throw new Error("disk full");
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Quit and discard" }));
+    await vi.advanceTimersByTimeAsync(0);
+    try {
+      expect(flush).toHaveBeenCalledOnce();
+      expect(exit).not.toHaveBeenCalled();
+    } finally {
+      finish?.();
+    }
+    await vi.advanceTimersByTimeAsync(0);
+    expect(exit).toHaveBeenCalledWith(0);
+    if (fails)
+      expect(error).toHaveBeenCalledWith(
+        "Failed to save writing position before closing:",
+        expect.any(Error)
+      );
+  }
+);
+
+it("disables update restart while a quit-discard decision is pending", async () => {
+  vi.useFakeTimers();
+  currentProject.setChapters(mockChapters);
+  const install = vi.fn().mockResolvedValue(undefined);
+  updateState.set({ ready: true, version: "1.2.1", body: null, update: { install } as never });
+  render(App);
+  await vi.advanceTimersByTimeAsync(0);
+  synopsisSaves.stage({
+    projectId: mockProject.id,
+    sceneId: mockScenes[0].id,
+    synopsis: "Unsaved draft",
+  });
+  vi.mocked(invoke).mockImplementation(async (cmd) => {
+    if (cmd === "save_scene_synopsis") throw "disk full";
+    return [];
+  });
+  await menu("quit");
+  await vi.advanceTimersByTimeAsync(0);
+  const restart = screen.getByRole("button", { name: "Restart" }) as HTMLButtonElement;
+  expect(restart.disabled).toBe(true);
+  expect(screen.queryByText("Your synopsis changes have not been saved.")).toBeNull();
+  await fireEvent.click(restart);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(install).not.toHaveBeenCalled();
+  await fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+  expect(restart.disabled).toBe(false);
+  expect(screen.getByText("Your synopsis changes have not been saved.")).toBeTruthy();
+  await fireEvent.click(restart);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(install).not.toHaveBeenCalled();
+  expect(screen.getByText(/Could not restart to update/)).toBeTruthy();
+});
+
+it("prevents editing and duplicate restart or quit while an update is saving", async () => {
+  vi.useFakeTimers();
+  currentProject.setChapters(mockChapters);
+  const install = vi.fn().mockResolvedValue(undefined);
+  updateState.set({ ready: true, version: "1.2.1", body: null, update: { install } as never });
+  render(App);
+  await vi.advanceTimersByTimeAsync(0);
+  let finish!: () => void;
+  vi.spyOn(session, "flush").mockImplementation(async () => {
+    await new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+  });
+  const restart = screen.getByRole("button", { name: "Restart" }) as HTMLButtonElement;
+  await fireEvent.click(restart);
+  await vi.advanceTimersByTimeAsync(0);
+  try {
+    expect(restart.disabled).toBe(true);
+    expect(screen.getByRole("main", { hidden: true }).inert).toBe(true);
+    await fireEvent.click(restart);
+    await menu("quit");
+    const preventDefault = vi.fn();
+    const handler = vi.mocked(getCurrentWindow().onCloseRequested).mock.calls[0][0];
+    await handler({ preventDefault } as never);
+    expect(preventDefault).toHaveBeenCalledOnce();
+    expect(exit).not.toHaveBeenCalled();
+  } finally {
+    finish?.();
+  }
+  await vi.advanceTimersByTimeAsync(0);
+  expect(install).toHaveBeenCalledOnce();
+  expect(screen.getByRole("main").inert).toBe(false);
+});
+
+async function editProse(mode: "beat" | "page") {
+  vi.useFakeTimers();
+  currentProject.setChapters(mockChapters);
+  currentProject.setCurrentChapter(mockChapters[0]);
+  currentProject.setCurrentScene({
+    ...mockScenes[0],
+    planning_status: "fixed",
+    editor_mode: mode,
+    prose: "<p>Saved page</p>",
+  });
+  currentProject.setBeats([
+    {
+      id: "exit-beat",
+      scene_id: mockScenes[0].id,
+      content: "Beat",
+      prose: "<p>Saved beat</p>",
+      position: 0,
+    },
+  ]);
+  render(App);
+  await tick();
+  if (mode === "beat") ui.setExpandedBeat("exit-beat");
+  await vi.advanceTimersByTimeAsync(0);
+  const editor = (document.querySelector(".tiptap") as HTMLElement & { editor: Editor }).editor;
+  editor.commands.setContent("<p>Final words before exit</p>");
+}
+
+it.each([
+  ["beat", "menu"],
+  ["page", "menu"],
+  ["beat", "native"],
+  ["page", "native"],
+  ["beat", "update"],
+  ["page", "update"],
+] as const)("flushes debounced prose in %s mode before %s exit", async (mode, path) => {
+  const install = vi.fn().mockResolvedValue(undefined);
+  if (path === "update")
+    updateState.set({ ready: true, version: "1.2.1", body: null, update: { install } as never });
+  await editProse(mode);
+  let finish!: () => void;
+  vi.mocked(invoke).mockImplementation(async (cmd) => {
+    if (cmd === "save_beat_prose" || cmd === "save_scene_page_prose")
+      await new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+    return [];
+  });
+  let closing: Promise<unknown> | undefined;
+  let closed = false;
+  const preventDefault = vi.fn();
+  if (path === "menu") await menu("quit");
+  else if (path === "update")
+    await fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+  else {
+    const handler = vi.mocked(getCurrentWindow().onCloseRequested).mock.calls[0][0];
+    closing = Promise.resolve(handler({ preventDefault } as never)).then(() => {
+      closed = true;
+    });
+  }
+  await vi.advanceTimersByTimeAsync(0);
+  try {
+    expect(invoke).toHaveBeenCalledWith(
+      mode === "beat" ? "save_beat_prose" : "save_scene_page_prose",
+      {
+        [mode === "beat" ? "beatId" : "sceneId"]: mode === "beat" ? "exit-beat" : mockScenes[0].id,
+        prose: "<p>Final words before exit</p>",
+      }
+    );
+    expect(exit).not.toHaveBeenCalled();
+    expect(install).not.toHaveBeenCalled();
+    expect(closed).toBe(false);
+  } finally {
+    finish?.();
+  }
+  await vi.advanceTimersByTimeAsync(0);
+  await closing;
+  if (path === "menu") expect(exit).toHaveBeenCalledWith(0);
+  if (path === "update") expect(install).toHaveBeenCalledOnce();
+  if (path === "native") expect(closed).toBe(true);
+  expect(preventDefault).not.toHaveBeenCalled();
+});
+
+it.each([
+  ["beat", "disk full"],
+  ["page", "disk full"],
+  ["beat", "Cannot edit beats in a locked scene"],
+  ["page", "Cannot edit a locked scene"],
+] as const)("allows explicit discard when %s prose cannot save: %s", async (mode, error) => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  await editProse(mode);
+  vi.mocked(invoke).mockImplementation(async (cmd) => {
+    if (cmd === "save_beat_prose" || cmd === "save_scene_page_prose") throw error;
+    return [];
+  });
+  await menu("quit");
+  await vi.advanceTimersByTimeAsync(0);
+  expect(exit).not.toHaveBeenCalled();
+  expect(screen.getByRole("dialog", { name: "Quit without saving writing changes?" })).toBeTruthy();
+  expect(proseSaves.draftsForRecovery(mockProject.id)[0].prose).toBe(
+    "<p>Final words before exit</p>"
+  );
+  await fireEvent.click(screen.getByRole("button", { name: "Quit and discard" }));
+  await vi.advanceTimersByTimeAsync(0);
+  expect(exit).toHaveBeenCalledWith(0);
+  expect(proseSaves.draftsForRecovery(mockProject.id)).toEqual([]);
+  const calls = vi.mocked(invoke).mock.calls.length;
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(
+    vi
+      .mocked(invoke)
+      .mock.calls.slice(calls)
+      .some(([cmd]) => cmd === "save_beat_prose" || cmd === "save_scene_page_prose")
+  ).toBe(false);
+});
+
+it.each(["install", "relaunch"])("shows an actionable update error when %s fails", async (step) => {
+  vi.useFakeTimers();
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  currentProject.setChapters(mockChapters);
+  const install = vi.fn().mockResolvedValue(undefined);
+  if (step === "install") install.mockRejectedValue(new Error("Installer failed"));
+  else vi.mocked(relaunch).mockRejectedValue(new Error("Relaunch failed"));
+  updateState.set({ ready: true, version: "1.2.1", body: null, update: { install } as never });
+  render(App);
+  await vi.advanceTimersByTimeAsync(0);
+  await fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+  await vi.advanceTimersByTimeAsync(0);
+  expect(
+    screen.getByText(
+      new RegExp(
+        `Could not restart to update.*${step === "install" ? "Installer" : "Relaunch"} failed`
+      )
+    )
+  ).toBeTruthy();
+  expect(screen.queryByText(/Retry saving your synopsis first/)).toBeNull();
+  expect((screen.getByRole("button", { name: "Restart" }) as HTMLButtonElement).disabled).toBe(
+    false
+  );
+});
+
+it.each(["quit", "update"])(
+  "gives %s preparation exclusive keyboard and command ownership",
+  async (mode) => {
+    vi.useFakeTimers();
+    currentProject.setChapters(mockChapters);
+    updateState.set({
+      ready: true,
+      version: "1.2.1",
+      body: null,
+      update: { install: vi.fn() } as never,
+    });
+    render(App);
+    await vi.advanceTimersByTimeAsync(0);
+    await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
+    const editor = screen.getByPlaceholderText("Write a brief synopsis for this sceneâ€¦");
+    await fireEvent.input(editor, { target: { value: "Keep this editor open" } });
+    let fail!: (error: Error) => void;
+    vi.mocked(invoke).mockImplementation(async (cmd) => {
+      if (cmd === "save_scene_synopsis") {
+        if (mode === "quit") throw new Error("disk full");
+        await new Promise((_, reject) => {
+          fail = reject;
+        });
+      }
+      return [];
+    });
+    if (mode === "quit") await menu("quit");
+    else await fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+    await vi.advanceTimersByTimeAsync(0);
+    try {
+      if (mode === "quit") {
+        expect(document.activeElement).toBe(screen.getByRole("button", { name: "Keep editing" }));
+        await fireEvent.keyDown(document.activeElement!, { key: "Tab" });
+        expect(document.activeElement).toBe(
+          screen.getByRole("button", { name: "Quit and discard" })
+        );
+        await fireEvent.keyDown(document.activeElement!, { key: "Tab" });
+        expect(document.activeElement).toBe(
+          screen.getByRole("button", { name: "Close confirmation" })
+        );
+        await fireEvent.keyDown(document.activeElement!, { key: "Tab" });
+        expect(document.activeElement).toBe(screen.getByRole("button", { name: "Keep editing" }));
+      }
+      for (const key of ["e", "k", "f", "H"]) {
+        await fireEvent.keyDown(window, { key, ctrlKey: true, shiftKey: key === "H" });
+        await fireEvent.keyDown(window, { key, metaKey: true, shiftKey: key === "H" });
+      }
+      for (const command of [
+        "export",
+        "command_palette",
+        "find",
+        "new_project",
+        "close_project",
+        "import_plottr",
+      ])
+        await menu(command);
+      expect(currentProject.value?.id).toBe(mockProject.id);
+      expect(screen.queryByPlaceholderText("Type a command or searchâ€¦")).toBeNull();
+      expect(screen.queryByText("Export Project")).toBeNull();
+      await fireEvent.keyDown(window, { key: "Escape" });
+      expect(editor.isConnected).toBe(true);
+      if (mode === "quit")
+        expect(screen.queryByRole("button", { name: "Keep editing" })).toBeNull();
+      else expect(screen.getByRole("main", { hidden: true }).inert).toBe(true);
+    } finally {
+      fail?.(new Error("disk full"));
+    }
+    await vi.advanceTimersByTimeAsync(0);
+    await fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    expect(screen.getByPlaceholderText("Type a command or searchâ€¦")).toBeTruthy();
+    await vi.advanceTimersByTimeAsync(0);
+  }
+);
+
+it.each(["same scene", "navigation", "other control", "unmount"])(
+  "restores update-failure selection only for the original writing target: %s",
+  async (target) => {
+    vi.useFakeTimers();
+    currentProject.setChapters(mockChapters);
+    updateState.set({
+      ready: true,
+      version: "1.2.1",
+      body: null,
+      update: { install: vi.fn() } as never,
+    });
+    const app = render(App);
+    await vi.advanceTimersByTimeAsync(0);
+    await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
+    const editor = screen.getByPlaceholderText(
+      "Write a brief synopsis for this sceneâ€¦"
+    ) as HTMLTextAreaElement;
+    await fireEvent.input(editor, { target: { value: "My unsaved writing" } });
+    editor.focus();
+    editor.setSelectionRange(3, 7, "backward");
+    let fail!: (error: Error) => void;
+    const saving = new Promise((_, reject) => {
+      fail = reject;
+    });
+    vi.mocked(invoke).mockImplementation(async (cmd) => {
+      if (cmd === "save_scene_synopsis") await saving;
+      return [];
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+    await vi.advanceTimersByTimeAsync(0);
+    editor.blur(); // jsdom does not implement the browser's inert-induced blur.
+    if (target === "navigation") {
+      currentProject.setCurrentScene({ ...mockScenes[1], planning_status: "undefined" });
+      await tick();
+    }
+    const other = document.createElement("button");
+    if (target === "other control") {
+      document.body.append(other);
+      other.focus();
+    }
+    if (target === "unmount") app.unmount();
+    fail(new Error("disk full"));
+    await vi.advanceTimersByTimeAsync(0);
+    if (target === "same scene") {
+      expect(document.activeElement).toBe(editor);
+      expect([editor.selectionStart, editor.selectionEnd, editor.selectionDirection]).toEqual([
+        3,
+        7,
+        "backward",
+      ]);
+      expect(editor.value).toBe("My unsaved writing");
+    } else expect(document.activeElement).not.toBe(editor);
+    other.remove();
+  }
+);
+
+it.each(["export", "export success"])(
+  "keeps confirmation keys out of the background %s dialog",
+  async (background) => {
+    vi.useFakeTimers();
+    currentProject.setChapters(mockChapters);
+    localStorage.setItem("kindling:lastExportPath", "/tmp/lithomark-review-export");
+    vi.mocked(invoke).mockImplementation(async (cmd) => {
+      if (cmd === "save_scene_synopsis") throw new Error("disk full");
+      if (cmd === "export_to_markdown")
+        return {
+          output_path: "/tmp/lithomark-review-export",
+          chapters_exported: 1,
+          scenes_exported: 1,
+          files_created: 1,
+        };
+      return [];
+    });
+    render(App);
+    await vi.advanceTimersByTimeAsync(0);
+    await menu("export");
+    await fireEvent.click(screen.getByText("Markdown"));
+    expect((screen.getByTestId("export-confirm") as HTMLButtonElement).disabled).toBe(false);
+    if (background === "export success")
+      await fireEvent.click(screen.getByTestId("export-confirm"));
+    synopsisSaves.stage({
+      projectId: mockProject.id,
+      sceneId: mockScenes[0].id,
+      synopsis: "Unsaved draft",
+    });
+    await menu("quit");
+    await vi.advanceTimersByTimeAsync(0);
+    vi.mocked(invoke).mockClear();
+    const keepEditing = screen.getByRole("button", { name: "Keep editing" });
+    const backgroundKey = vi.fn();
+    window.addEventListener("keydown", backgroundKey);
+    try {
+      for (const key of ["Enter", " ", "ArrowDown"]) {
+        const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+        await fireEvent(keepEditing, event);
+        expect(event.defaultPrevented).toBe(false);
+      }
+      expect(backgroundKey).not.toHaveBeenCalled();
+      expect(vi.mocked(invoke).mock.calls.some(([cmd]) => cmd === "export_to_markdown")).toBe(
+        false
+      );
+      // jsdom does not perform the native button click generated by Enter.
+      await fireEvent.click(keepEditing);
+      expect(screen.queryByRole("button", { name: "Keep editing" })).toBeNull();
+      if (background === "export success") expect(screen.getByText("Export complete")).toBeTruthy();
+      else expect(screen.getByTestId("export-confirm")).toBeTruthy();
+    } finally {
+      window.removeEventListener("keydown", backgroundKey);
+      localStorage.removeItem("kindling:lastExportPath");
+    }
+  }
+);
+
+it("keeps errors visible and dismissable within the active quit modal", async () => {
+  vi.useFakeTimers();
+  currentProject.setChapters(mockChapters);
+  render(App);
+  await vi.advanceTimersByTimeAsync(0);
+  ui.showError("Error before quitting");
+  await tick();
+  synopsisSaves.stage({
+    projectId: mockProject.id,
+    sceneId: mockScenes[0].id,
+    synopsis: "Unsaved draft",
+  });
+  vi.mocked(invoke).mockImplementation(async (cmd) => {
+    if (cmd === "save_scene_synopsis") throw new Error("disk full");
+    return [];
+  });
+  await menu("quit");
+  await vi.advanceTimersByTimeAsync(0);
+  const confirmation = screen.getByRole("dialog", {
+    name: "Quit without saving synopsis changes?",
+  });
+  expect(confirmation.tagName).toBe("DIALOG");
+  expect(confirmation.querySelector('[role="dialog"]')).toBeNull();
+  expect(
+    screen.getByText("Error before quitting").closest("[data-quit-confirmation]")
+  ).toBeTruthy();
+  ui.showError("Error during confirmation");
+  await tick();
+  const dismiss = screen.getByRole("button", { name: "Dismiss error" });
+  expect(dismiss.closest("[data-quit-confirmation]")).toBeTruthy();
+  expect(screen.getAllByRole("button", { name: "Dismiss error" })).toHaveLength(1);
+  await fireEvent.keyDown(document.activeElement!, { key: "Tab" });
+  await fireEvent.keyDown(document.activeElement!, { key: "Tab" });
+  expect(document.activeElement).toBe(dismiss);
+  await fireEvent.click(dismiss);
+  expect(screen.queryByText("Error during confirmation")).toBeNull();
+  expect(screen.getByRole("button", { name: "Keep editing" })).toBeTruthy();
+  ui.showError("Still relevant after cancelling");
+  await tick();
+  await fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+  expect(
+    screen.getByText("Still relevant after cancelling").closest("[data-quit-confirmation]")
+  ).toBeNull();
+  expect(screen.getAllByRole("button", { name: "Dismiss error" })).toHaveLength(1);
+  shortcuts.bindings = { ...defaultBindings };
+  ui.clearToast();
+});
+
+it.each(["quit", "update"])("blocks retry saving while %s preparation is pending", async (mode) => {
+  vi.useFakeTimers();
+  currentProject.setChapters(mockChapters);
+  updateState.set({
+    ready: true,
+    version: "1.2.1",
+    body: null,
+    update: { install: vi.fn() } as never,
+  });
+  synopsisSaves.stage({
+    projectId: mockProject.id,
+    sceneId: mockScenes[0].id,
+    synopsis: "Unsaved draft",
+  });
+  vi.mocked(invoke).mockImplementation(async (cmd) => {
+    if (cmd === "save_scene_synopsis") throw new Error("disk full");
+    return [];
+  });
+  await expect(synopsisSaves.flush()).rejects.toThrow();
+  render(App);
+  await vi.advanceTimersByTimeAsync(0);
+  const retry = screen.getByRole("button", {
+    name: "Retry all synopsis saves",
+  }) as HTMLButtonElement;
+  let fail!: (error: Error) => void;
+  const flush = vi.spyOn(synopsisSaves, "flush").mockImplementation(
+    () =>
+      new Promise((_, reject) => {
+        fail = reject;
+      })
+  );
+  try {
+    if (mode === "quit") await menu("quit");
+    else await fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(retry.disabled).toBe(true);
+    await fireEvent.click(retry);
+    expect(flush).toHaveBeenCalledOnce();
+    fail(new Error("disk full"));
+    await vi.advanceTimersByTimeAsync(0);
+  } finally {
+    flush.mockRestore();
+  }
+  if (mode === "quit") await fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));

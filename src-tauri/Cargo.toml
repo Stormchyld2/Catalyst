@@ -1,0 +1,51 @@
+[package]
+name = "lithomark"
+version = "0.1.0"
+description = "LithoMark Writer OS - a local-first writing and story development environment"
+authors = ["Josh Smith"]
+edition = "2021"
+
+[lib]
+name = "lithomark_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+cc = "1"
+
+[dependencies]
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2.6"
+tauri-plugin-process = "2"
+tauri-plugin-os = "2"
+tauri-plugin-mcp = { git = "https://github.com/P3GLEG/tauri-plugin-mcp", tag = "v0.1.0", optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.38", features = ["bundled"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+quick-xml = "0.41"
+sha1 = "0.10"
+encoding_rs = "0.8"
+walkdir = "2"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+flate2 = "1"
+docx-rs = "0.4"
+zip = "8"
+serde_yaml = "0.9.34"
+tempfile = "3"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+html-to-markdown-rs = "3.14.3"
+sha2 = "0.11.0"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-dialog = "2.6"
+tauri-plugin-single-instance = "2"
+
+[features]
+# QA automation over a local socket (debug builds only). The plugin has no licence, so
+# release builds are made with --no-default-features and never compile it in.
+default = ["mcp"]
+mcp = ["dep:tauri-plugin-mcp"]

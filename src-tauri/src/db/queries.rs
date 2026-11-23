@@ -1,0 +1,3337 @@
+use rusqlite::{params, types::Type, Connection, OptionalExtension, Result};
+use std::collections::HashMap;
+use uuid::Uuid;
+
+use crate::models::{
+    Beat, Chapter, Character, DiscoveryNote, EditorMode, Location, PlanningStatus, Project,
+    ReferenceItem, Scene, SceneCharacterRef, SceneLocationRef, SceneReferenceItemRef,
+    SceneReferenceState, SceneStatus, SceneType, SnapshotMetadata, SnapshotTrigger, SourceType,
+};
+
+pub(crate) fn parse_uuid(s: &str) -> rusqlite::Result<Uuid> {
+    Uuid::parse_str(s)
+        .map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))
+}
+
+// ============================================================================
+// Project Queries
+// ============================================================================
+
+pub fn insert_project(conn: &Connection, project: &Project) -> Result<()> {
+    let reference_types_json =
+        serde_json::to_string(&project.reference_types).unwrap_or_else(|_| "[]".to_string());
+    conn.execute(
+        "INSERT INTO projects (id, name, source_type, source_path, project_root, created_at, modified_at, author_pen_name, genre, description, word_target, reference_types, project_type, target_page_count)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        params![
+            project.id.to_string(),
+            project.name,
+            project.source_type.as_str(),
+            project.source_path,
+            project.project_root,
+            project.created_at,
+            project.modified_at,
+            project.author_pen_name,
+            project.genre,
+            project.description,
+            project.word_target,
+            reference_types_json,
+            project.project_type,
+            project.target_page_count,
+        ],
+    )?;
+    Ok(())
+}
+
+fn parse_reference_types(raw: Option<String>) -> Vec<String> {
+    match raw {
+        Some(value) => serde_json::from_str::<Vec<String>>(&value)
+            .unwrap_or_else(|_| Project::default_reference_types()),
+        None => Project::default_reference_types(),
+    }
+}
+
+/// Build a Project from a row selected with columns:
+/// id, name, source_type, source_path, project_root, created_at, modified_at, author_pen_name, genre, description, word_target, reference_types, project_type, target_page_count
+fn project_from_row(row: &rusqlite::Row) -> rusqlite::Result<Project> {
+    Ok(Project {
+        id: parse_uuid(&row.get::<_, String>(0)?)?,
+        name: row.get(1)?,
+        source_type: SourceType::parse(&row.get::<_, String>(2)?).unwrap_or(SourceType::Markdown),
+        source_path: row.get(3)?,
+        project_root: row.get(4)?,
+        created_at: row.get(5)?,
+        modified_at: row.get(6)?,
+        author_pen_name: row.get(7)?,
+        genre: row.get(8)?,
+        description: row.get(9)?,
+        word_target: row.get(10)?,
+        reference_types: parse_reference_types(row.get(11)?),
+        project_type: row
+            .get::<_, String>(12)
+            .unwrap_or_else(|_| Project::default_project_type()),
+        target_page_count: row.get(13)?,
+    })
+}
+
+pub fn get_project(conn: &Connection, id: &Uuid) -> Result<Option<Project>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, name, source_type, source_path, project_root, created_at, modified_at, author_pen_name, genre, description, word_target, reference_types, project_type, target_page_count
+         FROM projects WHERE id = ?1",
+    )?;
+
+    let mut rows = stmt.query(params![id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(project_from_row(row)?))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_recent_projects(conn: &Connection, limit: usize) -> Result<Vec<Project>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, name, source_type, source_path, project_root, created_at, modified_at, author_pen_name, genre, description, word_target, reference_types, project_type, target_page_count
+         FROM projects ORDER BY modified_at DESC LIMIT ?1",
+    )?;
+
+    let projects = stmt
+        .query_map(params![limit as i64], project_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(projects)
+}
+
+pub fn get_all_projects(conn: &Connection) -> Result<Vec<Project>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, name, source_type, source_path, project_root, created_at, modified_at, author_pen_name, genre, description, word_target, reference_types, project_type, target_page_count
+         FROM projects ORDER BY modified_at DESC",
+    )?;
+
+    let projects = stmt
+        .query_map([], project_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(projects)
+}
+
+pub fn update_project_root(conn: &Connection, id: &Uuid, project_root: &str) -> Result<()> {
+    let now = chrono::Utc::now().to_rfc3339();
+    conn.execute(
+        "UPDATE projects SET project_root = ?1, modified_at = ?2 WHERE id = ?3",
+        params![project_root, now, id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_project_word_target(conn: &Connection, id: &Uuid, word_target: Option<i32>) -> Result<()> {
+    conn.execute(
+        "UPDATE projects SET word_target = ?1 WHERE id = ?2",
+        params![word_target, id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_project_modified(conn: &Connection, id: &Uuid) -> Result<()> {
+    let now = chrono::Utc::now().to_rfc3339();
+    conn.execute(
+        "UPDATE projects SET modified_at = ?1 WHERE id = ?2",
+        params![now, id.to_string()],
+    )?;
+    Ok(())
+}
+
+/// Delete a project and all its data (cascades via foreign keys)
+pub fn delete_project(conn: &Connection, id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM projects WHERE id = ?1",
+        params![id.to_string()],
+    )?;
+    Ok(())
+}
+
+// ============================================================================
+// Chapter Queries
+// ============================================================================
+
+/// Build a Chapter from a row selected with columns:
+/// id, project_id, title, position, source_id, archived, locked, is_part, synopsis, planning_status
+fn chapter_from_row(row: &rusqlite::Row) -> rusqlite::Result<Chapter> {
+    Ok(Chapter {
+        id: parse_uuid(&row.get::<_, String>(0)?)?,
+        project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+        title: row.get(2)?,
+        position: row.get(3)?,
+        source_id: row.get(4)?,
+        archived: row.get::<_, i32>(5).unwrap_or(0) != 0,
+        locked: row.get::<_, i32>(6).unwrap_or(0) != 0,
+        is_part: row.get::<_, i32>(7).unwrap_or(0) != 0,
+        synopsis: row.get(8).unwrap_or(None),
+        planning_status: row
+            .get::<_, String>(9)
+            .map(|s| PlanningStatus::parse(&s))
+            .unwrap_or_default(),
+    })
+}
+
+/// Build a Scene from a row selected with columns:
+/// id, chapter_id, title, synopsis, prose, position, source_id, archived, locked, scene_type, scene_status, planning_status, editor_mode
+fn scene_from_row(row: &rusqlite::Row) -> rusqlite::Result<Scene> {
+    Ok(Scene {
+        id: parse_uuid(&row.get::<_, String>(0)?)?,
+        chapter_id: parse_uuid(&row.get::<_, String>(1)?)?,
+        title: row.get(2)?,
+        synopsis: row.get(3)?,
+        prose: row.get(4)?,
+        position: row.get(5)?,
+        source_id: row.get(6)?,
+        archived: row.get::<_, i32>(7).unwrap_or(0) != 0,
+        locked: row.get::<_, i32>(8).unwrap_or(0) != 0,
+        scene_type: SceneType::parse(&row.get::<_, String>(9).unwrap_or_default()),
+        scene_status: SceneStatus::parse(&row.get::<_, String>(10).unwrap_or_default()),
+        planning_status: row
+            .get::<_, String>(11)
+            .map(|s| PlanningStatus::parse(&s))
+            .unwrap_or_default(),
+        editor_mode: row
+            .get::<_, String>(12)
+            .map(|s| EditorMode::parse(&s))
+            .unwrap_or_default(),
+    })
+}
+
+pub fn insert_chapter(conn: &Connection, chapter: &Chapter) -> Result<()> {
+    conn.execute(
+        "INSERT INTO chapters (id, project_id, title, position, source_id, archived, locked, is_part, synopsis, planning_status)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+        params![
+            chapter.id.to_string(),
+            chapter.project_id.to_string(),
+            chapter.title,
+            chapter.position,
+            chapter.source_id,
+            chapter.archived as i32,
+            chapter.locked as i32,
+            chapter.is_part as i32,
+            chapter.synopsis,
+            chapter.planning_status.as_str(),
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn get_max_chapter_position(conn: &Connection, project_id: &Uuid) -> Result<i32> {
+    let mut stmt =
+        conn.prepare("SELECT COALESCE(MAX(position), -1) FROM chapters WHERE project_id = ?1")?;
+    let max: i32 = stmt.query_row(params![project_id.to_string()], |row| row.get(0))?;
+    Ok(max)
+}
+
+pub fn reorder_chapters(conn: &Connection, project_id: &Uuid, chapter_ids: &[Uuid]) -> Result<()> {
+    let tx = conn.unchecked_transaction()?;
+    for (idx, id) in chapter_ids.iter().enumerate() {
+        tx.execute(
+            "UPDATE chapters SET position = ?1 WHERE id = ?2 AND project_id = ?3",
+            params![idx as i32, id.to_string(), project_id.to_string()],
+        )?;
+    }
+    tx.commit()
+}
+
+/// Shift all chapters at or after the given position up by 1 to make room for insertion
+pub fn shift_chapters_after_position(
+    conn: &Connection,
+    project_id: &Uuid,
+    position: i32,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET position = position + 1 WHERE project_id = ?1 AND position >= ?2",
+        params![project_id.to_string(), position],
+    )?;
+    Ok(())
+}
+
+pub fn get_chapters(conn: &Connection, project_id: &Uuid) -> Result<Vec<Chapter>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, title, position, source_id, archived, locked, is_part, synopsis, planning_status
+         FROM chapters WHERE project_id = ?1 AND archived = 0 ORDER BY position",
+    )?;
+
+    let chapters = stmt
+        .query_map(params![project_id.to_string()], chapter_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(chapters)
+}
+
+// ============================================================================
+// Scene Queries
+// ============================================================================
+
+pub fn insert_scene(conn: &Connection, scene: &Scene) -> Result<()> {
+    conn.execute(
+        "INSERT INTO scenes (id, chapter_id, title, synopsis, prose, position, source_id, archived, locked, scene_type, scene_status, planning_status, editor_mode)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+        params![
+            scene.id.to_string(),
+            scene.chapter_id.to_string(),
+            scene.title,
+            scene.synopsis,
+            scene.prose,
+            scene.position,
+            scene.source_id,
+            scene.archived as i32,
+            scene.locked as i32,
+            scene.scene_type.as_str(),
+            scene.scene_status.as_str(),
+            scene.planning_status.as_str(),
+            scene.editor_mode.as_str(),
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn get_max_scene_position(conn: &Connection, chapter_id: &Uuid) -> Result<i32> {
+    let mut stmt =
+        conn.prepare("SELECT COALESCE(MAX(position), -1) FROM scenes WHERE chapter_id = ?1")?;
+    let max: i32 = stmt.query_row(params![chapter_id.to_string()], |row| row.get(0))?;
+    Ok(max)
+}
+
+pub fn get_chapter_project_id(conn: &Connection, chapter_id: &Uuid) -> Result<Option<Uuid>> {
+    let mut stmt = conn.prepare("SELECT project_id FROM chapters WHERE id = ?1")?;
+    let mut rows = stmt.query(params![chapter_id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(parse_uuid(&row.get::<_, String>(0)?)?))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_scene_project_id(conn: &Connection, scene_id: &Uuid) -> Result<Option<Uuid>> {
+    let mut stmt = conn.prepare(
+        "SELECT c.project_id FROM chapters c
+         JOIN scenes s ON s.chapter_id = c.id
+         WHERE s.id = ?1",
+    )?;
+    let mut rows = stmt.query(params![scene_id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(parse_uuid(&row.get::<_, String>(0)?)?))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn reorder_scenes(conn: &Connection, chapter_id: &Uuid, scene_ids: &[Uuid]) -> Result<()> {
+    let tx = conn.unchecked_transaction()?;
+    reorder_scenes_in_transaction(&tx, chapter_id, scene_ids)?;
+    tx.commit()
+}
+
+/// A planned move of one scene to `position` in a (possibly different) chapter.
+///
+/// Both chapters' active scenes are renumbered 0..n: the source chapter closes the
+/// gap and the target chapter shifts later scenes down to make room, so positions
+/// never collide.
+pub struct SceneMove {
+    pub scene_id: Uuid,
+    pub source_chapter_id: Uuid,
+    pub target_chapter_id: Uuid,
+    /// The source chapter's remaining scenes, in order (unused when moving within it).
+    pub source_after: Vec<Uuid>,
+    /// The target chapter's active scenes before the move (including the moved scene
+    /// when it stays in the same chapter), for checking which rows would shift.
+    pub target_before: Vec<Scene>,
+    /// The target chapter's scenes after the move, in order.
+    pub target_after: Vec<Uuid>,
+}
+
+/// Plans a scene move. `position` is clamped to the target chapter's bounds.
+pub fn plan_scene_move(
+    conn: &Connection,
+    scene_id: &Uuid,
+    target_chapter_id: &Uuid,
+    position: i32,
+) -> Result<SceneMove> {
+    let scene = get_scene_by_id(conn, scene_id)?.ok_or(rusqlite::Error::QueryReturnedNoRows)?;
+    let source_after: Vec<Uuid> = get_scenes(conn, &scene.chapter_id)?
+        .into_iter()
+        .map(|s| s.id)
+        .filter(|id| id != scene_id)
+        .collect();
+    let target_before = get_scenes(conn, target_chapter_id)?;
+    let mut target_after: Vec<Uuid> = target_before
+        .iter()
+        .map(|s| s.id)
+        .filter(|id| id != scene_id)
+        .collect();
+    let at = usize::try_from(position.max(0))
+        .unwrap_or(0)
+        .min(target_after.len());
+    target_after.insert(at, *scene_id);
+    Ok(SceneMove {
+        scene_id: *scene_id,
+        source_chapter_id: scene.chapter_id,
+        target_chapter_id: *target_chapter_id,
+        source_after,
+        target_before,
+        target_after,
+    })
+}
+
+/// Writes a planned move; the caller owns the transaction.
+pub fn apply_scene_move(conn: &Connection, plan: &SceneMove) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET chapter_id = ?1 WHERE id = ?2",
+        params![
+            plan.target_chapter_id.to_string(),
+            plan.scene_id.to_string()
+        ],
+    )?;
+    if plan.source_chapter_id != plan.target_chapter_id {
+        reorder_scenes_in_transaction(conn, &plan.source_chapter_id, &plan.source_after)?;
+    }
+    reorder_scenes_in_transaction(conn, &plan.target_chapter_id, &plan.target_after)
+}
+
+fn reorder_scenes_in_transaction(
+    conn: &Connection,
+    chapter_id: &Uuid,
+    scene_ids: &[Uuid],
+) -> Result<()> {
+    for (idx, id) in scene_ids.iter().enumerate() {
+        conn.execute(
+            "UPDATE scenes SET position = ?1 WHERE id = ?2 AND chapter_id = ?3",
+            params![idx as i32, id.to_string(), chapter_id.to_string()],
+        )?;
+    }
+    Ok(())
+}
+
+pub fn get_scenes(conn: &Connection, chapter_id: &Uuid) -> Result<Vec<Scene>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, chapter_id, title, synopsis, prose, position, source_id, archived, locked, scene_type, scene_status, planning_status, editor_mode
+         FROM scenes WHERE chapter_id = ?1 AND archived = 0 ORDER BY position",
+    )?;
+
+    let scenes = stmt
+        .query_map(params![chapter_id.to_string()], scene_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(scenes)
+}
+
+pub fn update_scene_prose(conn: &Connection, scene_id: &Uuid, prose: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET prose = ?1 WHERE id = ?2",
+        params![prose, scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn switch_scene_editor_mode(conn: &Connection, scene_id: &Uuid, mode: &str) -> Result<Scene> {
+    let mode = match mode {
+        "page" | "beat" => mode,
+        other => {
+            return Err(rusqlite::Error::InvalidParameterName(format!(
+                "unknown editor mode: {other}"
+            )))
+        }
+    };
+    let current =
+        get_scene_by_id(conn, scene_id)?.ok_or_else(|| rusqlite::Error::QueryReturnedNoRows)?;
+    // Re-selecting the active mode must not rebuild prose from the other side's stale copy.
+    if current.editor_mode.as_str() == mode {
+        return Ok(current);
+    }
+
+    let tx = conn.unchecked_transaction()?;
+
+    if mode == "page" {
+        let beats = get_beats(&tx, scene_id)?;
+        let combined: Vec<String> = beats
+            .iter()
+            .map(|b| b.prose.as_deref().unwrap_or(""))
+            .map(String::from)
+            .collect();
+        let page_prose = combined.join("<hr>");
+        // Empty prompts must not replace existing scene-only prose (for example,
+        // after adding a beat to a scene first written in Page mode).
+        if combined.iter().any(|prose| !prose.is_empty()) {
+            tx.execute(
+                "UPDATE scenes SET prose = ?1 WHERE id = ?2",
+                params![page_prose, scene_id.to_string()],
+            )?;
+        }
+    } else if mode == "beat" {
+        if let Some(page_prose) = current.prose.as_deref() {
+            let beats = get_beats(&tx, scene_id)?;
+            if !beats.is_empty() {
+                let segments: Vec<&str> = page_prose.split("<hr>").collect();
+                for (i, beat) in beats.iter().enumerate() {
+                    let new_prose = if i < segments.len() {
+                        let trimmed = segments[i].trim();
+                        if i == beats.len() - 1 && segments.len() > beats.len() {
+                            let overflow = segments[i..].join("<hr>");
+                            Some(overflow)
+                        } else if trimmed.is_empty() {
+                            None
+                        } else {
+                            Some(trimmed.to_string())
+                        }
+                    } else {
+                        None
+                    };
+                    tx.execute(
+                        "UPDATE beats SET prose = ?1 WHERE id = ?2",
+                        params![new_prose, beat.id.to_string()],
+                    )?;
+                }
+            }
+        }
+    }
+
+    tx.execute(
+        "UPDATE scenes SET editor_mode = ?1 WHERE id = ?2",
+        params![mode, scene_id.to_string()],
+    )?;
+
+    tx.commit()?;
+
+    get_scene_by_id(conn, scene_id)?.ok_or_else(|| rusqlite::Error::QueryReturnedNoRows)
+}
+
+pub fn save_scene_page_prose(conn: &Connection, scene_id: &Uuid, prose: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET prose = ?1 WHERE id = ?2",
+        params![prose, scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+// ============================================================================
+// Beat Queries
+// ============================================================================
+
+pub fn insert_beat(conn: &Connection, beat: &Beat) -> Result<()> {
+    conn.execute(
+        "INSERT INTO beats (id, scene_id, content, prose, position, source_id)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            beat.id.to_string(),
+            beat.scene_id.to_string(),
+            beat.content,
+            beat.prose,
+            beat.position,
+            beat.source_id,
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn get_beats(conn: &Connection, scene_id: &Uuid) -> Result<Vec<Beat>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, scene_id, content, prose, position, source_id
+         FROM beats WHERE scene_id = ?1 ORDER BY position",
+    )?;
+
+    let beats = stmt
+        .query_map(params![scene_id.to_string()], |row| {
+            Ok(Beat {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                scene_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                content: row.get(2)?,
+                prose: row.get(3)?,
+                position: row.get(4)?,
+                source_id: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(beats)
+}
+
+pub fn update_beat_prose(conn: &Connection, beat_id: &Uuid, prose: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE beats SET prose = ?1 WHERE id = ?2",
+        params![prose, beat_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn get_max_beat_position(conn: &Connection, scene_id: &Uuid) -> Result<i32> {
+    let mut stmt =
+        conn.prepare("SELECT COALESCE(MAX(position), -1) FROM beats WHERE scene_id = ?1")?;
+    let max: i32 = stmt.query_row(params![scene_id.to_string()], |row| row.get(0))?;
+    Ok(max)
+}
+
+pub fn get_beat(conn: &Connection, beat_id: &Uuid) -> Result<Option<Beat>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, scene_id, content, prose, position, source_id
+         FROM beats WHERE id = ?1",
+    )?;
+    let opt = stmt
+        .query_row(params![beat_id.to_string()], |row| {
+            Ok(Beat {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                scene_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                content: row.get(2)?,
+                prose: row.get(3)?,
+                position: row.get(4)?,
+                source_id: row.get(5)?,
+            })
+        })
+        .optional()?;
+    Ok(opt)
+}
+
+pub fn delete_beat(conn: &Connection, beat_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM beats WHERE id = ?1",
+        params![beat_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_beat_position(conn: &Connection, beat_id: &Uuid, position: i32) -> Result<()> {
+    conn.execute(
+        "UPDATE beats SET position = ?1 WHERE id = ?2",
+        params![position, beat_id.to_string()],
+    )?;
+    Ok(())
+}
+
+/// Shift all beats at position >= from_position by +1 (for insert before)
+pub fn shift_beat_positions(conn: &Connection, scene_id: &Uuid, from_position: i32) -> Result<()> {
+    conn.execute(
+        "UPDATE beats SET position = position + 1 WHERE scene_id = ?1 AND position >= ?2",
+        params![scene_id.to_string(), from_position],
+    )?;
+    Ok(())
+}
+
+pub fn update_scene_synopsis(
+    conn: &Connection,
+    scene_id: &Uuid,
+    synopsis: Option<&str>,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET synopsis = ?1 WHERE id = ?2",
+        params![synopsis, scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+// ============================================================================
+// Discovery Note Queries
+// ============================================================================
+
+fn parse_tags(raw: Option<String>) -> Vec<String> {
+    match raw {
+        Some(value) => serde_json::from_str::<Vec<String>>(&value).unwrap_or_default(),
+        None => Vec::new(),
+    }
+}
+
+pub fn insert_discovery_note(conn: &Connection, note: &DiscoveryNote) -> Result<()> {
+    let tags_json = serde_json::to_string(&note.tags).unwrap_or_else(|_| "[]".to_string());
+    conn.execute(
+        "INSERT INTO discovery_notes (id, scene_id, content, tags, position, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            note.id.to_string(),
+            note.scene_id.to_string(),
+            note.content,
+            tags_json,
+            note.position,
+            note.created_at,
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn get_discovery_notes(conn: &Connection, scene_id: &Uuid) -> Result<Vec<DiscoveryNote>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, scene_id, content, tags, position, created_at
+         FROM discovery_notes WHERE scene_id = ?1 ORDER BY position, created_at",
+    )?;
+
+    let notes = stmt
+        .query_map(params![scene_id.to_string()], |row| {
+            Ok(DiscoveryNote {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                scene_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                content: row.get(2)?,
+                tags: parse_tags(row.get(3)?),
+                position: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(notes)
+}
+
+pub fn update_discovery_note(
+    conn: &Connection,
+    note_id: &Uuid,
+    content: &str,
+    tags: &[String],
+) -> Result<()> {
+    let tags_json = serde_json::to_string(tags).unwrap_or_else(|_| "[]".to_string());
+    conn.execute(
+        "UPDATE discovery_notes SET content = ?1, tags = ?2 WHERE id = ?3",
+        params![content, tags_json, note_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn delete_discovery_note(conn: &Connection, note_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM discovery_notes WHERE id = ?1",
+        params![note_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn get_discovery_note(conn: &Connection, note_id: &Uuid) -> Result<Option<DiscoveryNote>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, scene_id, content, tags, position, created_at
+         FROM discovery_notes WHERE id = ?1",
+    )?;
+
+    let opt = stmt
+        .query_row(params![note_id.to_string()], |row| {
+            Ok(DiscoveryNote {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                scene_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                content: row.get(2)?,
+                tags: parse_tags(row.get(3)?),
+                position: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })
+        .optional()?;
+    Ok(opt)
+}
+
+// ============================================================================
+// Character Queries
+// ============================================================================
+
+pub fn insert_character(conn: &Connection, character: &Character) -> Result<()> {
+    conn.execute(
+        "INSERT INTO characters (id, project_id, name, description, source_id)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![
+            character.id.to_string(),
+            character.project_id.to_string(),
+            character.name,
+            character.description,
+            character.source_id,
+        ],
+    )?;
+
+    // Insert attributes
+    for (key, value) in &character.attributes {
+        conn.execute(
+            "INSERT INTO character_attributes (character_id, key, value)
+             VALUES (?1, ?2, ?3)",
+            params![character.id.to_string(), key, value],
+        )?;
+    }
+
+    Ok(())
+}
+
+pub fn get_characters(conn: &Connection, project_id: &Uuid) -> Result<Vec<Character>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, name, description, source_id
+         FROM characters WHERE project_id = ?1 ORDER BY name",
+    )?;
+
+    let mut characters: Vec<Character> = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(Character {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                name: row.get(2)?,
+                description: row.get(3)?,
+                attributes: HashMap::new(),
+                source_id: row.get(4)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // Load attributes for each character
+    for character in &mut characters {
+        let mut attr_stmt =
+            conn.prepare("SELECT key, value FROM character_attributes WHERE character_id = ?1")?;
+
+        let attrs: Vec<(String, String)> = attr_stmt
+            .query_map(params![character.id.to_string()], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        character.attributes = attrs.into_iter().collect();
+    }
+
+    Ok(characters)
+}
+
+pub fn get_character_project_id(conn: &Connection, character_id: &Uuid) -> Result<Option<Uuid>> {
+    let mut stmt = conn.prepare("SELECT project_id FROM characters WHERE id = ?1")?;
+    let mut rows = stmt.query(params![character_id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(parse_uuid(&row.get::<_, String>(0)?)?))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_character_by_id(conn: &Connection, character_id: &Uuid) -> Result<Option<Character>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, name, description, source_id
+         FROM characters WHERE id = ?1",
+    )?;
+    let mut rows = stmt.query(params![character_id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        let mut character = Character {
+            id: parse_uuid(&row.get::<_, String>(0)?)?,
+            project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+            name: row.get(2)?,
+            description: row.get(3)?,
+            attributes: HashMap::new(),
+            source_id: row.get(4)?,
+        };
+
+        let mut attr_stmt =
+            conn.prepare("SELECT key, value FROM character_attributes WHERE character_id = ?1")?;
+        let attrs: Vec<(String, String)> = attr_stmt
+            .query_map(params![character.id.to_string()], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+        character.attributes = attrs.into_iter().collect();
+
+        Ok(Some(character))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn update_character(
+    conn: &Connection,
+    character_id: &Uuid,
+    name: &str,
+    description: Option<&str>,
+    attributes: &HashMap<String, String>,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE characters SET name = ?1, description = ?2 WHERE id = ?3",
+        params![name, description, character_id.to_string()],
+    )?;
+
+    conn.execute(
+        "DELETE FROM character_attributes WHERE character_id = ?1",
+        params![character_id.to_string()],
+    )?;
+
+    for (key, value) in attributes {
+        conn.execute(
+            "INSERT INTO character_attributes (character_id, key, value)
+             VALUES (?1, ?2, ?3)",
+            params![character_id.to_string(), key, value],
+        )?;
+    }
+
+    Ok(())
+}
+
+pub fn delete_character(conn: &Connection, character_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM characters WHERE id = ?1",
+        params![character_id.to_string()],
+    )?;
+    Ok(())
+}
+
+// ============================================================================
+// Location Queries
+// ============================================================================
+
+pub fn insert_location(conn: &Connection, location: &Location) -> Result<()> {
+    conn.execute(
+        "INSERT INTO locations (id, project_id, name, description, source_id)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![
+            location.id.to_string(),
+            location.project_id.to_string(),
+            location.name,
+            location.description,
+            location.source_id,
+        ],
+    )?;
+
+    // Insert attributes
+    for (key, value) in &location.attributes {
+        conn.execute(
+            "INSERT INTO location_attributes (location_id, key, value)
+             VALUES (?1, ?2, ?3)",
+            params![location.id.to_string(), key, value],
+        )?;
+    }
+
+    Ok(())
+}
+
+pub fn get_locations(conn: &Connection, project_id: &Uuid) -> Result<Vec<Location>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, name, description, source_id
+         FROM locations WHERE project_id = ?1 ORDER BY name",
+    )?;
+
+    let mut locations: Vec<Location> = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(Location {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                name: row.get(2)?,
+                description: row.get(3)?,
+                attributes: HashMap::new(),
+                source_id: row.get(4)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // Load attributes for each location
+    for location in &mut locations {
+        let mut attr_stmt =
+            conn.prepare("SELECT key, value FROM location_attributes WHERE location_id = ?1")?;
+
+        let attrs: Vec<(String, String)> = attr_stmt
+            .query_map(params![location.id.to_string()], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        location.attributes = attrs.into_iter().collect();
+    }
+
+    Ok(locations)
+}
+
+pub fn get_location_project_id(conn: &Connection, location_id: &Uuid) -> Result<Option<Uuid>> {
+    let mut stmt = conn.prepare("SELECT project_id FROM locations WHERE id = ?1")?;
+    let mut rows = stmt.query(params![location_id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(parse_uuid(&row.get::<_, String>(0)?)?))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_location_by_id(conn: &Connection, location_id: &Uuid) -> Result<Option<Location>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, name, description, source_id
+         FROM locations WHERE id = ?1",
+    )?;
+    let mut rows = stmt.query(params![location_id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        let mut location = Location {
+            id: parse_uuid(&row.get::<_, String>(0)?)?,
+            project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+            name: row.get(2)?,
+            description: row.get(3)?,
+            attributes: HashMap::new(),
+            source_id: row.get(4)?,
+        };
+
+        let mut attr_stmt =
+            conn.prepare("SELECT key, value FROM location_attributes WHERE location_id = ?1")?;
+        let attrs: Vec<(String, String)> = attr_stmt
+            .query_map(params![location.id.to_string()], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+        location.attributes = attrs.into_iter().collect();
+
+        Ok(Some(location))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn update_location(
+    conn: &Connection,
+    location_id: &Uuid,
+    name: &str,
+    description: Option<&str>,
+    attributes: &HashMap<String, String>,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE locations SET name = ?1, description = ?2 WHERE id = ?3",
+        params![name, description, location_id.to_string()],
+    )?;
+
+    conn.execute(
+        "DELETE FROM location_attributes WHERE location_id = ?1",
+        params![location_id.to_string()],
+    )?;
+
+    for (key, value) in attributes {
+        conn.execute(
+            "INSERT INTO location_attributes (location_id, key, value)
+             VALUES (?1, ?2, ?3)",
+            params![location_id.to_string(), key, value],
+        )?;
+    }
+
+    Ok(())
+}
+
+pub fn delete_location(conn: &Connection, location_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM locations WHERE id = ?1",
+        params![location_id.to_string()],
+    )?;
+    Ok(())
+}
+
+// ============================================================================
+// Reference Item Queries
+// ============================================================================
+
+pub fn insert_reference_item(conn: &Connection, item: &ReferenceItem) -> Result<()> {
+    conn.execute(
+        "INSERT INTO reference_items (id, project_id, reference_type, name, description, source_id)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            item.id.to_string(),
+            item.project_id.to_string(),
+            item.reference_type,
+            item.name,
+            item.description,
+            item.source_id,
+        ],
+    )?;
+
+    for (key, value) in &item.attributes {
+        conn.execute(
+            "INSERT INTO reference_item_attributes (reference_item_id, key, value)
+             VALUES (?1, ?2, ?3)",
+            params![item.id.to_string(), key, value],
+        )?;
+    }
+
+    Ok(())
+}
+
+pub fn get_reference_items(
+    conn: &Connection,
+    project_id: &Uuid,
+    reference_type: &str,
+) -> Result<Vec<ReferenceItem>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, reference_type, name, description, source_id
+         FROM reference_items WHERE project_id = ?1 AND reference_type = ?2 ORDER BY name",
+    )?;
+
+    let mut items: Vec<ReferenceItem> = stmt
+        .query_map(params![project_id.to_string(), reference_type], |row| {
+            Ok(ReferenceItem {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                reference_type: row.get(2)?,
+                name: row.get(3)?,
+                description: row.get(4)?,
+                attributes: HashMap::new(),
+                source_id: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    for item in &mut items {
+        let mut attr_stmt = conn.prepare(
+            "SELECT key, value FROM reference_item_attributes WHERE reference_item_id = ?1",
+        )?;
+
+        let attrs: Vec<(String, String)> = attr_stmt
+            .query_map(params![item.id.to_string()], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        item.attributes = attrs.into_iter().collect();
+    }
+
+    Ok(items)
+}
+
+pub fn get_all_reference_items(conn: &Connection, project_id: &Uuid) -> Result<Vec<ReferenceItem>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, reference_type, name, description, source_id
+         FROM reference_items WHERE project_id = ?1 ORDER BY reference_type, name",
+    )?;
+
+    let mut items: Vec<ReferenceItem> = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(ReferenceItem {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                reference_type: row.get(2)?,
+                name: row.get(3)?,
+                description: row.get(4)?,
+                attributes: HashMap::new(),
+                source_id: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    for item in &mut items {
+        let mut attr_stmt = conn.prepare(
+            "SELECT key, value FROM reference_item_attributes WHERE reference_item_id = ?1",
+        )?;
+
+        let attrs: Vec<(String, String)> = attr_stmt
+            .query_map(params![item.id.to_string()], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        item.attributes = attrs.into_iter().collect();
+    }
+
+    Ok(items)
+}
+
+pub fn get_reference_item_project_id(
+    conn: &Connection,
+    reference_item_id: &Uuid,
+) -> Result<Option<Uuid>> {
+    let mut stmt = conn.prepare("SELECT project_id FROM reference_items WHERE id = ?1")?;
+    let mut rows = stmt.query(params![reference_item_id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(parse_uuid(&row.get::<_, String>(0)?)?))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_reference_item_by_id(
+    conn: &Connection,
+    reference_item_id: &Uuid,
+) -> Result<Option<ReferenceItem>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, reference_type, name, description, source_id
+         FROM reference_items WHERE id = ?1",
+    )?;
+    let mut rows = stmt.query(params![reference_item_id.to_string()])?;
+
+    if let Some(row) = rows.next()? {
+        let mut item = ReferenceItem {
+            id: parse_uuid(&row.get::<_, String>(0)?)?,
+            project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+            reference_type: row.get(2)?,
+            name: row.get(3)?,
+            description: row.get(4)?,
+            attributes: HashMap::new(),
+            source_id: row.get(5)?,
+        };
+
+        let mut attr_stmt = conn.prepare(
+            "SELECT key, value FROM reference_item_attributes WHERE reference_item_id = ?1",
+        )?;
+        let attrs: Vec<(String, String)> = attr_stmt
+            .query_map(params![item.id.to_string()], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+        item.attributes = attrs.into_iter().collect();
+
+        Ok(Some(item))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn update_reference_item_type(
+    conn: &Connection,
+    reference_item_id: &Uuid,
+    reference_type: &str,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE reference_items SET reference_type = ?1 WHERE id = ?2",
+        params![reference_type, reference_item_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_reference_item(
+    conn: &Connection,
+    reference_item_id: &Uuid,
+    name: &str,
+    description: Option<&str>,
+    attributes: &HashMap<String, String>,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE reference_items SET name = ?1, description = ?2 WHERE id = ?3",
+        params![name, description, reference_item_id.to_string()],
+    )?;
+
+    conn.execute(
+        "DELETE FROM reference_item_attributes WHERE reference_item_id = ?1",
+        params![reference_item_id.to_string()],
+    )?;
+
+    for (key, value) in attributes {
+        conn.execute(
+            "INSERT INTO reference_item_attributes (reference_item_id, key, value)
+             VALUES (?1, ?2, ?3)",
+            params![reference_item_id.to_string(), key, value],
+        )?;
+    }
+
+    Ok(())
+}
+
+pub fn delete_reference_item(conn: &Connection, reference_item_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM reference_items WHERE id = ?1",
+        params![reference_item_id.to_string()],
+    )?;
+    Ok(())
+}
+
+// ============================================================================
+// Scene References
+// ============================================================================
+
+pub fn add_scene_character_ref(
+    conn: &Connection,
+    scene_id: &Uuid,
+    character_id: &Uuid,
+) -> Result<()> {
+    conn.execute(
+        "INSERT OR IGNORE INTO scene_character_refs (scene_id, character_id)
+         VALUES (?1, ?2)",
+        params![scene_id.to_string(), character_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn add_scene_location_ref(
+    conn: &Connection,
+    scene_id: &Uuid,
+    location_id: &Uuid,
+) -> Result<()> {
+    conn.execute(
+        "INSERT OR IGNORE INTO scene_location_refs (scene_id, location_id)
+         VALUES (?1, ?2)",
+        params![scene_id.to_string(), location_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn add_scene_reference_item_ref(
+    conn: &Connection,
+    scene_id: &Uuid,
+    reference_item_id: &Uuid,
+) -> Result<()> {
+    conn.execute(
+        "INSERT OR IGNORE INTO scene_reference_item_refs (scene_id, reference_item_id)
+         VALUES (?1, ?2)",
+        params![scene_id.to_string(), reference_item_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn get_scene_ids_for_character(conn: &Connection, character_id: &Uuid) -> Result<Vec<Uuid>> {
+    let mut stmt =
+        conn.prepare("SELECT scene_id FROM scene_character_refs WHERE character_id = ?1")?;
+    let ids = stmt
+        .query_map(params![character_id.to_string()], |row| {
+            parse_uuid(&row.get::<_, String>(0)?)
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(ids)
+}
+
+pub fn get_scene_ids_for_location(conn: &Connection, location_id: &Uuid) -> Result<Vec<Uuid>> {
+    let mut stmt =
+        conn.prepare("SELECT scene_id FROM scene_location_refs WHERE location_id = ?1")?;
+    let ids = stmt
+        .query_map(params![location_id.to_string()], |row| {
+            parse_uuid(&row.get::<_, String>(0)?)
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(ids)
+}
+
+pub fn get_scene_ids_for_reference_item(
+    conn: &Connection,
+    reference_item_id: &Uuid,
+) -> Result<Vec<Uuid>> {
+    let mut stmt = conn
+        .prepare("SELECT scene_id FROM scene_reference_item_refs WHERE reference_item_id = ?1")?;
+    let ids = stmt
+        .query_map(params![reference_item_id.to_string()], |row| {
+            parse_uuid(&row.get::<_, String>(0)?)
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(ids)
+}
+
+pub fn get_scene_characters(conn: &Connection, scene_id: &Uuid) -> Result<Vec<Uuid>> {
+    let mut stmt =
+        conn.prepare("SELECT character_id FROM scene_character_refs WHERE scene_id = ?1")?;
+
+    let ids = stmt
+        .query_map(params![scene_id.to_string()], |row| {
+            parse_uuid(&row.get::<_, String>(0)?)
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(ids)
+}
+
+pub fn get_scene_locations(conn: &Connection, scene_id: &Uuid) -> Result<Vec<Uuid>> {
+    let mut stmt =
+        conn.prepare("SELECT location_id FROM scene_location_refs WHERE scene_id = ?1")?;
+
+    let ids = stmt
+        .query_map(params![scene_id.to_string()], |row| {
+            parse_uuid(&row.get::<_, String>(0)?)
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(ids)
+}
+
+pub fn get_scene_reference_states(
+    conn: &Connection,
+    scene_id: &Uuid,
+) -> Result<Vec<SceneReferenceState>> {
+    let mut stmt = conn.prepare(
+        "SELECT scene_id, reference_type, reference_id, position, expanded
+         FROM scene_reference_state
+         WHERE scene_id = ?1
+         ORDER BY reference_type, position",
+    )?;
+
+    let states = stmt
+        .query_map(params![scene_id.to_string()], |row| {
+            Ok(SceneReferenceState {
+                scene_id: parse_uuid(&row.get::<_, String>(0)?)?,
+                reference_type: row.get(1)?,
+                reference_id: parse_uuid(&row.get::<_, String>(2)?)?,
+                position: row.get(3)?,
+                expanded: row.get::<_, i32>(4)? != 0,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(states)
+}
+
+pub fn get_scene_reference_states_for_reference(
+    conn: &Connection,
+    reference_type: &str,
+    reference_id: &Uuid,
+) -> Result<Vec<SceneReferenceState>> {
+    let mut stmt = conn.prepare(
+        "SELECT scene_id, reference_type, reference_id, position, expanded
+         FROM scene_reference_state
+         WHERE reference_type = ?1 AND reference_id = ?2",
+    )?;
+
+    let states = stmt
+        .query_map(params![reference_type, reference_id.to_string()], |row| {
+            Ok(SceneReferenceState {
+                scene_id: parse_uuid(&row.get::<_, String>(0)?)?,
+                reference_type: row.get(1)?,
+                reference_id: parse_uuid(&row.get::<_, String>(2)?)?,
+                position: row.get(3)?,
+                expanded: row.get::<_, i32>(4)? != 0,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(states)
+}
+
+// MAX always returns a row; NULL means this scene/category has no saved state.
+// Decode the column as Option<i32> rather than treating absence of rows as None.
+pub fn get_scene_reference_state_max_position(
+    conn: &Connection,
+    scene_id: &Uuid,
+    reference_type: &str,
+) -> Result<Option<i32>> {
+    conn.query_row(
+        "SELECT MAX(position) FROM scene_reference_state WHERE scene_id = ?1 AND reference_type = ?2",
+        params![scene_id.to_string(), reference_type],
+        |row| row.get(0),
+    )
+}
+
+pub fn insert_scene_reference_state(conn: &Connection, state: &SceneReferenceState) -> Result<()> {
+    conn.execute(
+        "INSERT INTO scene_reference_state (scene_id, reference_type, reference_id, position, expanded)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![
+            state.scene_id.to_string(),
+            &state.reference_type,
+            state.reference_id.to_string(),
+            state.position,
+            if state.expanded { 1 } else { 0 }
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn delete_scene_reference_states_for_type(
+    conn: &Connection,
+    scene_id: &Uuid,
+    reference_type: &str,
+) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_reference_state WHERE scene_id = ?1 AND reference_type = ?2",
+        params![scene_id.to_string(), reference_type],
+    )?;
+    Ok(())
+}
+
+pub fn delete_scene_reference_states_for_reference(
+    conn: &Connection,
+    reference_type: &str,
+    reference_id: &Uuid,
+) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_reference_state WHERE reference_type = ?1 AND reference_id = ?2",
+        params![reference_type, reference_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn cleanup_scene_reference_state(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_reference_state
+         WHERE scene_id = ?1 AND reference_type = 'characters'
+         AND reference_id NOT IN (SELECT id FROM characters)",
+        params![scene_id.to_string()],
+    )?;
+    conn.execute(
+        "DELETE FROM scene_reference_state
+         WHERE scene_id = ?1 AND reference_type = 'locations'
+         AND reference_id NOT IN (SELECT id FROM locations)",
+        params![scene_id.to_string()],
+    )?;
+    conn.execute(
+        "DELETE FROM scene_reference_state
+         WHERE scene_id = ?1 AND reference_type NOT IN ('characters', 'locations')
+         AND reference_id NOT IN (SELECT id FROM reference_items)",
+        params![scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn build_default_scene_reference_state(
+    conn: &Connection,
+    scene_id: &Uuid,
+) -> Result<Vec<SceneReferenceState>> {
+    let mut states = Vec::new();
+
+    let mut character_stmt = conn.prepare(
+        "SELECT c.id
+         FROM scene_character_refs scr
+         JOIN characters c ON scr.character_id = c.id
+         WHERE scr.scene_id = ?1
+         ORDER BY c.name",
+    )?;
+    let character_rows: Vec<Uuid> = character_stmt
+        .query_map(params![scene_id.to_string()], |row| {
+            parse_uuid(&row.get::<_, String>(0)?)
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    for (position, character_id) in character_rows.into_iter().enumerate() {
+        states.push(SceneReferenceState {
+            scene_id: *scene_id,
+            reference_type: "characters".to_string(),
+            reference_id: character_id,
+            position: position as i32,
+            expanded: false,
+        });
+    }
+
+    let mut location_stmt = conn.prepare(
+        "SELECT l.id
+         FROM scene_location_refs slr
+         JOIN locations l ON slr.location_id = l.id
+         WHERE slr.scene_id = ?1
+         ORDER BY l.name",
+    )?;
+    let location_rows: Vec<Uuid> = location_stmt
+        .query_map(params![scene_id.to_string()], |row| {
+            parse_uuid(&row.get::<_, String>(0)?)
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    for (position, location_id) in location_rows.into_iter().enumerate() {
+        states.push(SceneReferenceState {
+            scene_id: *scene_id,
+            reference_type: "locations".to_string(),
+            reference_id: location_id,
+            position: position as i32,
+            expanded: false,
+        });
+    }
+
+    let mut reference_stmt = conn.prepare(
+        "SELECT ri.id, ri.reference_type
+         FROM scene_reference_item_refs srir
+         JOIN reference_items ri ON srir.reference_item_id = ri.id
+         WHERE srir.scene_id = ?1
+         ORDER BY ri.reference_type, ri.name",
+    )?;
+    let reference_rows: Vec<(Uuid, String)> = reference_stmt
+        .query_map(params![scene_id.to_string()], |row| {
+            Ok((
+                parse_uuid(&row.get::<_, String>(0)?)?,
+                row.get::<_, String>(1)?,
+            ))
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let mut type_positions: HashMap<String, i32> = HashMap::new();
+    for (reference_id, reference_type) in reference_rows {
+        let entry = type_positions.entry(reference_type.clone()).or_insert(0);
+        let position = *entry;
+        *entry += 1;
+        states.push(SceneReferenceState {
+            scene_id: *scene_id,
+            reference_type,
+            reference_id,
+            position,
+            expanded: false,
+        });
+    }
+
+    for state in &states {
+        insert_scene_reference_state(conn, state)?;
+    }
+
+    Ok(states)
+}
+
+pub fn clear_scene_character_refs(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_character_refs WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn clear_scene_location_refs(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_location_refs WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn clear_scene_reference_item_refs(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_reference_item_refs WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn clear_scene_reference_item_refs_for_type(
+    conn: &Connection,
+    scene_id: &Uuid,
+    reference_type: &str,
+) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_reference_item_refs
+         WHERE scene_id = ?1
+           AND reference_item_id IN (
+             SELECT id FROM reference_items WHERE reference_type = ?2
+           )",
+        params![scene_id.to_string(), reference_type],
+    )?;
+    Ok(())
+}
+
+pub fn delete_scene_character_refs_for_character(
+    conn: &Connection,
+    character_id: &Uuid,
+) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_character_refs WHERE character_id = ?1",
+        params![character_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn delete_scene_location_refs_for_location(
+    conn: &Connection,
+    location_id: &Uuid,
+) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_location_refs WHERE location_id = ?1",
+        params![location_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn delete_scene_reference_item_refs_for_item(
+    conn: &Connection,
+    reference_item_id: &Uuid,
+) -> Result<()> {
+    conn.execute(
+        "DELETE FROM scene_reference_item_refs WHERE reference_item_id = ?1",
+        params![reference_item_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn get_scene_reference_items(
+    conn: &Connection,
+    scene_id: &Uuid,
+    reference_type: &str,
+) -> Result<Vec<ReferenceItem>> {
+    let mut stmt = conn.prepare(
+        "SELECT ri.id, ri.project_id, ri.reference_type, ri.name, ri.description, ri.source_id
+         FROM scene_reference_item_refs srir
+         JOIN reference_items ri ON srir.reference_item_id = ri.id
+         WHERE srir.scene_id = ?1 AND ri.reference_type = ?2
+         ORDER BY ri.name",
+    )?;
+
+    let mut items: Vec<ReferenceItem> = stmt
+        .query_map(params![scene_id.to_string(), reference_type], |row| {
+            Ok(ReferenceItem {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                reference_type: row.get(2)?,
+                name: row.get(3)?,
+                description: row.get(4)?,
+                attributes: HashMap::new(),
+                source_id: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    for item in &mut items {
+        let mut attr_stmt = conn.prepare(
+            "SELECT key, value FROM reference_item_attributes WHERE reference_item_id = ?1",
+        )?;
+        let attrs: Vec<(String, String)> = attr_stmt
+            .query_map(params![item.id.to_string()], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        item.attributes = attrs.into_iter().collect();
+    }
+
+    Ok(items)
+}
+
+// ============================================================================
+// Delete Operations
+// ============================================================================
+
+/// Get counts of scenes and beats in a chapter (for confirmation dialog)
+pub fn get_chapter_content_counts(conn: &Connection, chapter_id: &Uuid) -> Result<(i32, i32)> {
+    let scene_count: i32 = conn.query_row(
+        "SELECT COUNT(*) FROM scenes WHERE chapter_id = ?1",
+        params![chapter_id.to_string()],
+        |row| row.get(0),
+    )?;
+
+    let beat_count: i32 = conn.query_row(
+        "SELECT COUNT(*) FROM beats WHERE scene_id IN (SELECT id FROM scenes WHERE chapter_id = ?1)",
+        params![chapter_id.to_string()],
+        |row| row.get(0),
+    )?;
+
+    Ok((scene_count, beat_count))
+}
+
+/// Get beat count for a scene (for confirmation dialog)
+pub fn get_scene_beat_count(conn: &Connection, scene_id: &Uuid) -> Result<i32> {
+    let count: i32 = conn.query_row(
+        "SELECT COUNT(*) FROM beats WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+        |row| row.get(0),
+    )?;
+    Ok(count)
+}
+
+/// Delete a chapter and all its scenes, beats, and references
+pub fn delete_chapter(conn: &Connection, chapter_id: &Uuid) -> Result<()> {
+    let tx = conn.unchecked_transaction()?;
+    delete_chapter_in_transaction(&tx, chapter_id)?;
+    tx.commit()
+}
+
+/// Delete a chapter and its contents within the caller's transaction (for atomic Part deletion).
+pub fn delete_chapter_in_transaction(
+    tx: &rusqlite::Transaction<'_>,
+    chapter_id: &Uuid,
+) -> Result<()> {
+    tx.execute(
+        "DELETE FROM scene_character_refs WHERE scene_id IN (SELECT id FROM scenes WHERE chapter_id = ?1)",
+        params![chapter_id.to_string()],
+    )?;
+    tx.execute(
+        "DELETE FROM scene_location_refs WHERE scene_id IN (SELECT id FROM scenes WHERE chapter_id = ?1)",
+        params![chapter_id.to_string()],
+    )?;
+    tx.execute(
+        "DELETE FROM scene_reference_item_refs WHERE scene_id IN (SELECT id FROM scenes WHERE chapter_id = ?1)",
+        params![chapter_id.to_string()],
+    )?;
+    tx.execute(
+        "DELETE FROM scene_reference_state WHERE scene_id IN (SELECT id FROM scenes WHERE chapter_id = ?1)",
+        params![chapter_id.to_string()],
+    )?;
+
+    tx.execute(
+        "DELETE FROM beats WHERE scene_id IN (SELECT id FROM scenes WHERE chapter_id = ?1)",
+        params![chapter_id.to_string()],
+    )?;
+
+    tx.execute(
+        "DELETE FROM scenes WHERE chapter_id = ?1",
+        params![chapter_id.to_string()],
+    )?;
+
+    tx.execute(
+        "DELETE FROM chapters WHERE id = ?1",
+        params![chapter_id.to_string()],
+    )?;
+
+    Ok(())
+}
+
+/// Delete a scene and all its beats and references
+pub fn delete_scene(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    let tx = conn.unchecked_transaction()?;
+
+    tx.execute(
+        "DELETE FROM scene_character_refs WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    tx.execute(
+        "DELETE FROM scene_location_refs WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    tx.execute(
+        "DELETE FROM scene_reference_item_refs WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    tx.execute(
+        "DELETE FROM scene_reference_state WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+    )?;
+
+    tx.execute(
+        "DELETE FROM beats WHERE scene_id = ?1",
+        params![scene_id.to_string()],
+    )?;
+
+    tx.execute(
+        "DELETE FROM scenes WHERE id = ?1",
+        params![scene_id.to_string()],
+    )?;
+
+    tx.commit()
+}
+
+// ============================================================================
+// Re-import / Merge Queries
+// ============================================================================
+
+/// Find a chapter by source_id (for reimport matching)
+pub fn find_chapter_by_source_id(
+    conn: &Connection,
+    project_id: &Uuid,
+    source_id: &str,
+) -> Result<Option<Chapter>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, title, position, source_id, archived, locked, is_part, synopsis, planning_status
+         FROM chapters WHERE project_id = ?1 AND source_id = ?2",
+    )?;
+
+    let mut rows = stmt.query(params![project_id.to_string(), source_id])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(Chapter {
+            id: parse_uuid(&row.get::<_, String>(0)?)?,
+            project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+            title: row.get(2)?,
+            position: row.get(3)?,
+            source_id: row.get(4)?,
+            archived: row.get::<_, i32>(5)? != 0,
+            locked: row.get::<_, i32>(6)? != 0,
+            is_part: row.get::<_, i32>(7).unwrap_or(0) != 0,
+            synopsis: row.get(8).unwrap_or(None),
+            planning_status: row
+                .get::<_, String>(9)
+                .map(|s| PlanningStatus::parse(&s))
+                .unwrap_or_default(),
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+/// Find a scene by source_id (for reimport matching)
+pub fn find_scene_by_source_id(
+    conn: &Connection,
+    chapter_id: &Uuid,
+    source_id: &str,
+) -> Result<Option<Scene>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, chapter_id, title, synopsis, prose, position, source_id, archived, locked, scene_type, scene_status, planning_status, editor_mode
+         FROM scenes WHERE chapter_id = ?1 AND source_id = ?2",
+    )?;
+
+    let scene = stmt
+        .query_row(params![chapter_id.to_string(), source_id], scene_from_row)
+        .optional()?;
+    Ok(scene)
+}
+
+/// Find a beat by source_id (for reimport matching)
+pub fn find_beat_by_source_id(
+    conn: &Connection,
+    scene_id: &Uuid,
+    source_id: &str,
+) -> Result<Option<Beat>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, scene_id, content, prose, position, source_id
+         FROM beats WHERE scene_id = ?1 AND source_id = ?2",
+    )?;
+
+    let mut rows = stmt.query(params![scene_id.to_string(), source_id])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(Beat {
+            id: parse_uuid(&row.get::<_, String>(0)?)?,
+            scene_id: parse_uuid(&row.get::<_, String>(1)?)?,
+            content: row.get(2)?,
+            prose: row.get(3)?,
+            position: row.get(4)?,
+            source_id: row.get(5)?,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+/// Update a chapter's title and position (for reimport merge)
+pub fn update_chapter(
+    conn: &Connection,
+    chapter_id: &Uuid,
+    title: &str,
+    position: i32,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET title = ?1, position = ?2 WHERE id = ?3",
+        params![title, position, chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_chapter_source_id(
+    conn: &Connection,
+    chapter_id: &Uuid,
+    source_id: &str,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET source_id = ?1 WHERE id = ?2",
+        params![source_id, chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+/// Update a scene's title, synopsis, position, and metadata (preserves prose)
+pub fn update_scene(
+    conn: &Connection,
+    scene_id: &Uuid,
+    title: &str,
+    synopsis: Option<&str>,
+    position: i32,
+    scene_type: &SceneType,
+    scene_status: &SceneStatus,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET title = ?1, synopsis = ?2, position = ?3, scene_type = ?4, scene_status = ?5 WHERE id = ?6",
+        params![
+            title,
+            synopsis,
+            position,
+            scene_type.as_str(),
+            scene_status.as_str(),
+            scene_id.to_string()
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn update_scene_source_id(conn: &Connection, scene_id: &Uuid, source_id: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET source_id = ?1 WHERE id = ?2",
+        params![source_id, scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_scene_metadata(
+    conn: &Connection,
+    scene_id: &Uuid,
+    scene_type: &SceneType,
+    scene_status: &SceneStatus,
+) -> Result<()> {
+    let tx = conn.unchecked_transaction()?;
+    let old_status: String = tx.query_row(
+        "SELECT scene_status FROM scenes WHERE id=?1",
+        [scene_id.to_string()],
+        |r| r.get(0),
+    )?;
+    if old_status != scene_status.as_str() {
+        tx.execute("UPDATE scene_reviews SET data=json_set(data,'$.status',?1), version=version+1 WHERE scene_id=?2", params![match scene_status.as_str() { "final" => "final", "revised" => "revised", _ => "first_draft" }, scene_id.to_string()])?;
+    }
+    tx.execute(
+        "UPDATE scenes SET scene_type = ?1, scene_status = ?2 WHERE id = ?3",
+        params![
+            scene_type.as_str(),
+            scene_status.as_str(),
+            scene_id.to_string()
+        ],
+    )?;
+    tx.commit()
+}
+
+pub fn update_scene_planning_status(
+    conn: &Connection,
+    scene_id: &Uuid,
+    planning_status: &PlanningStatus,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET planning_status = ?1 WHERE id = ?2",
+        params![planning_status.as_str(), scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_chapter_planning_status(
+    conn: &Connection,
+    chapter_id: &Uuid,
+    planning_status: &PlanningStatus,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET planning_status = ?1 WHERE id = ?2",
+        params![planning_status.as_str(), chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_chapter_synopsis(
+    conn: &Connection,
+    chapter_id: &Uuid,
+    synopsis: Option<&str>,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET synopsis = ?1 WHERE id = ?2",
+        params![synopsis, chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+/// Update a beat's content and position (preserves prose)
+pub fn update_beat(conn: &Connection, beat_id: &Uuid, content: &str, position: i32) -> Result<()> {
+    conn.execute(
+        "UPDATE beats SET content = ?1, position = ?2 WHERE id = ?3",
+        params![content, position, beat_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn update_beat_source_id(conn: &Connection, beat_id: &Uuid, source_id: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE beats SET source_id = ?1 WHERE id = ?2",
+        params![source_id, beat_id.to_string()],
+    )?;
+    Ok(())
+}
+
+/// Get all chapters for a project (for reimport)
+pub fn get_all_chapters(conn: &Connection, project_id: &Uuid) -> Result<Vec<Chapter>> {
+    get_chapters(conn, project_id)
+}
+
+/// Get all scenes for a project across all chapters (for reimport stats)
+pub fn get_all_project_scenes(conn: &Connection, project_id: &Uuid) -> Result<Vec<Scene>> {
+    let mut stmt = conn.prepare(
+        "SELECT s.id, s.chapter_id, s.title, s.synopsis, s.prose, s.position, s.source_id, s.archived, s.locked, s.scene_type, s.scene_status, s.planning_status, s.editor_mode
+         FROM scenes s
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1
+         ORDER BY c.position, s.position",
+    )?;
+
+    let scenes = stmt
+        .query_map(params![project_id.to_string()], scene_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(scenes)
+}
+
+/// Get all beats for a project across all scenes (for reimport stats)
+pub fn get_all_project_beats(conn: &Connection, project_id: &Uuid) -> Result<Vec<Beat>> {
+    let mut stmt = conn.prepare(
+        "SELECT b.id, b.scene_id, b.content, b.prose, b.position, b.source_id
+         FROM beats b
+         JOIN scenes s ON b.scene_id = s.id
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1
+         ORDER BY c.position, s.position, b.position",
+    )?;
+
+    let beats = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(Beat {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                scene_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                content: row.get(2)?,
+                prose: row.get(3)?,
+                position: row.get(4)?,
+                source_id: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(beats)
+}
+
+// ============================================================================
+// Archive Operations
+// ============================================================================
+
+pub fn archive_chapter(conn: &Connection, chapter_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET archived = 1 WHERE id = ?1",
+        params![chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn restore_chapter(conn: &Connection, chapter_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET archived = 0 WHERE id = ?1",
+        params![chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn archive_scene(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET archived = 1 WHERE id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn restore_scene(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET archived = 0 WHERE id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn get_archived_chapters(conn: &Connection, project_id: &Uuid) -> Result<Vec<Chapter>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, title, position, source_id, archived, locked, is_part, synopsis, planning_status
+         FROM chapters WHERE project_id = ?1 AND archived = 1 ORDER BY position",
+    )?;
+
+    let chapters = stmt
+        .query_map(params![project_id.to_string()], chapter_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(chapters)
+}
+
+pub fn get_archived_scenes(conn: &Connection, project_id: &Uuid) -> Result<Vec<Scene>> {
+    let mut stmt = conn.prepare(
+        "SELECT s.id, s.chapter_id, s.title, s.synopsis, s.prose, s.position, s.source_id, s.archived, s.locked, s.scene_type, s.scene_status, s.planning_status, s.editor_mode
+         FROM scenes s
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1 AND s.archived = 1
+         ORDER BY c.position, s.position",
+    )?;
+
+    let scenes = stmt
+        .query_map(params![project_id.to_string()], scene_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(scenes)
+}
+
+// ============================================================================
+// Lock Operations
+// ============================================================================
+
+pub fn lock_chapter(conn: &Connection, chapter_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET locked = 1 WHERE id = ?1",
+        params![chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn unlock_chapter(conn: &Connection, chapter_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET locked = 0 WHERE id = ?1",
+        params![chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn set_chapter_is_part(conn: &Connection, chapter_id: &Uuid, is_part: bool) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET is_part = ?1 WHERE id = ?2",
+        params![is_part as i32, chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn lock_scene(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET locked = 1 WHERE id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn unlock_scene(conn: &Connection, scene_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET locked = 0 WHERE id = ?1",
+        params![scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn is_scene_locked(conn: &Connection, scene_id: &Uuid) -> Result<bool> {
+    let mut stmt = conn.prepare(
+        "SELECT s.locked, c.locked FROM scenes s
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE s.id = ?1",
+    )?;
+    let (scene_locked, chapter_locked): (i32, i32) = stmt
+        .query_row(params![scene_id.to_string()], |row| {
+            Ok((row.get(0)?, row.get(1)?))
+        })?;
+    Ok(scene_locked != 0 || chapter_locked != 0)
+}
+
+pub fn is_chapter_locked(conn: &Connection, chapter_id: &Uuid) -> Result<bool> {
+    let mut stmt = conn.prepare("SELECT locked FROM chapters WHERE id = ?1")?;
+    let locked: i32 = stmt.query_row(params![chapter_id.to_string()], |row| row.get(0))?;
+    Ok(locked != 0)
+}
+
+/// Whether any scene in the chapter is locked, archived scenes included:
+/// deleting or archiving the chapter would take every one of them with it.
+pub fn chapter_has_locked_scene(conn: &Connection, chapter_id: &Uuid) -> Result<bool> {
+    conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM scenes WHERE chapter_id = ?1 AND locked = 1)",
+        params![chapter_id.to_string()],
+        |row| row.get(0),
+    )
+}
+
+// ============================================================================
+// Rename Operations
+// ============================================================================
+
+pub fn rename_chapter(conn: &Connection, chapter_id: &Uuid, title: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE chapters SET title = ?1 WHERE id = ?2",
+        params![title, chapter_id.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn rename_scene(conn: &Connection, scene_id: &Uuid, title: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE scenes SET title = ?1 WHERE id = ?2",
+        params![title, scene_id.to_string()],
+    )?;
+    Ok(())
+}
+
+// ============================================================================
+// Get by ID Operations
+// ============================================================================
+
+pub fn get_chapter_by_id(conn: &Connection, chapter_id: &Uuid) -> Result<Option<Chapter>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, title, position, source_id, archived, locked, is_part, synopsis, planning_status
+         FROM chapters WHERE id = ?1",
+    )?;
+
+    let chapter = stmt
+        .query_row(params![chapter_id.to_string()], chapter_from_row)
+        .optional()?;
+
+    Ok(chapter)
+}
+
+pub fn get_scene_by_id(conn: &Connection, scene_id: &Uuid) -> Result<Option<Scene>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, chapter_id, title, synopsis, prose, position, source_id, archived, locked, scene_type, scene_status, planning_status, editor_mode
+         FROM scenes WHERE id = ?1",
+    )?;
+
+    let scene = stmt
+        .query_row(params![scene_id.to_string()], scene_from_row)
+        .optional()?;
+
+    Ok(scene)
+}
+
+// ============================================================================
+// Snapshot Queries
+// ============================================================================
+
+pub fn insert_snapshot_metadata(conn: &Connection, snapshot: &SnapshotMetadata) -> Result<()> {
+    conn.execute(
+        "INSERT INTO snapshots (id, project_id, name, description, trigger_type, created_at, file_path, file_size, uncompressed_size, chapter_count, scene_count, beat_count, word_count, schema_version)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        params![
+            snapshot.id.to_string(),
+            snapshot.project_id.to_string(),
+            snapshot.name,
+            snapshot.description,
+            snapshot.trigger_type.as_str(),
+            snapshot.created_at,
+            snapshot.file_path,
+            snapshot.file_size,
+            snapshot.uncompressed_size,
+            snapshot.chapter_count,
+            snapshot.scene_count,
+            snapshot.beat_count,
+            snapshot.word_count,
+            snapshot.schema_version,
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn get_snapshots_for_project(
+    conn: &Connection,
+    project_id: &Uuid,
+) -> Result<Vec<SnapshotMetadata>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, name, description, trigger_type, created_at, file_path, file_size, uncompressed_size, chapter_count, scene_count, beat_count, word_count, schema_version
+         FROM snapshots WHERE project_id = ?1 ORDER BY created_at DESC",
+    )?;
+
+    let snapshots = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(SnapshotMetadata {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                name: row.get(2)?,
+                description: row.get(3)?,
+                trigger_type: SnapshotTrigger::parse(&row.get::<_, String>(4)?)
+                    .unwrap_or(SnapshotTrigger::Manual),
+                created_at: row.get(5)?,
+                file_path: row.get(6)?,
+                file_size: row.get(7)?,
+                uncompressed_size: row.get(8)?,
+                chapter_count: row.get(9)?,
+                scene_count: row.get(10)?,
+                beat_count: row.get(11)?,
+                word_count: row.get(12)?,
+                schema_version: row.get(13)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(snapshots)
+}
+
+pub fn get_snapshot_by_id(
+    conn: &Connection,
+    snapshot_id: &Uuid,
+) -> Result<Option<SnapshotMetadata>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, name, description, trigger_type, created_at, file_path, file_size, uncompressed_size, chapter_count, scene_count, beat_count, word_count, schema_version
+         FROM snapshots WHERE id = ?1",
+    )?;
+
+    let snapshot = stmt
+        .query_row(params![snapshot_id.to_string()], |row| {
+            Ok(SnapshotMetadata {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                project_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                name: row.get(2)?,
+                description: row.get(3)?,
+                trigger_type: SnapshotTrigger::parse(&row.get::<_, String>(4)?)
+                    .unwrap_or(SnapshotTrigger::Manual),
+                created_at: row.get(5)?,
+                file_path: row.get(6)?,
+                file_size: row.get(7)?,
+                uncompressed_size: row.get(8)?,
+                chapter_count: row.get(9)?,
+                scene_count: row.get(10)?,
+                beat_count: row.get(11)?,
+                word_count: row.get(12)?,
+                schema_version: row.get(13)?,
+            })
+        })
+        .optional()?;
+
+    Ok(snapshot)
+}
+
+pub fn delete_snapshot_metadata(conn: &Connection, snapshot_id: &Uuid) -> Result<()> {
+    conn.execute(
+        "DELETE FROM snapshots WHERE id = ?1",
+        params![snapshot_id.to_string()],
+    )?;
+    Ok(())
+}
+
+/// Get all scene-character references for a project (for snapshots)
+pub fn get_all_scene_character_refs(
+    conn: &Connection,
+    project_id: &Uuid,
+) -> Result<Vec<SceneCharacterRef>> {
+    let mut stmt = conn.prepare(
+        "SELECT scr.scene_id, scr.character_id
+         FROM scene_character_refs scr
+         JOIN scenes s ON scr.scene_id = s.id
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1",
+    )?;
+
+    let refs = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(SceneCharacterRef {
+                scene_id: parse_uuid(&row.get::<_, String>(0)?)?,
+                character_id: parse_uuid(&row.get::<_, String>(1)?)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(refs)
+}
+
+/// Get all scene-location references for a project (for snapshots)
+pub fn get_all_scene_location_refs(
+    conn: &Connection,
+    project_id: &Uuid,
+) -> Result<Vec<SceneLocationRef>> {
+    let mut stmt = conn.prepare(
+        "SELECT slr.scene_id, slr.location_id
+         FROM scene_location_refs slr
+         JOIN scenes s ON slr.scene_id = s.id
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1",
+    )?;
+
+    let refs = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(SceneLocationRef {
+                scene_id: parse_uuid(&row.get::<_, String>(0)?)?,
+                location_id: parse_uuid(&row.get::<_, String>(1)?)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(refs)
+}
+
+pub fn get_all_scene_reference_states(
+    conn: &Connection,
+    project_id: &Uuid,
+) -> Result<Vec<SceneReferenceState>> {
+    let mut stmt = conn.prepare(
+        "SELECT srs.scene_id, srs.reference_type, srs.reference_id, srs.position, srs.expanded
+         FROM scene_reference_state srs
+         JOIN scenes s ON srs.scene_id = s.id
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1
+         ORDER BY srs.scene_id, srs.reference_type, srs.position",
+    )?;
+
+    let states = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(SceneReferenceState {
+                scene_id: parse_uuid(&row.get::<_, String>(0)?)?,
+                reference_type: row.get(1)?,
+                reference_id: parse_uuid(&row.get::<_, String>(2)?)?,
+                position: row.get(3)?,
+                expanded: row.get::<_, i32>(4)? != 0,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(states)
+}
+
+/// Get all discovery notes for a project (for snapshots)
+pub fn get_all_discovery_notes_for_project(
+    conn: &Connection,
+    project_id: &Uuid,
+) -> Result<Vec<DiscoveryNote>> {
+    let mut stmt = conn.prepare(
+        "SELECT dn.id, dn.scene_id, dn.content, dn.tags, dn.position, dn.created_at
+         FROM discovery_notes dn
+         JOIN scenes s ON dn.scene_id = s.id
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1
+         ORDER BY c.position, s.position, dn.position, dn.created_at",
+    )?;
+
+    let notes = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(DiscoveryNote {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                scene_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                content: row.get(2)?,
+                tags: parse_tags(row.get(3)?),
+                position: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(notes)
+}
+
+/// Get all scene-reference-item references for a project (for snapshots)
+pub fn get_all_scene_reference_item_refs(
+    conn: &Connection,
+    project_id: &Uuid,
+) -> Result<Vec<SceneReferenceItemRef>> {
+    let mut stmt = conn.prepare(
+        "SELECT srir.scene_id, srir.reference_item_id
+         FROM scene_reference_item_refs srir
+         JOIN scenes s ON srir.scene_id = s.id
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1",
+    )?;
+
+    let refs = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(SceneReferenceItemRef {
+                scene_id: parse_uuid(&row.get::<_, String>(0)?)?,
+                reference_item_id: parse_uuid(&row.get::<_, String>(1)?)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(refs)
+}
+
+/// Get all chapters for a project including archived (for snapshots)
+pub fn get_all_chapters_including_archived(
+    conn: &Connection,
+    project_id: &Uuid,
+) -> Result<Vec<Chapter>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, title, position, source_id, archived, locked, is_part, synopsis, planning_status
+         FROM chapters WHERE project_id = ?1 ORDER BY position",
+    )?;
+
+    let chapters = stmt
+        .query_map(params![project_id.to_string()], chapter_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(chapters)
+}
+
+/// Get all scenes for a project including archived (for snapshots)
+pub fn get_all_scenes_including_archived(
+    conn: &Connection,
+    project_id: &Uuid,
+) -> Result<Vec<Scene>> {
+    let mut stmt = conn.prepare(
+        "SELECT s.id, s.chapter_id, s.title, s.synopsis, s.prose, s.position, s.source_id, s.archived, s.locked, s.scene_type, s.scene_status, s.planning_status, s.editor_mode
+         FROM scenes s
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1
+         ORDER BY c.position, s.position",
+    )?;
+
+    let scenes = stmt
+        .query_map(params![project_id.to_string()], scene_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(scenes)
+}
+
+/// Get all beats for a project (for snapshots)
+pub fn get_all_beats_for_project(conn: &Connection, project_id: &Uuid) -> Result<Vec<Beat>> {
+    let mut stmt = conn.prepare(
+        "SELECT b.id, b.scene_id, b.content, b.prose, b.position, b.source_id
+         FROM beats b
+         JOIN scenes s ON b.scene_id = s.id
+         JOIN chapters c ON s.chapter_id = c.id
+         WHERE c.project_id = ?1
+         ORDER BY c.position, s.position, b.position",
+    )?;
+
+    let beats = stmt
+        .query_map(params![project_id.to_string()], |row| {
+            Ok(Beat {
+                id: parse_uuid(&row.get::<_, String>(0)?)?,
+                scene_id: parse_uuid(&row.get::<_, String>(1)?)?,
+                content: row.get(2)?,
+                prose: row.get(3)?,
+                position: row.get(4)?,
+                source_id: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(beats)
+}
+
+/// Delete all project content (for restore)
+pub fn delete_all_project_content(conn: &Connection, project_id: &Uuid) -> Result<()> {
+    // Delete scene references first
+    conn.execute(
+        "DELETE FROM scene_character_refs WHERE scene_id IN (
+            SELECT s.id FROM scenes s
+            JOIN chapters c ON s.chapter_id = c.id
+            WHERE c.project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+    conn.execute(
+        "DELETE FROM scene_location_refs WHERE scene_id IN (
+            SELECT s.id FROM scenes s
+            JOIN chapters c ON s.chapter_id = c.id
+            WHERE c.project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+    conn.execute(
+        "DELETE FROM scene_reference_item_refs WHERE scene_id IN (
+            SELECT s.id FROM scenes s
+            JOIN chapters c ON s.chapter_id = c.id
+            WHERE c.project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+    conn.execute(
+        "DELETE FROM scene_reference_state WHERE scene_id IN (
+            SELECT s.id FROM scenes s
+            JOIN chapters c ON s.chapter_id = c.id
+            WHERE c.project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+
+    // Delete beats
+    conn.execute(
+        "DELETE FROM beats WHERE scene_id IN (
+            SELECT s.id FROM scenes s
+            JOIN chapters c ON s.chapter_id = c.id
+            WHERE c.project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+
+    // Delete scenes
+    conn.execute(
+        "DELETE FROM scenes WHERE chapter_id IN (
+            SELECT id FROM chapters WHERE project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+
+    // Delete chapters
+    conn.execute(
+        "DELETE FROM chapters WHERE project_id = ?1",
+        params![project_id.to_string()],
+    )?;
+
+    // Delete characters and their attributes
+    conn.execute(
+        "DELETE FROM character_attributes WHERE character_id IN (
+            SELECT id FROM characters WHERE project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+    conn.execute(
+        "DELETE FROM characters WHERE project_id = ?1",
+        params![project_id.to_string()],
+    )?;
+
+    // Delete locations and their attributes
+    conn.execute(
+        "DELETE FROM location_attributes WHERE location_id IN (
+            SELECT id FROM locations WHERE project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+    conn.execute(
+        "DELETE FROM locations WHERE project_id = ?1",
+        params![project_id.to_string()],
+    )?;
+
+    // Delete reference items and their attributes
+    conn.execute(
+        "DELETE FROM reference_item_attributes WHERE reference_item_id IN (
+            SELECT id FROM reference_items WHERE project_id = ?1
+        )",
+        params![project_id.to_string()],
+    )?;
+    conn.execute(
+        "DELETE FROM reference_items WHERE project_id = ?1",
+        params![project_id.to_string()],
+    )?;
+
+    Ok(())
+}
+
+/// Update project metadata
+pub fn update_project(conn: &Connection, project: &Project) -> Result<()> {
+    let reference_types_json =
+        serde_json::to_string(&project.reference_types).unwrap_or_else(|_| "[]".to_string());
+    conn.execute(
+        "UPDATE projects SET name = ?1, source_type = ?2, source_path = ?3, project_root = ?4, modified_at = ?5, author_pen_name = ?6, genre = ?7, description = ?8, word_target = ?9, reference_types = ?10, project_type = ?11, target_page_count = ?12 WHERE id = ?13",
+        params![
+            project.name,
+            project.source_type.as_str(),
+            project.source_path,
+            project.project_root,
+            project.modified_at,
+            project.author_pen_name,
+            project.genre,
+            project.description,
+            project.word_target,
+            reference_types_json,
+            project.project_type,
+            project.target_page_count,
+            project.id.to_string(),
+        ],
+    )?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::schema::initialize_schema;
+    use crate::models::SourceType;
+    use std::collections::HashMap;
+
+    #[test]
+    fn empty_beat_prompts_do_not_replace_existing_page_prose() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = Scene::new(chapter.id, "Page-first scene".into(), None, 0);
+        insert_scene(&conn, &scene).unwrap();
+        switch_scene_editor_mode(&conn, &scene.id, "page").unwrap();
+        save_scene_page_prose(&conn, &scene.id, "<p>Existing manuscript</p>").unwrap();
+        switch_scene_editor_mode(&conn, &scene.id, "beat").unwrap();
+        for i in 0..3 {
+            insert_beat(&conn, &Beat::new(scene.id, format!("New prompt {i}"), i)).unwrap();
+            let page = switch_scene_editor_mode(&conn, &scene.id, "page").unwrap();
+            assert_eq!(page.prose.as_deref(), Some("<p>Existing manuscript</p>"));
+        }
+    }
+
+    #[test]
+    fn page_round_trip_keeps_empty_beats_in_place() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = Scene::new(chapter.id, "Scene".into(), None, 0);
+        insert_scene(&conn, &scene).unwrap();
+        for (i, prose) in [None, Some("<p>A</p>"), None, Some("<p>C</p>"), None]
+            .into_iter()
+            .enumerate()
+        {
+            let mut beat = Beat::new(scene.id, format!("Beat {i}"), i as i32);
+            beat.prose = prose.map(str::to_owned);
+            insert_beat(&conn, &beat).unwrap();
+        }
+        let before = get_beats(&conn, &scene.id).unwrap();
+        switch_scene_editor_mode(&conn, &scene.id, "page").unwrap();
+        switch_scene_editor_mode(&conn, &scene.id, "beat").unwrap();
+        let after = get_beats(&conn, &scene.id).unwrap();
+        for (a, b) in before.iter().zip(&after) {
+            assert_eq!((&a.id, &a.prose), (&b.id, &b.prose));
+        }
+        switch_scene_editor_mode(&conn, &scene.id, "page").unwrap();
+        save_scene_page_prose(&conn, &scene.id, "").unwrap();
+        switch_scene_editor_mode(&conn, &scene.id, "beat").unwrap();
+        assert!(get_beats(&conn, &scene.id)
+            .unwrap()
+            .iter()
+            .all(|b| b.prose.is_none()));
+        assert_eq!(
+            switch_scene_editor_mode(&conn, &scene.id, "page")
+                .unwrap()
+                .prose
+                .as_deref(),
+            Some("")
+        );
+    }
+
+    #[test]
+    fn reselecting_the_active_editor_mode_keeps_prose() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = Scene::new(chapter.id, "Scene".into(), None, 0);
+        insert_scene(&conn, &scene).unwrap();
+        let mut beat = Beat::new(scene.id, "Beat".into(), 0);
+        beat.prose = Some("<p>Beat draft</p>".into());
+        insert_beat(&conn, &beat).unwrap();
+
+        switch_scene_editor_mode(&conn, &scene.id, "page").unwrap();
+        let page_work = "<p>Beat draft</p><p>Two new pages of work</p>";
+        save_scene_page_prose(&conn, &scene.id, page_work).unwrap();
+        let page = switch_scene_editor_mode(&conn, &scene.id, "page").unwrap();
+        assert_eq!(page.prose.as_deref(), Some(page_work));
+        assert_eq!(page.editor_mode, EditorMode::Page);
+
+        switch_scene_editor_mode(&conn, &scene.id, "beat").unwrap();
+        update_beat_prose(&conn, &beat.id, "<p>Edited in beat view</p>").unwrap();
+        let beat_scene = switch_scene_editor_mode(&conn, &scene.id, "beat").unwrap();
+        assert_eq!(beat_scene.editor_mode, EditorMode::Beat);
+        assert_eq!(
+            get_beats(&conn, &scene.id).unwrap()[0].prose.as_deref(),
+            Some("<p>Edited in beat view</p>")
+        );
+        assert!(switch_scene_editor_mode(&conn, &scene.id, "Page").is_err());
+        assert_eq!(
+            get_scene_by_id(&conn, &scene.id)
+                .unwrap()
+                .unwrap()
+                .editor_mode,
+            EditorMode::Beat
+        );
+    }
+
+    fn setup_test_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        initialize_schema(&conn).unwrap();
+        conn
+    }
+
+    fn create_test_project(conn: &Connection) -> Project {
+        let project = Project::new(
+            "Test Project".to_string(),
+            SourceType::Markdown,
+            Some("/test/path".to_string()),
+        );
+        insert_project(conn, &project).unwrap();
+        project
+    }
+
+    fn create_test_chapter(conn: &Connection, project_id: Uuid) -> Chapter {
+        let chapter = Chapter {
+            id: Uuid::new_v4(),
+            project_id,
+            title: "Test Chapter".to_string(),
+            position: 0,
+            source_id: None,
+            archived: false,
+            locked: false,
+            is_part: false,
+            synopsis: None,
+            planning_status: PlanningStatus::Fixed,
+        };
+        insert_chapter(conn, &chapter).unwrap();
+        chapter
+    }
+
+    fn create_test_scene(conn: &Connection, chapter_id: Uuid) -> Scene {
+        let scene = Scene {
+            id: Uuid::new_v4(),
+            chapter_id,
+            title: "Test Scene".to_string(),
+            synopsis: Some("A test synopsis".to_string()),
+            prose: None,
+            position: 0,
+            source_id: None,
+            archived: false,
+            locked: false,
+            scene_type: SceneType::Normal,
+            scene_status: SceneStatus::Draft,
+            planning_status: PlanningStatus::Fixed,
+            editor_mode: EditorMode::Beat,
+        };
+        insert_scene(conn, &scene).unwrap();
+        scene
+    }
+
+    // ========================================================================
+    // Project Tests
+    // ========================================================================
+
+    #[test]
+    fn project_root_round_trips_and_updates() {
+        let conn = setup_test_db();
+        let mut project = create_test_project(&conn);
+        assert_eq!(get_project(&conn, &project.id).unwrap().unwrap().project_root, None);
+
+        update_project_root(&conn, &project.id, "/tmp/lithomark-project").unwrap();
+        let stored = get_project(&conn, &project.id).unwrap().unwrap();
+        assert_eq!(
+            stored.project_root.as_deref(),
+            Some("/tmp/lithomark-project")
+        );
+
+        project.project_root = Some("/tmp/lithomark-project-2".into());
+        update_project(&conn, &project).unwrap();
+        let stored = get_project(&conn, &project.id).unwrap().unwrap();
+        assert_eq!(
+            stored.project_root.as_deref(),
+            Some("/tmp/lithomark-project-2")
+        );
+    }
+
+    #[test]
+    fn reference_state_max_position_handles_null_and_scopes() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+        let other = create_test_scene(&conn, chapter.id);
+        assert_eq!(
+            get_scene_reference_state_max_position(&conn, &scene.id, "timelines").unwrap(),
+            None
+        );
+        for (scene_id, reference_type, position) in [
+            (scene.id, "timelines", 0),
+            (scene.id, "timelines", 3),
+            (scene.id, "custom", 9),
+            (other.id, "timelines", 12),
+        ] {
+            insert_scene_reference_state(
+                &conn,
+                &SceneReferenceState {
+                    scene_id,
+                    reference_type: reference_type.into(),
+                    reference_id: Uuid::new_v4(),
+                    position,
+                    expanded: false,
+                },
+            )
+            .unwrap();
+        }
+        assert_eq!(
+            get_scene_reference_state_max_position(&conn, &scene.id, "timelines").unwrap(),
+            Some(3)
+        );
+        assert_eq!(
+            get_scene_reference_state_max_position(&conn, &scene.id, "custom").unwrap(),
+            Some(9)
+        );
+        assert_eq!(
+            get_scene_reference_state_max_position(&conn, &other.id, "timelines").unwrap(),
+            Some(12)
+        );
+        delete_scene_reference_states_for_type(&conn, &scene.id, "timelines").unwrap();
+        assert_eq!(
+            get_scene_reference_state_max_position(&conn, &scene.id, "timelines").unwrap(),
+            None
+        );
+        insert_scene_reference_state(
+            &conn,
+            &SceneReferenceState {
+                scene_id: scene.id,
+                reference_type: "timelines".into(),
+                reference_id: Uuid::new_v4(),
+                position: 0,
+                expanded: false,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            get_scene_reference_state_max_position(&conn, &scene.id, "timelines").unwrap(),
+            Some(0)
+        );
+    }
+
+    #[test]
+    fn test_insert_and_get_project() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+
+        let retrieved = get_project(&conn, &project.id).unwrap();
+        assert!(retrieved.is_some());
+        let retrieved = retrieved.unwrap();
+        assert_eq!(retrieved.name, "Test Project");
+        assert_eq!(retrieved.source_type, SourceType::Markdown);
+    }
+
+    #[test]
+    fn test_get_nonexistent_project() {
+        let conn = setup_test_db();
+        let result = get_project(&conn, &Uuid::new_v4()).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_get_recent_projects() {
+        let conn = setup_test_db();
+        create_test_project(&conn);
+        create_test_project(&conn);
+
+        let projects = get_recent_projects(&conn, 10).unwrap();
+        assert_eq!(projects.len(), 2);
+    }
+
+    #[test]
+    fn test_update_project_modified() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let original_time = project.modified_at;
+
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        update_project_modified(&conn, &project.id).unwrap();
+
+        let updated = get_project(&conn, &project.id).unwrap().unwrap();
+        assert!(updated.modified_at > original_time);
+    }
+
+    // ========================================================================
+    // Chapter Tests
+    // ========================================================================
+
+    #[test]
+    fn test_insert_and_get_chapters() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+
+        let chapters = get_chapters(&conn, &project.id).unwrap();
+        assert_eq!(chapters.len(), 1);
+        assert_eq!(chapters[0].title, chapter.title);
+    }
+
+    #[test]
+    fn test_get_max_chapter_position() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+
+        // Empty project should return -1
+        let max = get_max_chapter_position(&conn, &project.id).unwrap();
+        assert_eq!(max, -1);
+
+        // After adding a chapter at position 0
+        create_test_chapter(&conn, project.id);
+        let max = get_max_chapter_position(&conn, &project.id).unwrap();
+        assert_eq!(max, 0);
+    }
+
+    #[test]
+    fn test_reorder_chapters() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+
+        let ch1 = Chapter {
+            id: Uuid::new_v4(),
+            project_id: project.id,
+            title: "Chapter 1".to_string(),
+            position: 0,
+            source_id: None,
+            archived: false,
+            locked: false,
+            is_part: false,
+            synopsis: None,
+            planning_status: PlanningStatus::Fixed,
+        };
+        let ch2 = Chapter {
+            id: Uuid::new_v4(),
+            project_id: project.id,
+            title: "Chapter 2".to_string(),
+            position: 1,
+            source_id: None,
+            archived: false,
+            locked: false,
+            is_part: false,
+            synopsis: None,
+            planning_status: PlanningStatus::Fixed,
+        };
+        insert_chapter(&conn, &ch1).unwrap();
+        insert_chapter(&conn, &ch2).unwrap();
+
+        // Reverse order
+        reorder_chapters(&conn, &project.id, &[ch2.id, ch1.id]).unwrap();
+
+        let chapters = get_chapters(&conn, &project.id).unwrap();
+        assert_eq!(chapters[0].id, ch2.id);
+        assert_eq!(chapters[0].position, 0);
+        assert_eq!(chapters[1].id, ch1.id);
+        assert_eq!(chapters[1].position, 1);
+    }
+
+    #[test]
+    fn test_rename_chapter() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+
+        rename_chapter(&conn, &chapter.id, "New Title").unwrap();
+
+        let updated = get_chapter_by_id(&conn, &chapter.id).unwrap().unwrap();
+        assert_eq!(updated.title, "New Title");
+    }
+
+    #[test]
+    fn test_delete_chapter() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+
+        delete_chapter(&conn, &chapter.id).unwrap();
+
+        let chapters = get_chapters(&conn, &project.id).unwrap();
+        assert!(chapters.is_empty());
+    }
+
+    // ========================================================================
+    // Scene Tests
+    // ========================================================================
+
+    #[test]
+    fn test_insert_and_get_scenes() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        let scenes = get_scenes(&conn, &chapter.id).unwrap();
+        assert_eq!(scenes.len(), 1);
+        assert_eq!(scenes[0].title, scene.title);
+    }
+
+    #[test]
+    fn test_update_scene_prose() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        update_scene_prose(&conn, &scene.id, "New prose content").unwrap();
+
+        let updated = get_scene_by_id(&conn, &scene.id).unwrap().unwrap();
+        assert_eq!(updated.prose, Some("New prose content".to_string()));
+    }
+
+    #[test]
+    fn test_update_scene_synopsis() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        update_scene_synopsis(&conn, &scene.id, Some("Updated synopsis")).unwrap();
+
+        let updated = get_scene_by_id(&conn, &scene.id).unwrap().unwrap();
+        assert_eq!(updated.synopsis, Some("Updated synopsis".to_string()));
+    }
+
+    #[test]
+    fn test_plan_and_apply_scene_move() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter1 = create_test_chapter(&conn, project.id);
+        let chapter2 = Chapter {
+            id: Uuid::new_v4(),
+            project_id: project.id,
+            title: "Chapter 2".to_string(),
+            position: 1,
+            source_id: None,
+            archived: false,
+            locked: false,
+            is_part: false,
+            synopsis: None,
+            planning_status: PlanningStatus::Fixed,
+        };
+        insert_chapter(&conn, &chapter2).unwrap();
+
+        let scene = create_test_scene(&conn, chapter1.id);
+        let plan = plan_scene_move(&conn, &scene.id, &chapter2.id, 0).unwrap();
+        apply_scene_move(&conn, &plan).unwrap();
+
+        let updated = get_scene_by_id(&conn, &scene.id).unwrap().unwrap();
+        assert_eq!(updated.chapter_id, chapter2.id);
+    }
+
+    #[test]
+    fn test_delete_scene() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        delete_scene(&conn, &scene.id).unwrap();
+
+        let scenes = get_scenes(&conn, &chapter.id).unwrap();
+        assert!(scenes.is_empty());
+    }
+
+    // ========================================================================
+    // Beat Tests
+    // ========================================================================
+
+    #[test]
+    fn test_insert_and_get_beats() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        let beat = Beat {
+            id: Uuid::new_v4(),
+            scene_id: scene.id,
+            content: "Test beat content".to_string(),
+            prose: None,
+            position: 0,
+            source_id: None,
+        };
+        insert_beat(&conn, &beat).unwrap();
+
+        let beats = get_beats(&conn, &scene.id).unwrap();
+        assert_eq!(beats.len(), 1);
+        assert_eq!(beats[0].content, "Test beat content");
+    }
+
+    #[test]
+    fn test_update_beat_prose() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        let beat = Beat {
+            id: Uuid::new_v4(),
+            scene_id: scene.id,
+            content: "Test beat".to_string(),
+            prose: None,
+            position: 0,
+            source_id: None,
+        };
+        insert_beat(&conn, &beat).unwrap();
+
+        update_beat_prose(&conn, &beat.id, "Beat prose").unwrap();
+
+        let beats = get_beats(&conn, &scene.id).unwrap();
+        assert_eq!(beats[0].prose, Some("Beat prose".to_string()));
+    }
+
+    // ========================================================================
+    // Lock Tests
+    // ========================================================================
+
+    #[test]
+    fn test_lock_unlock_chapter() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+
+        assert!(!is_chapter_locked(&conn, &chapter.id).unwrap());
+
+        lock_chapter(&conn, &chapter.id).unwrap();
+        assert!(is_chapter_locked(&conn, &chapter.id).unwrap());
+
+        unlock_chapter(&conn, &chapter.id).unwrap();
+        assert!(!is_chapter_locked(&conn, &chapter.id).unwrap());
+    }
+
+    #[test]
+    fn test_lock_unlock_scene() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        assert!(!is_scene_locked(&conn, &scene.id).unwrap());
+
+        lock_scene(&conn, &scene.id).unwrap();
+        assert!(is_scene_locked(&conn, &scene.id).unwrap());
+
+        unlock_scene(&conn, &scene.id).unwrap();
+        assert!(!is_scene_locked(&conn, &scene.id).unwrap());
+    }
+
+    #[test]
+    fn test_scene_locked_by_chapter() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        // Scene is unlocked
+        assert!(!is_scene_locked(&conn, &scene.id).unwrap());
+
+        // Lock the chapter - scene should now be locked too
+        lock_chapter(&conn, &chapter.id).unwrap();
+        assert!(is_scene_locked(&conn, &scene.id).unwrap());
+    }
+
+    // ========================================================================
+    // Character and Location Tests
+    // ========================================================================
+
+    #[test]
+    fn test_insert_and_get_characters() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+
+        let character = Character {
+            id: Uuid::new_v4(),
+            project_id: project.id,
+            name: "Hero".to_string(),
+            description: Some("The main character".to_string()),
+            attributes: HashMap::from([("role".to_string(), "protagonist".to_string())]),
+            source_id: None,
+        };
+        insert_character(&conn, &character).unwrap();
+
+        let characters = get_characters(&conn, &project.id).unwrap();
+        assert_eq!(characters.len(), 1);
+        assert_eq!(characters[0].name, "Hero");
+    }
+
+    #[test]
+    fn test_insert_and_get_locations() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+
+        let location = Location {
+            id: Uuid::new_v4(),
+            project_id: project.id,
+            name: "Castle".to_string(),
+            description: Some("A grand castle".to_string()),
+            attributes: HashMap::from([("type".to_string(), "building".to_string())]),
+            source_id: None,
+        };
+        insert_location(&conn, &location).unwrap();
+
+        let locations = get_locations(&conn, &project.id).unwrap();
+        assert_eq!(locations.len(), 1);
+        assert_eq!(locations[0].name, "Castle");
+    }
+
+    // ========================================================================
+    // Archive Tests
+    // ========================================================================
+
+    #[test]
+    fn test_archive_restore_chapter() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+
+        archive_chapter(&conn, &chapter.id).unwrap();
+        let archived = get_chapter_by_id(&conn, &chapter.id).unwrap().unwrap();
+        assert!(archived.archived);
+
+        restore_chapter(&conn, &chapter.id).unwrap();
+        let restored = get_chapter_by_id(&conn, &chapter.id).unwrap().unwrap();
+        assert!(!restored.archived);
+    }
+
+    #[test]
+    fn test_archive_restore_scene() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        archive_scene(&conn, &scene.id).unwrap();
+        let archived = get_scene_by_id(&conn, &scene.id).unwrap().unwrap();
+        assert!(archived.archived);
+
+        restore_scene(&conn, &scene.id).unwrap();
+        let restored = get_scene_by_id(&conn, &scene.id).unwrap().unwrap();
+        assert!(!restored.archived);
+    }
+
+    #[test]
+    fn test_get_archived_chapters() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+
+        // Initially no archived chapters
+        let archived = get_archived_chapters(&conn, &project.id).unwrap();
+        assert!(archived.is_empty());
+
+        // Archive the chapter
+        archive_chapter(&conn, &chapter.id).unwrap();
+        let archived = get_archived_chapters(&conn, &project.id).unwrap();
+        assert_eq!(archived.len(), 1);
+    }
+
+    #[test]
+    fn test_get_archived_scenes() {
+        let conn = setup_test_db();
+        let project = create_test_project(&conn);
+        let chapter = create_test_chapter(&conn, project.id);
+        let scene = create_test_scene(&conn, chapter.id);
+
+        // Initially no archived scenes
+        let archived = get_archived_scenes(&conn, &project.id).unwrap();
+        assert!(archived.is_empty());
+
+        // Archive the scene
+        archive_scene(&conn, &scene.id).unwrap();
+        let archived = get_archived_scenes(&conn, &project.id).unwrap();
+        assert_eq!(archived.len(), 1);
+    }
+}

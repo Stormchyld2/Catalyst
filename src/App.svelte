@@ -1,0 +1,1040 @@
+<script lang="ts">
+  import { IMPORT_FORMATS, importTypeForCommand, isImportType } from "./lib/importFormats";
+  import { invoke } from "@tauri-apps/api/core";
+  import { listen } from "@tauri-apps/api/event";
+  import { getCurrentWindow } from "@tauri-apps/api/window";
+  import { CircleAlert } from "lucide-svelte";
+  import { exit } from "@tauri-apps/plugin-process";
+  import { onMount, tick, untrack } from "svelte";
+  import { runImport, type ImportType } from "./lib/utils/import";
+  import { open } from "./lib/utils/nativeDialog";
+  import AboutDialog from "./lib/components/AboutDialog.svelte";
+  import EditorialWorkspace from "./lib/components/EditorialWorkspace.svelte";
+  import FeedbackDialog from "./lib/components/FeedbackDialog.svelte";
+  import Onboarding from "./lib/components/Onboarding.svelte";
+  import ReferencesPanel from "./lib/components/ReferencesPanel.svelte";
+  import FindReplaceDialog from "./lib/components/FindReplaceDialog.svelte";
+  import ScenePanel from "./lib/components/ScenePanel.svelte";
+  import Sidebar from "./lib/components/Sidebar.svelte";
+  import StartScreen from "./lib/components/StartScreen.svelte";
+  import SettingsDialog from "./lib/components/SettingsDialog.svelte";
+  import ExportDialog from "./lib/components/ExportDialog.svelte";
+  import ExportSuccessDialog from "./lib/components/ExportSuccessDialog.svelte";
+  import ErrorToast from "./lib/components/ErrorToast.svelte";
+  import ImportProgressDialog from "./lib/components/ImportProgressDialog.svelte";
+  import ConfirmDialog from "./lib/components/ConfirmDialog.svelte";
+  import ImportLongformDialog from "./lib/components/ImportLongformDialog.svelte";
+  import ReferenceClassificationDialog from "./lib/components/ReferenceClassificationDialog.svelte";
+  import QuickStartDialog from "./lib/components/QuickStartDialog.svelte";
+  import GuidanceOverlay from "./lib/components/GuidanceOverlay.svelte";
+  import CommandPalette from "./lib/components/CommandPalette.svelte";
+  import ModuleRail from "./lib/components/ModuleRail.svelte";
+  import StoryDevelopmentWorkspace from "./lib/components/StoryDevelopmentWorkspace.svelte";
+  import RecoveryManagerDialog from "./lib/components/RecoveryManagerDialog.svelte";
+  import ProjectDashboard from "./lib/components/ProjectDashboard.svelte";
+  import GitWorkspace from "./lib/components/GitWorkspace.svelte";
+  import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
+  import TerminalWorkspace from "./lib/components/TerminalWorkspace.svelte";
+  import { captureWritingFocus } from "./lib/utils/writingFocus";
+  import NewBookFoundationDialog from "./lib/components/NewBookFoundationDialog.svelte";
+  import { shortcuts } from "./lib/stores/shortcuts.svelte";
+  import { COMMAND_DEFS } from "./lib/commands";
+  import { currentProject } from "./lib/stores/project.svelte";
+  import { session } from "./lib/stores/session.svelte";
+  import { synopsisSaves, type SynopsisDraft } from "./lib/stores/synopsisSaves.svelte";
+  import { proseSaves, type ProseSave } from "./lib/utils/proseSaves";
+  import { ui } from "./lib/stores/ui.svelte";
+  import { workspace } from "./lib/stores/workspace.svelte";
+  import { isModalOpen } from "./lib/utils/modalFocus";
+  import type { ProseDocument } from "./lib/utils/proseSearch";
+  import type { Project, ExportResult, Chapter, Scene, Beat } from "./lib/types";
+
+  let { onReady }: { onReady?: () => void } = $props();
+  // Keep the native window title in sync with the selected book.
+  $effect(() => {
+    const bookTitle = currentProject.value?.name?.trim();
+    const title = bookTitle ? `${bookTitle} — LithoMark` : "LithoMark";
+    document.title = title;
+    void getCurrentWindow().setTitle(title).catch((error) => {
+      console.warn("Unable to update LithoMark window title:", error);
+    });
+  });
+
+  let initialProjectsLoaded = $state(false);
+  let initialEditorialLoaded = $state(false);
+  let showGlobalHome = $state(false);
+
+  $effect(() => {
+    if (initialProjectsLoaded && initialEditorialLoaded) onReady?.();
+  });
+
+  let scenePanel: ReturnType<typeof ScenePanel> | undefined = $state();
+  let editorial: ReturnType<typeof EditorialWorkspace> | undefined = $state();
+  export function focusAfterStartup() {
+    editorial?.focusIfOpen();
+  }
+  let searchDialog: ReturnType<typeof FindReplaceDialog> | undefined = $state();
+  let search = $state<{ projectId: string; scope: "scene" | "project"; replace: boolean } | null>(
+    null
+  );
+
+  // Native New/Import commands can change projects while a modal is open.
+  $effect(() => {
+    if (search && search.projectId !== currentProject.value?.id) search = null;
+  });
+
+  function openSearch(scope: "scene" | "project", replace = false) {
+    const projectId = currentProject.value?.id;
+    if (!projectId) return;
+    if (search?.projectId === projectId) searchDialog?.configure(scope, replace);
+    search = { projectId, scope, replace };
+  }
+
+  async function openSearchScene(doc: ProseDocument) {
+    if (!currentProject.value) return;
+    const projectId = currentProject.value.id;
+    const chapters = await invoke<Chapter[]>("get_chapters", {
+      projectId: currentProject.value.id,
+    });
+    const chapter = chapters.find((chapter) => chapter.id === doc.chapter_id);
+    const scenes = await invoke<Scene[]>("get_scenes", { chapterId: doc.chapter_id });
+    const scene = scenes.find((scene) => scene.id === doc.scene_id);
+    if (!chapter || !scene) throw new Error("This scene is no longer available.");
+    const beats = await invoke<Beat[]>("get_beats", { sceneId: scene.id });
+    if (currentProject.value?.id !== projectId) return;
+    currentProject.setChapters(chapters);
+    currentProject.setCurrentChapter(chapter);
+    currentProject.setScenes(scenes);
+    currentProject.setCurrentScene(scene);
+    await tick();
+    currentProject.setBeats(beats);
+    if (doc.beat_title !== null) ui.setExpandedBeat(doc.id);
+  }
+
+  let recentProjects = $state<Project[]>([]);
+
+  // Dialog states triggered by menu
+  let showSettings = $state(false);
+  let showExportDialog = $state(false);
+  let exportResult = $state<ExportResult | null>(null);
+  let showLongformImportDialog = $state(false);
+  let showReferenceClassificationDialog = $state(false);
+  let referenceClassificationProjectId = $state<string | null>(null);
+  let showQuickStart = $state(false);
+  let showCommandPalette = $state(false);
+  let showNewProjectDialog = $state(false);
+  let showAboutDialog = $state(false);
+  let showFeedbackDialog = $state(false);
+
+  async function loadRecentProjects() {
+    try {
+      recentProjects = await invoke("get_recent_projects");
+      if (!currentProject.value && recentProjects[0]) {
+        try {
+          const selected = await invoke<Project>("get_project", { id: recentProjects[0].id });
+          showGlobalHome = true;
+          currentProject.setProject(selected);
+        } catch (error) {
+          console.error("Failed to restore the latest project selection:", error);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load recent projects:", e);
+      recentProjects = [];
+    } finally {
+      initialProjectsLoaded = true;
+    }
+  }
+
+  async function openGlobalHome() {
+    await loadRecentProjects();
+    showGlobalHome = true;
+  }
+
+  function canOpenStoryDevelopment(): boolean {
+    const project = currentProject.value;
+    if (!project) return false;
+    if (project.project_root) return true;
+    ui.showError(
+      `${project.name} does not have a LithoMark project folder yet. Story Development requires a file-authoritative project folder. You can keep writing or return Home to open another project.`
+    );
+    return false;
+  }
+
+  $effect(() => {
+    const project = currentProject.value;
+    if (project && workspace.active === "story-development" && !project.project_root) {
+      workspace.setActive("write", true);
+      showGlobalHome = false;
+    }
+  });
+
+  async function requestProjectChange(): Promise<boolean> {
+    const pendingDocumentSaves: Promise<boolean>[] = [];
+    const permitted = window.dispatchEvent(
+      new CustomEvent("lithomark:before-project-change", {
+        cancelable: true,
+        detail: { pendingDocumentSaves },
+      })
+    );
+    if (!permitted) return false;
+    const results = await Promise.allSettled(pendingDocumentSaves);
+    return results.every((result) => result.status === "fulfilled" && result.value);
+  }
+
+  function activateImportedProject(project: Project) {
+    showGlobalHome = false;
+    // Clear prior project state so panels reload for the new project.
+    currentProject.setProject(null);
+    currentProject.setProject(project);
+    ui.setView("editor");
+    workspace.enterProject();
+  }
+
+  function openReferenceClassificationDialog(project: Project) {
+    referenceClassificationProjectId = project.id;
+    showReferenceClassificationDialog = true;
+  }
+
+  function closeReferenceClassificationDialog() {
+    showReferenceClassificationDialog = false;
+    referenceClassificationProjectId = null;
+  }
+
+  function handleReferenceClassificationComplete(project: Project) {
+    currentProject.setProject(project);
+    workspace.enterProject();
+    closeReferenceClassificationDialog();
+  }
+
+  // Reload projects when returning to start screen (currentProject becomes null)
+  // or on initial load
+  $effect(() => {
+    void ui.recentProjectsVersion;
+    if (!currentProject.value) {
+      loadRecentProjects();
+    }
+  });
+
+  async function handleImport(type: ImportType) {
+    if (!(await requestProjectChange())) return;
+    const project = await runImport(type);
+    if (!project) return;
+    activateImportedProject(project);
+    if (IMPORT_FORMATS[type].references) {
+      openReferenceClassificationDialog(project);
+    }
+  }
+
+  const importLongform = () => handleImport("longform");
+  const importLongformVault = () => handleImport("longformVault");
+
+  function handleImportCommand(command: string): boolean {
+    const type = importTypeForCommand(command);
+    if (!type) return false;
+    if (type === "longform") openLongformImportDialog();
+    else void handleImport(type);
+    return true;
+  }
+
+  function openLongformImportDialog() {
+    showLongformImportDialog = true;
+  }
+
+  async function openProjectFolder() {
+    if (!(await requestProjectChange())) return;
+    const rootPath = await open({
+      directory: true,
+      multiple: false,
+      title: "Open LithoMark Project Folder",
+      defaultPath: "C:\\Users\\storm\\Documents\\LithoMark Writer OS\\LithoMark\\docs\\projects",
+    });
+    if (!rootPath) return;
+    try {
+      const project = await invoke<Project>("open_project_folder", { rootPath });
+      showGlobalHome = false;
+      // Opening a folder selects the project; enter through its dashboard.
+      currentProject.setProject(null);
+      currentProject.setProject(project);
+      ui.setView("editor");
+      workspace.enterProject("home");
+      ui.refreshRecentProjects();
+    } catch (error) {
+      ui.showError(`Could not open LithoMark project folder: ${String(error)}`);
+    }
+  }
+
+  async function closeProject() {
+    if (!(await requestProjectChange())) return;
+    showGlobalHome = false;
+    search = null;
+    currentProject.setProject(null);
+    workspace.leaveProject();
+  }
+
+  let closePending = $state(false);
+  let closeRequest: Promise<boolean> | null = null;
+  let discardQuitDrafts = $state.raw<SynopsisDraft[] | null>(null);
+  let discardQuitProse = $state.raw<ProseSave[]>([]);
+
+  const interactionBlocked = $derived(closePending || discardQuitDrafts !== null);
+
+  let quitConfirmation: HTMLDialogElement | undefined = $state();
+
+  let finishQuitFocus: ((restore: boolean) => void) | undefined;
+
+  function captureCurrentWritingFocus(isTemporaryFocus?: (target: Event["target"]) => boolean) {
+    const projectId = currentProject.value?.id;
+    const sceneId = currentProject.currentScene?.id;
+    return captureWritingFocus(
+      () => currentProject.value?.id === projectId && currentProject.currentScene?.id === sceneId,
+      isTemporaryFocus
+    );
+  }
+
+  async function keepEditing() {
+    if (closePending) return;
+    const finish = finishQuitFocus;
+    finishQuitFocus = undefined;
+    quitConfirmation?.close();
+    discardQuitDrafts = null;
+    await tick();
+    finish?.(true);
+  }
+
+  function releaseQuitFocus() {
+    finishQuitFocus?.(false);
+    finishQuitFocus = undefined;
+  }
+
+  function focusQuitConfirmation(node: HTMLDialogElement) {
+    node.showModal();
+    node.querySelector<HTMLElement>('[data-testid="dialog-cancel"]')?.focus();
+  }
+
+  // Capture before any child/window shortcut handler can act on the same event.
+  onMount(() => {
+    const guardKeyboard = (event: KeyboardEvent) => {
+      if (!interactionBlocked) return;
+      if (discardQuitDrafts && !closePending && event.key === "Tab") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const buttons = Array.from(quitConfirmation?.querySelectorAll<HTMLElement>("button") ?? []);
+        const current = buttons.indexOf(document.activeElement as HTMLElement);
+        buttons[(current + (event.shiftKey ? buttons.length - 1 : 1)) % buttons.length]?.focus();
+        return;
+      }
+      const inConfirmation =
+        event.target instanceof HTMLElement &&
+        event.target.closest("[data-quit-confirmation]") !== null;
+      if (
+        inConfirmation &&
+        !closePending &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        event.key !== "Escape"
+      ) {
+        // Keep native button activation, but never deliver these keys to sibling
+        // dialogs' window listeners (including their bare Enter shortcuts).
+        event.stopImmediatePropagation();
+        return;
+      }
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (event.key === "Escape" && !closePending) void keepEditing();
+    };
+    window.addEventListener("keydown", guardKeyboard, true);
+    return () => window.removeEventListener("keydown", guardKeyboard, true);
+  });
+
+  function flushBeforeClose() {
+    if (discardQuitDrafts) return Promise.resolve(false);
+    if (closeRequest) return closeRequest;
+    finishQuitFocus = captureCurrentWritingFocus(
+      (target) => target instanceof Node && !!quitConfirmation?.contains(target)
+    );
+    closePending = true;
+    closeRequest = saveBeforeClose().finally(() => {
+      closePending = false;
+      closeRequest = null;
+      if (!discardQuitDrafts) releaseQuitFocus();
+    });
+    return closeRequest;
+  }
+
+  async function flushWritingBeforeExit() {
+    // This existing editor hook submits debounced page and beat edits to proseSaves.
+    await scenePanel?.prepareForSearch();
+    await proseSaves.flush();
+    if (proseSaves.draftsForRecovery().length) {
+      throw new Error(
+        "Prose changes could not be saved. Review the unsaved drafts in Find and Replace."
+      );
+    }
+  }
+  let editorialQuitFailed = $state(false);
+  async function saveBeforeClose() {
+    const results = await Promise.allSettled([
+      editorial?.flush(),
+      flushWritingBeforeExit(),
+      synopsisSaves.flush(),
+    ]);
+    editorialQuitFailed = results[0].status === "rejected";
+    const failed = results.some((result) => result.status === "rejected");
+    if (failed) {
+      discardQuitProse = proseSaves.draftsForRecovery();
+      discardQuitDrafts = synopsisSaves.snapshot();
+      return false;
+    }
+    await flushPositionBeforeClose();
+    return true;
+  }
+
+  async function flushPositionBeforeClose() {
+    try {
+      await session.flush();
+    } catch (error) {
+      console.error("Failed to save writing position before closing:", error);
+    }
+  }
+
+  async function quit() {
+    if (!(await flushBeforeClose())) return;
+    try {
+      await exit(0);
+    } catch (error) {
+      console.error("Failed to quit:", error);
+    }
+  }
+
+  async function quitAndDiscard() {
+    const approved = discardQuitDrafts;
+    if (!approved || closePending) return;
+    releaseQuitFocus();
+    closePending = true;
+    try {
+      if (editorialQuitFailed) editorial?.discardForQuit();
+      await proseSaves.discard(discardQuitProse, () =>
+        scenePanel?.discardProseDraftsForClose(discardQuitProse)
+      );
+      await synopsisSaves.discardAll(approved);
+      await flushPositionBeforeClose();
+      discardQuitDrafts = null;
+      await exit(0);
+    } catch (error) {
+      discardQuitDrafts = null;
+      ui.showError(`Could not quit: ${String(error)}`);
+    } finally {
+      closePending = false;
+    }
+  }
+
+  onMount(() => {
+    // Tauri awaits this handler before destroying the window.
+    const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
+      // Collect asynchronous saves from file-backed workspaces before closing.
+      // A rejected/failed save must keep the window open.
+      const pendingDocumentSaves: Promise<boolean>[] = [];
+      window.dispatchEvent(new CustomEvent("lithomark:flush-documents-before-close", {
+        detail: { pendingDocumentSaves },
+      }));
+      event.preventDefault();
+      const documentsSaved = await Promise.allSettled(pendingDocumentSaves);
+      if (documentsSaved.some((result) => result.status === "rejected" || !result.value)) {
+        ui.showError("Some documents could not be saved. LithoMark will remain open.");
+        return;
+      }
+      if (!(await requestProjectChange())) return;
+      if (await flushBeforeClose()) {
+        await getCurrentWindow().destroy();
+      }
+    });
+    return () => {
+      releaseQuitFocus();
+      void unlisten.then((stop) => stop());
+    };
+  });
+
+  let retryingSynopses = $state(false);
+  async function retrySynopses() {
+    if (interactionBlocked || retryingSynopses) return;
+    retryingSynopses = true;
+    try {
+      await synopsisSaves.flush();
+    } catch {
+      // The banner and per-scene errors remain visible until saving succeeds.
+    } finally {
+      retryingSynopses = false;
+    }
+  }
+
+  // Check for updates on launch (delayed so it doesn't block startup)
+  onMount(() => {
+    const t = setTimeout(() => {
+    }, 3000);
+    return () => clearTimeout(t);
+  });
+
+  // Handle menu events from Tauri
+  onMount(() => {
+    const unlisten = listen<string>("menu-event", (event) => {
+      if (!blockedByModal(event.payload)) runCommand(event.payload);
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  });
+
+  // Build command list with actions, filtered by context
+  const paletteCommands = $derived(
+    COMMAND_DEFS.filter((def) => {
+      if (def.requiresProject && !currentProject.value) return false;
+      if (def.requiresSourcePath && !currentProject.value?.source_path) return false;
+      return true;
+    }).map((def) => ({
+      ...def,
+      shortcut: shortcuts.label(def.id),
+      action: () => runCommand(def.id),
+    }))
+  );
+
+  let showRecoveryManager = $state(false);
+
+  function runCommand(id: string) {
+    if (interactionBlocked || (showSettings && id !== "quit")) return;
+    if (
+      editorial?.isOpen() &&
+      !["settings", "quit", "editorial_open", "editorial_project"].includes(id)
+    ) {
+      if (id === "close_project") void editorial.closeWorkspace();
+      if (["find", "find_project", "find_replace"].includes(id)) editorial.focusSearch();
+      if (id === "export") void editorial.exportFeedback();
+      return;
+    }
+    const def = COMMAND_DEFS.find((item) => item.id === id);
+    if (def?.requiresProject && !currentProject.value) return;
+    if (def?.requiresSourcePath && !currentProject.value?.source_path) return;
+    if (handleImportCommand(id)) return;
+    switch (id) {
+      case "recovery_manager":
+        if (currentProject.value?.project_root) showRecoveryManager = true;
+        break;
+      case "new_project":
+        showNewProjectDialog = true;
+        break;
+      case "open_project_folder":
+        void openProjectFolder();
+        break;
+      case "command_palette":
+        showCommandPalette = true;
+        break;
+      case "send_feedback":
+        showFeedbackDialog = true;
+        break;
+      case "editorial_open":
+        void editorial?.openFile();
+        break;
+      case "editorial_project":
+        if (currentProject.value) void editorial?.openProject(currentProject.value.id);
+        break;
+      case "find":
+        openSearch("scene");
+        break;
+      case "find_replace":
+        openSearch("scene", true);
+        break;
+      case "find_project":
+        openSearch("project", true);
+        break;
+      case "export":
+        if (currentProject.value) showExportDialog = true;
+        break;
+      case "close_project":
+        closeProject();
+        break;
+      case "sync":
+        window.dispatchEvent(new CustomEvent("kindling:sync"));
+        break;
+      case "toggle_sidebar":
+        ui.toggleSidebar();
+        break;
+      case "toggle_references":
+        ui.toggleReferencesPanel();
+        break;
+      case "toggle_discovery_notes":
+        window.dispatchEvent(new CustomEvent("kindling:toggleDiscoveryNotes"));
+        break;
+      case "detect_references":
+        window.dispatchEvent(new CustomEvent("kindling:detectReferences"));
+        break;
+      case "detect_all_references":
+        window.dispatchEvent(new CustomEvent("kindling:detectAllReferences"));
+        break;
+      case "toggle_editor_mode":
+        window.dispatchEvent(new CustomEvent("kindling:toggleEditorMode"));
+        break;
+      case "quick_start":
+        showQuickStart = true;
+        break;
+      case "settings":
+        showSettings = true;
+        break;
+      case "about":
+        showAboutDialog = true;
+        break;
+      case "quit":
+        void quit();
+        break;
+    }
+  }
+
+  let previousEditorialScene: string | undefined;
+  $effect(() => {
+    const scene = currentProject.currentScene?.id;
+    if (scene && scene !== previousEditorialScene && untrack(() => editorial?.isLocal()))
+      untrack(() => editorial?.navigateScene(scene));
+    previousEditorialScene = scene;
+  });
+
+  $effect(() => {
+    // A lock/status change in the shared outline refreshes local review metadata.
+    const metadata = [
+      currentProject.chapters.map((c) => [c.id, c.locked]),
+      currentProject.scenes.map((s) => [s.id, s.locked, s.scene_status]),
+    ];
+    void metadata;
+    if (untrack(() => editorial?.isLocal()))
+      untrack(() => {
+        void editorial?.refreshLocalContext();
+      });
+  });
+
+  // Capture application bindings before TipTap/browser keymaps consume them.
+  onMount(() => {
+    void shortcuts.load();
+    window.addEventListener("keydown", handleKeydown, true);
+    return () => window.removeEventListener("keydown", handleKeydown, true);
+  });
+
+  $effect(() => {
+    void shortcuts.suspend(showSettings).then(() => {
+      if (shortcuts.error) ui.showError(shortcuts.error);
+    });
+  });
+
+  const FIND_COMMANDS = ["find", "find_replace", "find_project"];
+  const FIND_DIALOG = 'dialog[aria-labelledby="find-title"]';
+
+  /**
+   * Menu accelerators and shortcuts must not act behind a modal (a file picker, an
+   * import in progress, any open dialog): Cmd+W there would close the project. Quit
+   * always gets through because it runs its own save-before-exit flow. Find and
+   * Replace is a working tool rather than a task in progress: menu commands still
+   * reach the app with it open, and it closes itself when the project changes.
+   */
+  function blockedByModal(id: string | null | undefined) {
+    if (id === "quit") return false;
+    if (showSettings) return true;
+    return isModalOpen((modal) => modal.matches(FIND_DIALOG));
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (interactionBlocked || event.defaultPrevented || event.isComposing) return;
+    const id = shortcuts.match(event);
+    if (showSettings) {
+      if (id === "quit" && !shortcuts.recording) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!event.repeat) runCommand(id);
+      }
+      return;
+    }
+    const target = event.target instanceof Element ? event.target : null;
+    const findInFindDialog = !!id && FIND_COMMANDS.includes(id) && !!target?.closest(FIND_DIALOG);
+    // Focus can sit on <body> while a dialog is open, so check for open modals as
+    // well as whether the key came from inside one.
+    if (
+      !findInFindDialog &&
+      (showCommandPalette || !!target?.closest('[role="dialog"], dialog') || blockedByModal(id))
+    )
+      return;
+    if (!id || !COMMAND_DEFS.some((def) => def.id === id)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (!event.repeat) runCommand(id);
+  }
+</script>
+
+{#snippet errorToast()}
+  <ImportProgressDialog />
+  {#if ui.toast}
+    {#key ui.toast.id}
+      <ErrorToast message={ui.toast.message} onDismiss={() => ui.clearToast()} />
+    {/key}
+  {/if}
+{/snippet}
+
+<div
+  inert={interactionBlocked || editorial?.isOpen()}
+  hidden={interactionBlocked || editorial?.isOpen()}
+>
+  {#if search && search.projectId === currentProject.value?.id}
+    {#key search.projectId}
+      <FindReplaceDialog
+        bind:this={searchDialog}
+        projectId={search.projectId}
+        sceneId={currentProject.currentScene?.id ?? null}
+        initialScope={search.scope}
+        showReplace={search.replace}
+        prepare={async () => {
+          await scenePanel?.prepareForSearch();
+        }}
+        onDiscardDrafts={async (drafts) => {
+          await scenePanel?.discardFailedSaves(drafts);
+        }}
+        onApplied={(changes) => scenePanel?.applySearchChanges(changes)}
+        onOpenScene={openSearchScene}
+        onClose={() => (search = null)}
+      />
+    {/key}
+  {/if}
+</div>
+{#if discardQuitDrafts}
+  <dialog
+    data-quit-confirmation
+    aria-labelledby="quit-confirmation-title"
+    bind:this={quitConfirmation}
+    use:focusQuitConfirmation
+    oncancel={(event) => {
+      event.preventDefault();
+      void keepEditing();
+    }}
+    class="border-0 p-0 max-w-none max-h-none backdrop:bg-transparent"
+  >
+    <ConfirmDialog
+      embedded
+      titleId="quit-confirmation-title"
+      title={editorialQuitFailed
+        ? "Quit without saving review changes?"
+        : discardQuitProse.length
+          ? "Quit without saving writing changes?"
+          : "Quit without saving synopsis changes?"}
+      message={editorialQuitFailed
+        ? "Your review could not be saved. Keep editing to retry or export a recovery copy. Quitting and discarding removes all unsaved review, prose, and synopsis changes."
+        : discardQuitProse.length
+          ? "Some prose or synopsis changes could not be saved. Quit and discard these unsaved writing changes, or keep editing to retry saving."
+          : "Some synopsis changes could not be saved. Quit and discard these unsaved synopsis changes, or keep editing to retry saving."}
+      confirmLabel="Quit and discard"
+      cancelLabel="Keep editing"
+      onConfirm={quitAndDiscard}
+      onCancel={keepEditing}
+    />
+    {@render errorToast()}
+  </dialog>
+{/if}
+
+{#if synopsisSaves.failedCount && !discardQuitDrafts}
+  <div class="ka-toast-region synopsis-toast">
+    <div role="alert" class="ka-toast">
+      <CircleAlert class="w-5 h-5 ka-icon" aria-hidden="true" />
+      <div>
+        <strong>Your synopsis changes have not been saved.</strong>
+        <button
+          type="button"
+          onclick={retrySynopses}
+          disabled={retryingSynopses || interactionBlocked}
+          aria-busy={retryingSynopses || undefined}
+          aria-label="Retry all synopsis saves"
+          class="ka-button ka-button--secondary synopsis-retry"
+          >{retryingSynopses ? "Saving..." : "Retry saving"}</button
+        >
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Settings is shared by the writing and local editorial workspaces. -->
+<div inert={interactionBlocked} hidden={interactionBlocked}>
+  {#if showSettings}
+    <SettingsDialog onClose={() => (showSettings = false)} />
+  {/if}
+</div>
+
+<main inert={interactionBlocked} aria-busy={closePending} class="app-main">
+  <ModuleRail
+    hasActiveProject={!!currentProject.value}
+    onOpenHome={() => void openGlobalHome()}
+    onOpenSettings={() => (showSettings = true)}
+    onStartStoryDevelopment={() => (showNewProjectDialog = true)}
+    onOpenStoryDevelopment={canOpenStoryDevelopment}
+    onProjectWorkspaceActivated={() => (showGlobalHome = false)}
+  />
+
+  {#if
+    currentProject.value &&
+    workspace.active === "write" &&
+    (!editorial?.isOpen() || editorial?.isLocal())
+  }
+    <Sidebar
+      onOpenSettings={() => (showSettings = true)}
+      onOpenProjectDashboard={() => {
+        showGlobalHome = false;
+        workspace.setActive("home", true);
+      }}
+      beforeCloseProject={async () => {
+        if (editorial?.isLocal()) {
+          await editorial.closeWorkspace();
+        }
+      }}
+      prepareWritingReset={async () => {
+        await scenePanel?.prepareForSearch();
+        await editorial?.flush();
+      }}
+    />
+  {/if}
+
+  {#if showRecoveryManager && currentProject.value?.project_root}
+    <RecoveryManagerDialog onClose={() => (showRecoveryManager = false)} />
+  {/if}
+
+  <div class="writing-surface" class:writing-hidden={editorial?.isOpen()}>
+    {#if !currentProject.value || showGlobalHome}
+      <StartScreen
+        {recentProjects}
+        onOpenEditorial={() => editorial?.openFile()}
+        onImportLongform={openLongformImportDialog}
+        onImportComplete={(project, type) => {
+          if (IMPORT_FORMATS[type].references) {
+            openReferenceClassificationDialog(project);
+          }
+        }}
+        onOpenQuickStart={() => (showQuickStart = true)}
+        onNewProject={() => (showNewProjectDialog = true)}
+        onOpenProjectFolder={openProjectFolder}
+        onProjectActivated={() => (showGlobalHome = false)}
+      />
+    {:else if workspace.active === "write"}
+      <ScenePanel
+        bind:this={scenePanel}
+        onOpenEditorial={async (id, sceneId, cursor) => {
+          await editorial?.openLocal(id, sceneId, cursor);
+        }}
+      />
+      <ReferencesPanel />
+    {:else if workspace.active === "story-development"}
+      <StoryDevelopmentWorkspace />
+    {:else if workspace.active === "outline"}
+      <OutlineWorkspace project={currentProject.value} />
+    {:else if workspace.active === "home"}
+      <ProjectDashboard
+        project={currentProject.value}
+        onOpenWrite={() => workspace.setActive("write", true)}
+        onOpenStoryDevelopment={() => {
+          if (canOpenStoryDevelopment()) workspace.setActive("story-development", true);
+        }}
+      />
+    {:else if workspace.active === "git"}
+      <GitWorkspace project={currentProject.value} />
+    {:else if workspace.active === "terminal"}
+      <TerminalWorkspace project={currentProject.value} />
+    {:else}
+      <section class="workspace-placeholder" aria-live="polite">
+        <div class="workspace-placeholder__card">
+          <p class="workspace-placeholder__eyebrow">LithoMark Writer OS</p>
+          <h1>{workspace.active.charAt(0).toUpperCase() + workspace.active.slice(1)}</h1>
+          <p>This workspace is part of the Writer OS shell and will be implemented in a later phase.</p>
+          <button
+            type="button"
+            class="ka-button"
+            onclick={() => workspace.enterProject()}
+          >
+            Return to Write
+          </button>
+        </div>
+      </section>
+    {/if}
+  </div>
+
+  <EditorialWorkspace
+    bind:this={editorial}
+    onReady={() => (initialEditorialLoaded = true)}
+    prepareWriting={async () => {
+      await scenePanel?.prepareForSearch();
+      await proseSaves.flush();
+    }}
+    onManuscriptChanged={async () => {
+      const scene = currentProject.currentScene;
+      if (scene) {
+        const scenes = await invoke<Scene[]>("get_scenes", { chapterId: scene.chapter_id });
+        currentProject.setScenes(scenes);
+        currentProject.setCurrentScene(scenes.find((s) => s.id === scene.id) ?? null);
+        currentProject.setBeats(await invoke<Beat[]>("get_beats", { sceneId: scene.id }));
+        scenePanel?.applyRevision(await invoke("get_scene_review", { sceneId: scene.id }));
+      }
+    }}
+    >{#snippet references(sceneId)}<ReferencesPanel
+        contextSceneId={sceneId}
+        embedded
+      />{/snippet}</EditorialWorkspace
+  >
+</main>
+
+{#if !discardQuitDrafts}
+  {@render errorToast()}
+{/if}
+
+<div
+  inert={interactionBlocked || editorial?.isOpen()}
+  hidden={interactionBlocked || editorial?.isOpen()}
+>
+  <!-- Command palette -->
+  <CommandPalette
+    bind:open={showCommandPalette}
+    commands={paletteCommands}
+    onClose={() => (showCommandPalette = false)}
+  />
+
+  <!-- Guidance overlay (first-visit tips, one at a time, modal-style) -->
+  <GuidanceOverlay />
+
+  <!-- Onboarding overlay (shown on first launch) -->
+  <Onboarding
+    onImportLongform={openLongformImportDialog}
+    onImportComplete={(project: Project, type: string) => {
+      if (isImportType(type) && IMPORT_FORMATS[type].references) {
+        openReferenceClassificationDialog(project);
+      }
+    }}
+  />
+
+  {#if showReferenceClassificationDialog && referenceClassificationProjectId}
+    <ReferenceClassificationDialog
+      projectId={referenceClassificationProjectId}
+      onClose={closeReferenceClassificationDialog}
+      onComplete={handleReferenceClassificationComplete}
+    />
+  {/if}
+
+  <!-- File-authoritative New Book Foundation (triggered by File menu or StartScreen) -->
+  {#if showNewProjectDialog}
+    <NewBookFoundationDialog
+      onClose={() => (showNewProjectDialog = false)}
+      onComplete={() => {
+        showNewProjectDialog = false;
+      }}
+    />
+  {/if}
+
+  <!-- Quick Start Dialog (triggered by Help menu) -->
+  {#if showQuickStart}
+    <QuickStartDialog onClose={() => (showQuickStart = false)} />
+  {/if}
+
+  <!-- Export Dialog (triggered by menu) -->
+  {#if showExportDialog && currentProject.value}
+    <ExportDialog
+      scope="project"
+      scopeId={null}
+      scopeTitle={currentProject.value.name}
+      onClose={() => (showExportDialog = false)}
+      onSuccess={(result) => {
+        showExportDialog = false;
+        exportResult = result;
+      }}
+    />
+  {/if}
+
+  {#if showLongformImportDialog}
+    <ImportLongformDialog
+      onSelectIndex={() => {
+        showLongformImportDialog = false;
+        importLongform();
+      }}
+      onSelectVault={() => {
+        showLongformImportDialog = false;
+        importLongformVault();
+      }}
+      onClose={() => (showLongformImportDialog = false)}
+    />
+  {/if}
+
+  <!-- Export Success Dialog -->
+  {#if exportResult}
+    <ExportSuccessDialog result={exportResult} onClose={() => (exportResult = null)} />
+  {/if}
+
+  <!-- About Dialog -->
+  {#if showAboutDialog}
+    <AboutDialog
+      onClose={() => (showAboutDialog = false)}
+      onSendFeedback={() => {
+        showAboutDialog = false;
+        showFeedbackDialog = true;
+      }}
+    />
+  {/if}
+
+  <!-- Feedback Dialog (opened from the Help menu or the About dialog) -->
+  {#if showFeedbackDialog}
+    <FeedbackDialog onClose={() => (showFeedbackDialog = false)} />
+  {/if}
+</div>
+
+<style>
+  .app-main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+    background: var(--color-bg);
+  }
+  .synopsis-toast {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+  .synopsis-retry {
+    margin-top: var(--space-2xs);
+  }
+  .writing-surface {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+  }
+  .writing-hidden {
+    display: none;
+  }
+  .workspace-placeholder {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    place-items: center;
+    padding: var(--space-l);
+    overflow: auto;
+    background: var(--color-bg);
+  }
+  .workspace-placeholder__card {
+    width: min(720px, 100%);
+    padding: var(--space-l);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-l);
+    background: var(--color-surface);
+  }
+  .workspace-placeholder__eyebrow {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-accent-text);
+    font: 600 var(--text-ui) / 1.4 var(--font-ui);
+  }
+  .workspace-placeholder h1 {
+    margin: 0 0 var(--space-s);
+    color: var(--color-text);
+    font-family: var(--font-display);
+  }
+  .workspace-placeholder p {
+    margin: 0 0 var(--space-m);
+    max-width: 65ch;
+    color: var(--color-text-muted);
+  }
+</style>
