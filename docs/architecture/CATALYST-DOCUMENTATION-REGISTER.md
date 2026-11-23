@@ -15,6 +15,7 @@
 ## Active authority and sequence
 
 - **New RPG campaigns:** `020-CAMPAIGN-WIZARD-ARCHITECTURE.md` — approved design, not yet proof of implementation.
+- **Character Studio:** `021-CHARACTER-STUDIO-ARCHITECTURE.md` — approved guided/manual builder, rules packs, sheets and donor evaluation; not yet proof of implementation.
 - **Core storage/stable-ID contracts:** `001-PROJECT-FILE-FORMAT.md`, `002-DOCUMENT-MODEL.md`, `003-STABLE-ID-SYSTEM.md`; read with the RPG exceptions in 020.
 - **Canon/continuity:** `004-CANON-MODEL.md`; useful core mechanism, later adapt domain language to campaigns and worlds.
 - **Plugins / agents:** `005-PLUGIN-ARCHITECTURE.md` and `006-AGENT-API.md`; inspect implementations before designing RPG extensions.
@@ -46,12 +47,12 @@
 | `019-STORY-DEVELOPMENT-PLANNING-CANVAS.md` | Reusable visual planning | Adapt to quests, locations, NPC relationships and planning boards |
 | `multi-window-adaptive-display.md` | Reusable design | Apply to GM/private and player-facing displays after security review |
 | `020-CAMPAIGN-WIZARD-ARCHITECTURE.md` | **Approved new RPG target** | Implement and validate through tests before declaring complete |
+| `021-CHARACTER-STUDIO-ARCHITECTURE.md` | **Approved new RPG target** | Reuse selected licensed donors after audit; implement guided/manual builder and sheet engine |
 
 ## Missing dedicated Catalyst architecture documents
 
 Create these as separate, reviewable design milestones:
 - Catalyst root product architecture and feature matrix.
-- Character Studio: guided/manual creation, rules packs, advancement, schema, digital and printable sheets.
 - World Builder RPG taxonomy and entity templates beyond initial wizard seeding.
 - Adventure Studio / quest and encounter documents and transitions.
 - Map Studio manual editor, generators, map schema, asset licenses and VTT interfaces.
