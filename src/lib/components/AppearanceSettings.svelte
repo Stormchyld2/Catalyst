@@ -38,30 +38,6 @@
       </div>
       <p class="ka-help">“System” follows your operating system’s appearance setting.</p>
 
-      <div class="accent-block">
-        <span class="ka-group-title">Accent color</span>
-        <div class="accent-options" role="radiogroup" aria-label="Accent color">
-          {#each [
-            { value: "blue", label: "Blue" },
-            { value: "gold", label: "Gold" },
-            { value: "teal", label: "Teal" },
-            { value: "purple", label: "Purple" }
-          ] as opt}
-            <label class="accent-option" class:selected={ui.accent === opt.value}>
-              <input
-                type="radio"
-                name="accent"
-                value={opt.value}
-                checked={ui.accent === opt.value}
-                onchange={() => ui.setAccent(opt.value as "blue" | "gold" | "teal" | "purple")}
-              />
-              <span class="accent-swatch" data-accent-preview={opt.value}></span>
-              <span>{opt.label}</span>
-            </label>
-          {/each}
-        </div>
-        <p class="ka-help">Accent colors apply immediately across navigation, focus rings, and primary actions.</p>
-      </div>
     </fieldset>
   </div>
 
@@ -129,48 +105,6 @@
 </div>
 
 <style>
-  .accent-block {
-    display: grid;
-    gap: var(--space-2xs);
-    margin-top: var(--space-s);
-    padding-top: var(--space-s);
-    border-top: var(--border-hair);
-  }
-  .accent-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2xs);
-  }
-  .accent-option {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    min-height: 36px;
-    padding: 5px 9px;
-    border: var(--border-hair);
-    border-radius: var(--radius-s);
-    background: var(--color-surface);
-    color: var(--color-text);
-    cursor: pointer;
-  }
-  .accent-option.selected {
-    box-shadow: var(--focus-ring);
-  }
-  .accent-option input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .accent-swatch {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 1px solid rgb(255 255 255 / .25);
-  }
-  .accent-swatch[data-accent-preview="blue"] { background: #6E8CA8; }
-  .accent-swatch[data-accent-preview="gold"] { background: #D8AB5F; }
-  .accent-swatch[data-accent-preview="teal"] { background: #65AAA5; }
-  .accent-swatch[data-accent-preview="purple"] { background: #B39AC4; }
   .guidance-actions {
     display: flex;
     flex-wrap: wrap;

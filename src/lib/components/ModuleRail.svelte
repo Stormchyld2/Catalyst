@@ -150,8 +150,8 @@
 <style>
   /* Obsidian + Frost Blue (docs/architecture/025-CATALYST-DESIGN-SYSTEM.md). */
   .module-rail {
-    flex: 0 0 76px;
-    width: 76px;
+    flex: 0 0 80px;
+    width: 80px;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -225,11 +225,11 @@
   }
 
   .module-rail__button span {
-    max-width: 66px;
+    max-width: 70px;
     font: 500 9.5px/1.15 var(--font-ui);
     text-align: center;
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
   }
 
   .module-rail__button:hover:not(:disabled) {
@@ -260,9 +260,10 @@
     background: var(--cat-accent);
   }
 
+  /* Overrides the global disabled token pair in app.css, which uses !important. */
   .module-rail__button:disabled {
     background: transparent !important;
-    color: var(--cat-disabled);
+    color: var(--cat-disabled) !important;
     cursor: not-allowed;
   }
 
