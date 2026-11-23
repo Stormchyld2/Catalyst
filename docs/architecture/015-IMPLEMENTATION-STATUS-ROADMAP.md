@@ -1,9 +1,9 @@
-# LithoMark Writer OS — Implementation Status and Roadmap
+# Catalyst — Implementation Status and Roadmap
 
 
 ## SQLite Removal Direction
 
-SQLite is transitional legacy state from Kindling and is not part of the target LithoMark project architecture.
+SQLite is transitional legacy state from Kindling and is not part of the target Catalyst project architecture.
 
 - Authoritative project identity and metadata live in `project.yaml` inside the local project folder.
 - Runtime subsystems should accept or resolve the active local project root directly and operate on files beneath that root.
@@ -14,7 +14,7 @@ SQLite is transitional legacy state from Kindling and is not part of the target 
 
 ## Locked navigation model
 
-LithoMark uses two intentionally distinct home destinations:
+Catalyst uses two intentionally distinct home destinations:
 
 - **Global Home** is the permanent Home workspace on the Writer OS rail. It is the project launcher/library for creating, importing, opening, and switching books. Visiting Global Home does not implicitly close the active project.
 - **Project Dashboard** is the active book's command center. It is entered from the project/editor sidebar and never substitutes for Global Home.
@@ -26,7 +26,7 @@ This navigation contract is locked unless a later architecture change explicitly
 
 ## Runtime Data Rule
 
-LithoMark must not ship or depend on mock, demo, placeholder, or hard-coded project data in normal application flows.
+Catalyst must not ship or depend on mock, demo, placeholder, or hard-coded project data in normal application flows.
 
 - Live workspaces must read from the actual project folder and authoritative Markdown/YAML/JSON files from the beginning of implementation.
 - Disposable indexes and caches are allowed only when they are derived from and rebuildable from those files.
@@ -47,7 +47,7 @@ Older projects using top-level `Story Bible/`, `Story/`, `Timeline/`, or `Resear
 
 ## Locked foundation
 
-LithoMark is a local-first Writer OS. Normal project files and folders are authoritative; Markdown/YAML/JSON are preferred. SQLite may remain only as disposable/rebuildable cache or transitional compatibility state.
+Catalyst is a local-first Writer OS. Normal project files and folders are authoritative; Markdown/YAML/JSON are preferred. SQLite may remain only as disposable/rebuildable cache or transitional compatibility state.
 
 A project is the product. Write, Story Development, Review, TTS, Audiobook, Publish, Git, and other capabilities operate on the same project and stable identities rather than importing or duplicating manuscript data.
 
@@ -197,7 +197,7 @@ Status: **full template system implemented, pending local test checkpoint**
 Status: **architecture locked, implementation pending**
 
 - explicit synthetic sample project only;
-- normal local LithoMark project folder;
+- normal local Catalyst project folder;
 - representative Story Development, entities, worldbuilding, planning, and two short manuscript chapters;
 - never used as silent runtime fallback data.
 
@@ -248,7 +248,7 @@ Status: **implemented and locally verified**
 ## Locked Write Experience Additions
 
 ### Writing history
-LithoMark will provide lightweight local writing history independently of Git.
+Catalyst will provide lightweight local writing history independently of Git.
 
 - Keep a small rotating set of automatic snapshots per chapter, targeting **five snapshots** rather than unlimited history.
 - Snapshot retention should be spread across meaningful recent points in time over several days, not created continuously on every keystroke.

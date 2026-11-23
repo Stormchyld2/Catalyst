@@ -30,8 +30,8 @@ pub fn enabled() -> bool {
         return false;
     }
     assert!(
-        std::env::var("LITHOMARK_DATA_DIR").is_ok_and(|v| !v.trim().is_empty()),
-        "Background QA requires an explicit LITHOMARK_DATA_DIR; refusing to open the normal app"
+        std::env::var("CATALYST_DATA_DIR").is_ok_and(|v| !v.trim().is_empty()),
+        "Background QA requires an explicit CATALYST_DATA_DIR; refusing to open the normal app"
     );
     assert!(
         unsafe { kindling_qa_supported() },

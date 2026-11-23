@@ -1,4 +1,4 @@
-/* kindling — Press components. Load AFTER tokens.css (reads its custom properties). */
+/* Catalyst — Press components. Load AFTER tokens.css (reads its custom properties). */
 
 * { margin:0; padding:0; box-sizing:border-box; }
 

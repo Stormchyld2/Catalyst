@@ -1,22 +1,22 @@
-# LithoMark Writer OS — External Agent API
+# Catalyst — External Agent API
 
 **Document:** 006-AGENT-API.md  
 **Status:** Locked Baseline  
-**Project:** LithoMark Writer OS  
-**Parent Specification:** 000-LITHOMARK-ARCHITECTURE.md  
+**Project:** Catalyst  
+**Parent Specification:** 000-CATALYST-ARCHITECTURE.md  
 **Related Specifications:** 001-PROJECT-FILE-FORMAT.md, 002-DOCUMENT-MODEL.md, 003-STABLE-ID-SYSTEM.md, 004-CANON-MODEL.md, 005-PLUGIN-ARCHITECTURE.md
 
 ---
 
 # 1. Purpose
 
-This specification defines the LithoMark External Agent API.
+This specification defines the Catalyst External Agent API.
 
-The Agent API allows explicitly authorized external applications, automation tools, scripts, developer tools, and agentic systems to interact with LithoMark through a controlled interface.
+The Agent API allows explicitly authorized external applications, automation tools, scripts, developer tools, and agentic systems to interact with Catalyst through a controlled interface.
 
-The Agent API does not make LithoMark an AI application.
+The Agent API does not make Catalyst an AI application.
 
-LithoMark Core contains no requirement for generative artificial intelligence.
+Catalyst Core contains no requirement for generative artificial intelligence.
 
 The API is a general-purpose external integration boundary.
 
@@ -24,7 +24,7 @@ The API is a general-purpose external integration boundary.
 
 # 2. Fundamental Principle
 
-External software must not require unrestricted access to LithoMark's internal implementation.
+External software must not require unrestricted access to Catalyst's internal implementation.
 
 Preferred architecture:
 
@@ -32,7 +32,7 @@ Preferred architecture:
 External Application
         │
         ▼
-LithoMark Agent API
+Catalyst Agent API
         │
         ▼
 Authentication
@@ -41,7 +41,7 @@ Authentication
 Permission Layer
         │
         ▼
-LithoMark Domain API
+Catalyst Domain API
         │
         ▼
 Project / Document Services
@@ -50,13 +50,13 @@ Project / Document Services
 Authoritative Project Files
 ```
 
-External tools interact with LithoMark through documented operations.
+External tools interact with Catalyst through documented operations.
 
 ---
 
 # 3. No Built-In AI
 
-LithoMark does not provide built-in generative AI.
+Catalyst does not provide built-in generative AI.
 
 The Agent API does not include:
 
@@ -96,7 +96,7 @@ Therefore the API must remain provider-neutral.
 
 External Agent API access must be disabled by default.
 
-A new LithoMark installation must not automatically expose project data to external applications.
+A new Catalyst installation must not automatically expose project data to external applications.
 
 The writer must explicitly enable external access.
 
@@ -146,13 +146,13 @@ Session
 Duration
 ```
 
-A connection authorized for one project must not automatically gain access to every LithoMark project.
+A connection authorized for one project must not automatically gain access to every Catalyst project.
 
 ---
 
 # 9. Connection Modes
 
-LithoMark should eventually support two broad authorization modes:
+Catalyst should eventually support two broad authorization modes:
 
 ```text
 Session Authorization
@@ -185,7 +185,7 @@ Remote network exposure is not required for Agent API v1.
 
 # 11. No Public Network Listener by Default
 
-LithoMark must not expose the Agent API directly to the public internet by default.
+Catalyst must not expose the Agent API directly to the public internet by default.
 
 The initial architecture should assume:
 
@@ -196,7 +196,7 @@ External Tool
 Local Machine
      │
      ▼
-LithoMark
+Catalyst
 ```
 
 Remote access, if ever implemented, requires a separate security design.
@@ -222,7 +222,7 @@ Unauthenticated project access is prohibited.
 
 # 13. Pairing
 
-LithoMark should support an explicit pairing workflow.
+Catalyst should support an explicit pairing workflow.
 
 Conceptually:
 
@@ -233,7 +233,7 @@ External Application
 Requests Connection
         │
         ▼
-LithoMark Displays Request
+Catalyst Displays Request
         │
         ▼
 Writer Reviews Identity
@@ -295,12 +295,12 @@ This identity supports permissions and auditing.
 
 # 16. API Versioning
 
-The Agent API is versioned independently from the LithoMark application.
+The Agent API is versioned independently from the Catalyst application.
 
 Example:
 
 ```text
-LithoMark:
+Catalyst:
 3.2.0
 
 Agent API:
@@ -330,7 +330,7 @@ Example conceptual response:
 }
 ```
 
-The response must reflect granted permissions rather than every possible LithoMark capability.
+The response must reflect granted permissions rather than every possible Catalyst capability.
 
 ---
 
@@ -462,7 +462,7 @@ continuity.read
 continuity.run
 ```
 
-An external tool may request LithoMark's deterministic continuity results without modifying the project.
+An external tool may request Catalyst's deterministic continuity results without modifying the project.
 
 ---
 
@@ -548,7 +548,7 @@ External Tool
 Create Proposal
       │
       ▼
-LithoMark Stores Proposal
+Catalyst Stores Proposal
       │
       ▼
 Writer Reviews
@@ -556,7 +556,7 @@ Writer Reviews
 Accept     Reject
    │
    ▼
-Normal LithoMark Change Pipeline
+Normal Catalyst Change Pipeline
 ```
 
 ---
@@ -595,7 +595,7 @@ Example conceptual request:
 }
 ```
 
-LithoMark displays the proposed change to the writer.
+Catalyst displays the proposed change to the writer.
 
 ---
 
@@ -672,7 +672,7 @@ Example:
 document.write
 ```
 
-Direct writes still pass through LithoMark's normal services.
+Direct writes still pass through Catalyst's normal services.
 
 They do not mean unrestricted filesystem access.
 
@@ -711,7 +711,7 @@ Index Update
 
 # 39. No Direct SQLite Access
 
-External applications must never depend upon LithoMark's SQLite schema.
+External applications must never depend upon Catalyst's SQLite schema.
 
 Incorrect:
 
@@ -924,7 +924,7 @@ Reveals
 Continuity findings
 ```
 
-This is derived from structured LithoMark data.
+This is derived from structured Catalyst data.
 
 ---
 
@@ -954,7 +954,7 @@ It is not required for Agent API v1 but should remain architecturally possible.
 
 # 52. Event Subscription
 
-Authorized clients may subscribe to LithoMark domain events.
+Authorized clients may subscribe to Catalyst domain events.
 
 Examples:
 
@@ -1067,7 +1067,7 @@ Settings
 
 # 59. Emergency Disable
 
-LithoMark should provide a simple control to disable all Agent API access.
+Catalyst should provide a simple control to disable all Agent API access.
 
 Example:
 
@@ -1104,7 +1104,7 @@ This prevents credentials from being accidentally:
 
 # 62. Rate Limiting
 
-LithoMark may enforce reasonable request limits.
+Catalyst may enforce reasonable request limits.
 
 This protects the application from:
 
@@ -1207,7 +1207,7 @@ Agent API v1 should favor safety over maximum automation.
 
 The Agent API should not initially expose whole-project deletion.
 
-Project deletion can remain a writer-controlled LithoMark UI operation.
+Project deletion can remain a writer-controlled Catalyst UI operation.
 
 ---
 
@@ -1226,7 +1226,7 @@ External writes must not bypass:
 
 # 70. Conflict Detection
 
-If an external application attempts to update a document that changed since it was read, LithoMark should detect the conflict.
+If an external application attempts to update a document that changed since it was read, Catalyst should detect the conflict.
 
 The API may use:
 
@@ -1284,7 +1284,7 @@ A conflict response should provide enough information for the client to decide w
 - Ask writer
 - Abort
 
-LithoMark must not silently overwrite newer work.
+Catalyst must not silently overwrite newer work.
 
 ---
 
@@ -1310,7 +1310,7 @@ PROJECT_READ_ONLY
 
 # 74. Read-Only Mode
 
-LithoMark may expose a global or per-project Agent API read-only mode.
+Catalyst may expose a global or per-project Agent API read-only mode.
 
 In read-only mode:
 
@@ -1357,7 +1357,7 @@ Direct modification remains disabled.
 
 # 77. Trust Profiles
 
-LithoMark may eventually provide understandable permission presets.
+Catalyst may eventually provide understandable permission presets.
 
 Examples:
 
@@ -1384,7 +1384,7 @@ The Agent API must not be designed specifically for:
 - Local LLM systems
 - Any single automation provider
 
-It is a LithoMark API.
+It is a Catalyst API.
 
 Any compatible external system may use it if the writer authorizes access.
 
@@ -1392,9 +1392,9 @@ Any compatible external system may use it if the writer authorizes access.
 
 # 79. No Mandatory Account
 
-Using the Agent API locally must not require a LithoMark cloud account.
+Using the Agent API locally must not require a Catalyst cloud account.
 
-LithoMark's local-first principle remains intact.
+Catalyst's local-first principle remains intact.
 
 ---
 
@@ -1402,7 +1402,7 @@ LithoMark's local-first principle remains intact.
 
 Local Agent API use must not require internet access.
 
-A local automation or local agent should be capable of interacting with LithoMark entirely offline.
+A local automation or local agent should be capable of interacting with Catalyst entirely offline.
 
 ---
 
@@ -1410,23 +1410,23 @@ A local automation or local agent should be capable of interacting with LithoMar
 
 If an authorized external application sends information to a cloud service, that behavior belongs to the external application's security and privacy model.
 
-LithoMark should clearly distinguish:
+Catalyst should clearly distinguish:
 
 ```text
-LithoMark granted this application access.
+Catalyst granted this application access.
 ```
 
 from:
 
 ```text
-LithoMark itself transmitted the manuscript.
+Catalyst itself transmitted the manuscript.
 ```
 
 ---
 
 # 82. Connection Visibility
 
-When external access is active, LithoMark should provide visible status.
+When external access is active, Catalyst should provide visible status.
 
 Example:
 
@@ -1440,7 +1440,7 @@ The indicator should not be unnecessarily intrusive.
 
 # 83. Active Operation Visibility
 
-For significant write operations, LithoMark may display:
+For significant write operations, Catalyst may display:
 
 ```text
 Example Editorial Tool is creating 12 proposals.
@@ -1452,7 +1452,7 @@ This improves transparency.
 
 # 84. External Connection Manager
 
-LithoMark should eventually provide:
+Catalyst should eventually provide:
 
 ```text
 Settings
@@ -1498,7 +1498,7 @@ The final format depends upon the selected transport.
 
 # 87. SDKs
 
-LithoMark may eventually provide lightweight SDKs.
+Catalyst may eventually provide lightweight SDKs.
 
 Potential SDKs:
 
@@ -1516,7 +1516,7 @@ The underlying protocol should remain independently implementable.
 
 # 88. Command-Line Integration
 
-A future LithoMark CLI may use the same domain contracts as the Agent API.
+A future Catalyst CLI may use the same domain contracts as the Agent API.
 
 Example:
 
@@ -1546,7 +1546,7 @@ Open scene
 Edit
       │
       ▼
-Save through LithoMark
+Save through Catalyst
 ```
 
 This complements direct Markdown file editing rather than replacing it.
@@ -1557,7 +1557,7 @@ This complements direct Markdown file editing rather than replacing it.
 
 The existence of the Agent API does not prohibit writers from opening Markdown files directly.
 
-LithoMark remains file-based.
+Catalyst remains file-based.
 
 The Agent API exists for structured external integration.
 
@@ -1565,7 +1565,7 @@ The Agent API exists for structured external integration.
 
 # 91. File Watcher Interaction
 
-If an external tool modifies project files directly instead of using the Agent API, LithoMark's normal file-watcher and conflict-detection mechanisms still apply.
+If an external tool modifies project files directly instead of using the Agent API, Catalyst's normal file-watcher and conflict-detection mechanisms still apply.
 
 Such changes are not treated as authenticated Agent API operations.
 
@@ -1577,10 +1577,10 @@ The distinction is:
 
 ```text
 Plugin:
-Runs as an extension of LithoMark.
+Runs as an extension of Catalyst.
 
 Agent:
-Runs outside LithoMark and communicates through an external API.
+Runs outside Catalyst and communicates through an external API.
 ```
 
 The two systems may expose similar domain concepts but have separate security boundaries.
@@ -1614,7 +1614,7 @@ Agent API
 
 External integrations must not depend upon TipTap JSON.
 
-The API operates on LithoMark document concepts.
+The API operates on Catalyst document concepts.
 
 This allows the editor implementation to change without breaking external integrations.
 
@@ -1632,13 +1632,13 @@ This allows indexing technology to change without breaking the Agent API.
 
 External integrations must not depend upon Svelte components or internal UI state.
 
-The Agent API belongs to the LithoMark domain layer.
+The Agent API belongs to the Catalyst domain layer.
 
 ---
 
 # 97. Future Mobile Support
 
-A future mobile LithoMark implementation may expose a subset of the same Agent API concepts.
+A future mobile Catalyst implementation may expose a subset of the same Agent API concepts.
 
 The domain contract should therefore avoid unnecessary desktop-only assumptions.
 
@@ -1701,7 +1701,7 @@ Convenience does not override this principle.
 
 # 102. Failure Behavior
 
-If the Agent API subsystem fails, normal LithoMark writing must continue.
+If the Agent API subsystem fails, normal Catalyst writing must continue.
 
 The writer must still be able to:
 
@@ -1763,7 +1763,7 @@ More powerful capabilities can be added later.
 Recommended implementation sequence:
 
 ```text
-1. LithoMark Domain Layer
+1. Catalyst Domain Layer
 2. Project Service
 3. Document Service
 4. Stable ID Service
@@ -1789,13 +1789,13 @@ When usability and external automation conflict with project safety, the default
 
 A writer may deliberately grant broader permissions.
 
-LithoMark should not grant them implicitly.
+Catalyst should not grant them implicitly.
 
 ---
 
 # 108. Governing Principle
 
-LithoMark remains a local-first, AI-free Writer OS.
+Catalyst remains a local-first, AI-free Writer OS.
 
 External tools may assist the writer when the writer chooses.
 
@@ -1819,7 +1819,7 @@ The writer remains in control of the project.
 
 Parent specifications:
 
-- `000-LITHOMARK-ARCHITECTURE.md`
+- `000-CATALYST-ARCHITECTURE.md`
 - `001-PROJECT-FILE-FORMAT.md`
 - `002-DOCUMENT-MODEL.md`
 - `003-STABLE-ID-SYSTEM.md`

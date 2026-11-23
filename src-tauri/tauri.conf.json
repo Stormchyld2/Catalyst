@@ -1,8 +1,8 @@
 {
     "$schema":  "https://schema.tauri.app/config/2",
-    "productName":  "LithoMark",
+    "productName":  "Catalyst",
     "version":  "0.1.0",
-    "identifier":  "com.lithomark.writer",
+    "identifier":  "com.catalyst.writer",
     "build":  {
                   "beforeDevCommand":  "npm run dev",
                   "devUrl":  "http://localhost:1420",
@@ -12,7 +12,7 @@
     "app":  {
                 "windows":  [
                                 {
-                                    "title":  "LithoMark",
+                                    "title":  "Catalyst",
                                     "visible":  false,
                                     "width":  1600,
                                     "height":  1000,
@@ -43,19 +43,19 @@
                                 "icons/icon.ico"
                             ],
                    "category":  "Productivity",
-                   "shortDescription":  "LithoMark Writer OS",
+                   "shortDescription":  "Catalyst",
                    "longDescription":  "A local-first writing and story development environment.",
                    "fileAssociations":  [
                                             {
                                                 "ext":  [
                                                             "lithomark-review"
                                                         ],
-                                                "name":  "LithoMark Review",
-                                                "description":  "LithoMark editorial review package",
+                                                "name":  "Catalyst Review",
+                                                "description":  "Catalyst editorial review package",
                                                 "role":  "Editor",
                                                 "mimeType":  "application/x-lithomark-review",
                                                 "exportedType":  {
-                                                                     "identifier":  "com.lithomark.writer.lithomark-review",
+                                                                     "identifier":  "com.catalyst.writer.lithomark-review",
                                                                      "conformsTo":  [
                                                                                         "public.json"
                                                                                     ]
@@ -65,12 +65,12 @@
                                                 "ext":  [
                                                             "lithomark-feedback"
                                                         ],
-                                                "name":  "LithoMark Feedback",
-                                                "description":  "LithoMark editorial feedback",
+                                                "name":  "Catalyst Feedback",
+                                                "description":  "Catalyst editorial feedback",
                                                 "role":  "Editor",
                                                 "mimeType":  "application/x-lithomark-feedback",
                                                 "exportedType":  {
-                                                                     "identifier":  "com.lithomark.writer.lithomark-feedback",
+                                                                     "identifier":  "com.catalyst.writer.lithomark-feedback",
                                                                      "conformsTo":  [
                                                                                         "public.json"
                                                                                     ]

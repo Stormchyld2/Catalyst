@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import lithomarkTokens from "../../styles/lithomark/tokens.json";
+import catalystTokens from "../../styles/catalyst/tokens.json";
 import { TAG_COLOR_NAMES, tagColor } from "./tagColor";
 
 describe("tagColor", () => {
   it("renders every stored palette value through its themed token", () => {
     for (const name of TAG_COLOR_NAMES) {
-      const stored = lithomarkTokens.light[`--tag-${name}` as keyof typeof lithomarkTokens.light];
+      const stored = catalystTokens.light[`--tag-${name}` as keyof typeof catalystTokens.light];
       expect(tagColor(stored)).toBe(`var(--color-tag-${name})`);
       expect(tagColor(stored.toLowerCase())).toBe(`var(--color-tag-${name})`);
     }

@@ -40,7 +40,7 @@ export interface Project {
   source_type: SourceType;
   /** Path to the original imported file (for re-import sync) */
   source_path: string | null;
-  /** Authoritative LithoMark project folder; independent of imported source files. */
+  /** Authoritative Catalyst project folder; independent of imported source files. */
   project_root: string | null;
   created_at: string;
   modified_at: string;

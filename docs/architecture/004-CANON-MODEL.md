@@ -1,16 +1,16 @@
-# LithoMark Writer OS — Canon Model
+# Catalyst — Canon Model
 
 **Document:** 004-CANON-MODEL.md  
 **Status:** Locked Baseline  
-**Project:** LithoMark Writer OS  
-**Parent Specification:** 000-LITHOMARK-ARCHITECTURE.md  
+**Project:** Catalyst  
+**Parent Specification:** 000-CATALYST-ARCHITECTURE.md  
 **Related Specifications:** 001-PROJECT-FILE-FORMAT.md, 002-DOCUMENT-MODEL.md, 003-STABLE-ID-SYSTEM.md
 
 ---
 
 # 1. Purpose
 
-This specification defines the LithoMark Canon Model.
+This specification defines the Catalyst Canon Model.
 
 The Canon Model records explicit facts established by the writer about the story world.
 
@@ -27,7 +27,7 @@ It provides structured information that can be used for:
 - Story Bible integration
 - Project integrity checks
 
-LithoMark does not determine canon through generative artificial intelligence.
+Catalyst does not determine canon through generative artificial intelligence.
 
 The writer establishes canon.
 
@@ -35,7 +35,7 @@ The writer establishes canon.
 
 # 2. Fundamental Definition
 
-In LithoMark:
+In Catalyst:
 
 **Canon is an explicit recorded fact about the project world.**
 
@@ -57,7 +57,7 @@ Canon records what the writer has deliberately established.
 
 # 3. Canon Is Not Prose Inference
 
-LithoMark Core must not automatically decide that a sentence in manuscript prose establishes canon.
+Catalyst Core must not automatically decide that a sentence in manuscript prose establishes canon.
 
 Example prose:
 
@@ -65,7 +65,7 @@ Example prose:
 Leah thought Harrison looked guilty.
 ```
 
-LithoMark must not automatically create:
+Catalyst must not automatically create:
 
 ```text
 Harrison Grant is guilty.
@@ -100,7 +100,7 @@ Canon therefore requires explicit structured recording.
 
 The writer is the ultimate authority over canon.
 
-LithoMark may:
+Catalyst may:
 
 - Store facts
 - Compare facts
@@ -109,7 +109,7 @@ LithoMark may:
 - Identify impossible chronology
 - Warn about possible continuity problems
 
-LithoMark must not silently rewrite canon to resolve a contradiction.
+Catalyst must not silently rewrite canon to resolve a contradiction.
 
 The writer decides what is correct.
 
@@ -172,7 +172,7 @@ status: confirmed
 
 # 7. Subject
 
-A canon fact normally applies to a stable LithoMark object.
+A canon fact normally applies to a stable Catalyst object.
 
 Examples:
 
@@ -266,7 +266,7 @@ valid_from: 2004
 
 The alias refers to the same stable character object.
 
-This allows LithoMark to understand that:
+This allows Catalyst to understand that:
 
 ```text
 Caleb Warren
@@ -279,7 +279,7 @@ may represent the same canonical person.
 
 # 11. Hidden Identity
 
-The story may conceal an identity from characters or readers while LithoMark still records the objective canon.
+The story may conceal an identity from characters or readers while Catalyst still records the objective canon.
 
 Example:
 
@@ -385,7 +385,7 @@ After November 3:
 Ray Carter → deceased
 ```
 
-LithoMark should be capable of representing this without deleting historical state.
+Catalyst should be capable of representing this without deleting historical state.
 
 ---
 
@@ -423,7 +423,7 @@ A confirmed death may imply:
 Character cannot normally be physically alive after death date.
 ```
 
-However, LithoMark should flag rather than automatically reject violations.
+However, Catalyst should flag rather than automatically reject violations.
 
 Valid story reasons might include:
 
@@ -454,7 +454,7 @@ value:
   date: 1987-04-16
 ```
 
-Given a scene date, LithoMark may calculate age.
+Given a scene date, Catalyst may calculate age.
 
 This is preferable to repeatedly storing:
 
@@ -470,7 +470,7 @@ when the story spans multiple years.
 
 Not every story requires exact dates.
 
-LithoMark should support:
+Catalyst should support:
 
 ```text
 Exact date
@@ -612,7 +612,7 @@ valid_from: 2024-06-03T09:12:00
 valid_to: 2024-06-03T11:08:00
 ```
 
-LithoMark may use these facts to identify impossible travel or simultaneous-location conflicts.
+Catalyst may use these facts to identify impossible travel or simultaneous-location conflicts.
 
 ---
 
@@ -630,7 +630,7 @@ value:
   location: loc-leah-apartment
 ```
 
-LithoMark must distinguish:
+Catalyst must distinguish:
 
 ```text
 Lives at
@@ -683,7 +683,7 @@ enemies
 former partners
 ```
 
-LithoMark should preserve relationship history rather than replacing previous state.
+Catalyst should preserve relationship history rather than replacing previous state.
 
 ---
 
@@ -719,7 +719,7 @@ Current possessor:
 Leah
 ```
 
-LithoMark must permit these to differ.
+Catalyst must permit these to differ.
 
 ---
 
@@ -786,7 +786,7 @@ This prevents duplicating the underlying truth.
 
 A character may believe something that is false.
 
-LithoMark should distinguish:
+Catalyst should distinguish:
 
 ```text
 Objective Canon
@@ -968,7 +968,7 @@ Continuity checking may treat confirmed facts as authoritative.
 
 A provisional fact is under consideration.
 
-LithoMark should not treat provisional facts as hard continuity requirements by default.
+Catalyst should not treat provisional facts as hard continuity requirements by default.
 
 ---
 
@@ -976,7 +976,7 @@ LithoMark should not treat provisional facts as hard continuity requirements by 
 
 Writers change their minds.
 
-LithoMark must support retconning.
+Catalyst must support retconning.
 
 A retconned fact should not simply disappear.
 
@@ -994,7 +994,7 @@ This preserves project history.
 
 # 46. Fact Supersession
 
-When one canon fact replaces another, LithoMark may record:
+When one canon fact replaces another, Catalyst may record:
 
 ```yaml
 supersedes:
@@ -1013,7 +1013,7 @@ This provides traceable canon evolution.
 
 # 47. Contradictory Facts
 
-LithoMark must detect potentially contradictory confirmed facts.
+Catalyst must detect potentially contradictory confirmed facts.
 
 Example:
 
@@ -1025,7 +1025,7 @@ Fact B:
 Ray died December 12, 2023.
 ```
 
-If both are confirmed and refer to the same canonical death, LithoMark should flag the conflict.
+If both are confirmed and refer to the same canonical death, Catalyst should flag the conflict.
 
 ---
 
@@ -1064,7 +1064,7 @@ During a chapter
 At an exact moment
 ```
 
-This allows LithoMark to model story state accurately.
+This allows Catalyst to model story state accurately.
 
 ---
 
@@ -1084,7 +1084,7 @@ Projects that do not require exact time-zone handling need not specify it for ev
 
 # 51. Approximate Dates
 
-LithoMark must support uncertain chronology.
+Catalyst must support uncertain chronology.
 
 Example:
 
@@ -1181,7 +1181,7 @@ locations:
   - loc-example
 ```
 
-LithoMark may evaluate applicable canon facts for the scene's story date.
+Catalyst may evaluate applicable canon facts for the scene's story date.
 
 ---
 
@@ -1242,7 +1242,7 @@ Organization membership conflicts with date.
 A continuity warning means:
 
 ```text
-LithoMark found structured information that may conflict.
+Catalyst found structured information that may conflict.
 ```
 
 It does not mean:
@@ -1489,7 +1489,7 @@ This hybrid approach prevents unnecessary file explosion while preserving struct
 
 # 72. Canon Index
 
-LithoMark may create a derived Canon Index in SQLite.
+Catalyst may create a derived Canon Index in SQLite.
 
 It may contain:
 
@@ -1509,7 +1509,7 @@ The index is rebuildable from authoritative files.
 
 # 73. Fact Query API
 
-LithoMark Core should support queries such as:
+Catalyst Core should support queries such as:
 
 ```text
 getFacts(subject)
@@ -1527,7 +1527,7 @@ These queries support UI, plugins, and authorized external agents.
 
 # 74. Character State
 
-LithoMark should be capable of constructing character state at a story moment.
+Catalyst should be capable of constructing character state at a story moment.
 
 Example:
 
@@ -1588,7 +1588,7 @@ Logged as evidence
 
 # 76. Story State
 
-LithoMark may construct a broader story-state snapshot for a given date or scene.
+Catalyst may construct a broader story-state snapshot for a given date or scene.
 
 This can support:
 
@@ -1603,7 +1603,7 @@ No generative AI is required.
 
 # 77. Scene Context
 
-When a writer opens a scene, LithoMark may display relevant structured context.
+When a writer opens a scene, Catalyst may display relevant structured context.
 
 Example:
 
@@ -1638,7 +1638,7 @@ This is a major intended benefit of the Canon Model.
 
 Writer-facing canon may contain information not yet revealed in the manuscript.
 
-LithoMark may eventually provide display controls to hide future canon while working in earlier scenes.
+Catalyst may eventually provide display controls to hide future canon while working in earlier scenes.
 
 This is a UI concern.
 
@@ -1688,7 +1688,7 @@ Clues
 Other facts
 ```
 
-LithoMark should eventually provide impact analysis before major canon changes.
+Catalyst should eventually provide impact analysis before major canon changes.
 
 ---
 
@@ -1696,7 +1696,7 @@ LithoMark should eventually provide impact analysis before major canon changes.
 
 Deleting a canon fact should identify dependent references.
 
-LithoMark must not silently destroy those relationships.
+Catalyst must not silently destroy those relationships.
 
 A fact may instead be:
 
@@ -1711,7 +1711,7 @@ when preserving history is preferable.
 
 # 82. Import
 
-Imported structured facts should be converted into LithoMark canon where reliable.
+Imported structured facts should be converted into Catalyst canon where reliable.
 
 Imported prose must not automatically become canon simply because it contains factual-looking sentences.
 
@@ -1774,7 +1774,7 @@ Permissions are governed by:
 
 Changes to significant canon facts should be revision-aware.
 
-Where practical, LithoMark should record:
+Where practical, Catalyst should record:
 
 ```text
 What changed
@@ -1989,17 +1989,17 @@ Each may change at different story moments.
 
 # 98. Governing Principle
 
-LithoMark does not decide the truth of the writer's story.
+Catalyst does not decide the truth of the writer's story.
 
 The writer records the truth.
 
-LithoMark remembers it.
+Catalyst remembers it.
 
-LithoMark tracks when it is true.
+Catalyst tracks when it is true.
 
-LithoMark tracks who knows it.
+Catalyst tracks who knows it.
 
-LithoMark identifies when structured information appears inconsistent with it.
+Catalyst identifies when structured information appears inconsistent with it.
 
 The writer decides what to do.
 
@@ -2009,7 +2009,7 @@ The writer decides what to do.
 
 Parent specifications:
 
-- `000-LITHOMARK-ARCHITECTURE.md`
+- `000-CATALYST-ARCHITECTURE.md`
 - `001-PROJECT-FILE-FORMAT.md`
 - `002-DOCUMENT-MODEL.md`
 - `003-STABLE-ID-SYSTEM.md`
@@ -2039,7 +2039,7 @@ The Canon Model, Timeline, relationships, and Story Development entities form a 
 
 A timeline event may identify participating entities and explicit effects. Those effects may begin, end, or alter canon facts such as location, employment, possession, injury, relationship status, organization membership, aliases, or character knowledge.
 
-From the same authoritative event/fact history, LithoMark may provide multiple projections:
+From the same authoritative event/fact history, Catalyst may provide multiple projections:
 
 - Master event chronology
 - Event-change view showing affected entities

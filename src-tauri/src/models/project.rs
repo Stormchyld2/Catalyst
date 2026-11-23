@@ -45,7 +45,7 @@ pub struct Project {
     pub name: String,
     pub source_type: SourceType,
     pub source_path: Option<String>,
-    /// Authoritative LithoMark project folder. Unlike source_path, this is the
+    /// Authoritative Catalyst project folder. Unlike source_path, this is the
     /// root owned by the project and is independent of any imported source file.
     #[serde(default)]
     pub project_root: Option<String>,

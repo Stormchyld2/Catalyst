@@ -785,7 +785,7 @@
 
     const projectRoot = currentProject.value.project_root;
     if (!projectRoot) {
-      bodyError = "This project does not have a local LithoMark project folder yet.";
+      bodyError = "This project does not have a local Catalyst project folder yet.";
       return false;
     }
 
@@ -870,7 +870,7 @@
     try {
       const projectRoot = currentProject.value?.project_root;
       if (!projectRoot) {
-        throw new Error("This project does not have a local LithoMark project folder yet.");
+        throw new Error("This project does not have a local Catalyst project folder yet.");
       }
 
       const result = await invoke<StoryDevelopmentIndex>("get_story_development_index", {
@@ -943,7 +943,7 @@
     try {
       const projectRoot = currentProject.value?.project_root;
       if (!projectRoot) {
-        throw new Error("This project does not have a local LithoMark project folder yet.");
+        throw new Error("This project does not have a local Catalyst project folder yet.");
       }
 
       const result = await invoke<StoryDevelopmentDocument>("get_story_development_document", {
@@ -981,7 +981,7 @@
     try {
       const projectRoot = currentProject.value?.project_root;
       if (!projectRoot) {
-        throw new Error("This project does not have a local LithoMark project folder yet.");
+        throw new Error("This project does not have a local Catalyst project folder yet.");
       }
       const asset = await invoke<StoryDevelopmentAsset>("get_story_development_asset", {
         projectRoot,

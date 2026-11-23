@@ -49,7 +49,7 @@ const registry = {
     },
   ],
   issues: [],
-  user_templates_dir: "C:/Temp/LithoMark/Templates",
+  user_templates_dir: "C:/Temp/Catalyst/Templates",
 };
 
 beforeEach(() => {

@@ -1,7 +1,7 @@
 //! File-authoritative New Book Foundation seeder.
 //!
 //! Setup state is temporary. Pressing Create Book materializes ordinary local
-//! LithoMark project files and project.yaml; those files are authoritative from
+//! Catalyst project files and project.yaml; those files are authoritative from
 //! that point forward.
 
 use std::collections::BTreeMap;

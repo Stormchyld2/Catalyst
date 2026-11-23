@@ -129,7 +129,7 @@ Do not execute arbitrary JS, Rust, shell or eval strings supplied by rules packs
 
 ## 7. Digital character sheet and sheet designer
 
-**Visual direction:** Catalyst charcoal/gunmetal, silver and amber-gold; ornate fantasy styling optionally applied through a *skin*, with a clean modern default and accessibility/contrast options. Keep decorative art away from text, clickable controls and small fields.
+**Visual direction:** Catalyst Obsidian + Frost Blue app chrome with charcoal/gunmetal and silver neutrals, per [025](025-CATALYST-DESIGN-SYSTEM.md); amber-gold and ornate fantasy styling are optional sheet *skins* only, with a clean modern default and accessibility/contrast options. Keep decorative art away from text, clickable controls and small fields.
 
 Digital sheet tabs/sections configured by the rules pack: Overview, Attributes, Skills, Combat, Inventory, Spells/Powers, Features, Background, Notes, Conditions, Relationships, History. Tab labels and counts must adapt to non-D&D systems.
 

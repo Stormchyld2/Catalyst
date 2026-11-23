@@ -1,11 +1,11 @@
 # Catalyst Architecture Documentation — Conversion Register
 
 **Status:** Documentation triage register · 2026-11-23  
-**Purpose:** Separate current Catalyst RPG requirements from donor-era LithoMark/Kindling engineering records without breaking compatibility.
+**Purpose:** Separate current Catalyst RPG requirements from inherited writer-era (Kindling-derived) engineering records without breaking compatibility.
 
 ## Editorial policy
 
-1. **Never bulk-replace every occurrence** of `LithoMark` or `Kindling`. Preserve literal file extensions, internal keys, historical project format identifiers, migration names, tests, stable-ID prefixes, and references to the original donor repository.
+1. **Product naming is Catalyst everywhere** (decided 2026-11-23). Replace LithoMark branding in docs, UI and code. Literal on-disk identifiers that existing projects depend on (the `lithomark-project` format marker, the `.lithomark` folder, stable-ID prefixes) change only together with the code that reads them, through a tested migration. Kindling is the upstream open-source donor and keeps its name.
 2. An inherited document that still describes a working implementation is a **legacy technical reference**, not automatically an approved Catalyst feature specification.
 3. Prefer writing a **new Catalyst RPG architecture document** that links to reusable donor mechanisms rather than overwriting the source of truth for existing book files.
 4. Distinguish **Approved target / Implemented / Legacy supported / Planned / Deprecated** explicitly. Never imply that a proposal has been coded or tested.
@@ -21,6 +21,8 @@
 - **Engine Implementation Ownership:** `024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` — initial 29 shared + 18 module + 12 character-specific list, extended by M19–M21 in 026 (62 total), specific ownership, tasks, handoff, audit and build order.
 - **Official Design System:** `025-CATALYST-DESIGN-SYSTEM.md` — approved Obsidian + Frost Blue semantic tokens, accessibility, components and migration; supersedes global amber/gold accent in earlier drafts.
 - **LAN GM Remote, Player Sharing & Android:** `026-LAN-REMOTE-PLAYER-SHARING-ANDROID.md` — approved mobile GM browser, logically isolated player sharing, host authority, secure pairing, offline sync and later Android Character Companion.
+- **3D Dice Roller:** `027-DICE-ROLLER-ARCHITECTURE.md` with 028–031 — implemented global tray, shared dice engine (S07/S08), roll logs and GM API.
+- **Campaign Wizard build notes:** `032-CAMPAIGN-WIZARD-IMPLEMENTATION-NOTES.md` — what PR #6 built and how it deviates from 020.
 - **Core storage/stable-ID contracts:** `001-PROJECT-FILE-FORMAT.md`, `002-DOCUMENT-MODEL.md`, `003-STABLE-ID-SYSTEM.md`; read with the RPG exceptions in 020.
 - **Canon/continuity:** `004-CANON-MODEL.md`; useful core mechanism, later adapt domain language to campaigns and worlds.
 - **Plugins / agents:** `005-PLUGIN-ARCHITECTURE.md` and `006-AGENT-API.md`; inspect implementations before designing RPG extensions.
@@ -29,7 +31,7 @@
 
 | File | Disposition | Catalyst action |
 |---|---|---|
-| `000-LITHOMARK-ARCHITECTURE.md` | Legacy donor baseline | Keep intact for provenance; write a new Catalyst RPG root architecture, do not rename old program semantics as already implemented |
+| `000-CATALYST-ARCHITECTURE.md` | Root architecture, amended for campaigns | Purpose and identity now describe the tabletop studio; writer-specific sections apply to legacy book projects only; RPG docs 020+ take precedence for campaigns |
 | `001-PROJECT-FILE-FORMAT.md` | Active compatibility contract | Preserve original schema/literals; add a documented campaign schema and compatibility adapter |
 | `002-DOCUMENT-MODEL.md` | Active shared infrastructure | Reuse file-authoritative documents and stable IDs; add RPG document types via reviewed contract |
 | `003-STABLE-ID-SYSTEM.md` | Active shared infrastructure | Preserve IDs on rename/move; extend only through approved type registry |
@@ -38,10 +40,10 @@
 | `006-AGENT-API.md` | Reusable design | Preserve access boundaries; no unapproved cloud requirement |
 | `007-KINDLING-MIGRATION.md` | Historical | Keep donor-specific migration details |
 | `008-EDITORIAL-REVIEW-PACKAGE.md` | Legacy writing feature | Retain for compatibility; not a V1 RPG prerequisite |
-| `009-LITHOMARK-AUDIOBOOK-STUDIO.md` | Legacy optional feature | Evaluate for later offline atmosphere/TTS; don't confuse audiobook with RPG soundboard |
-| `010-LITHOMARK-PROJECT-WORKSPACE-ARCHITECTURE.md` | Reusable workspace mechanics | Reuse tabs/tree/editor/navigation in World Builder |
-| `011-LITHOMARK-PUBLISHING-&-EXPORT-STUDIO.md` | Legacy + reusable export | Plan new Print Studio for character sheets, maps, handouts and reports |
-| `012-LITHOMARK-WRITER-OS-INTEGRATION-ARCHITECTURE.md` | Historical integration | Keep as donor compatibility reference |
+| `009-CATALYST-AUDIOBOOK-STUDIO.md` | Legacy optional feature | Evaluate for later offline atmosphere/TTS; don't confuse audiobook with RPG soundboard |
+| `010-CATALYST-PROJECT-WORKSPACE-ARCHITECTURE.md` | Reusable workspace mechanics | Reuse tabs/tree/editor/navigation in World Builder |
+| `011-CATALYST-PUBLISHING-&-EXPORT-STUDIO.md` | Legacy + reusable export | Plan new Print Studio for character sheets, maps, handouts and reports |
+| `012-CATALYST-WRITER-OS-INTEGRATION-ARCHITECTURE.md` | Historical integration | Keep as donor compatibility reference |
 | `013-VSCODE-PLUGIN-ARCHITECTURE-MAPPING.md` | Developer reference | Retain as optional; not product roadmap |
 | `014-ECOSYSTEM-REGISTRY-WEBSITE.md` | Deferred | Not a V1 tabletop requirement; no cloud dependency |
 | `015-IMPLEMENTATION-STATUS-ROADMAP.md` | Historical checkpoint | Do not treat status of writer features as status of RPG features; establish separate Catalyst tracker |
@@ -55,9 +57,15 @@
 | `021-CHARACTER-STUDIO-ARCHITECTURE.md` | **Approved new RPG target** | Reuse selected licensed donors after audit; implement guided/manual builder and sheet engine |
 | `022-RPG-SOURCEBOOK-LIBRARY-ARCHITECTURE.md` | **Approved shared RPG target** | Implement once for PDF reading/search/reference and use across Character Studio, GM Console, World Builder and other Catalyst modules |
 | `023-CATALYST-SHARED-AND-MODULE-ENGINES.md` | **Approved engine target inventory** | Audit before building; distinguish shared engines from module-owned engines and reuse existing services |
-| `024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` | **Approved ownership and work matrix** | Main app vs standalone Character Studio ownership for all 59 listed engines; code statuses unverified until audited |
-| `025-CATALYST-DESIGN-SYSTEM.md` | **Approved cross-app branding** | Obsidian, charcoal, silver and Frost Blue; stage migration of inherited LithoMark UI tokens |
+| `024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` | **Approved ownership and work matrix** | Main app vs standalone Character Studio ownership for all 62 listed engines (59 initial plus M19–M21 from 026); code statuses unverified until audited |
+| `025-CATALYST-DESIGN-SYSTEM.md` | **Approved cross-app branding** | Obsidian, charcoal, silver and Frost Blue; stage migration of inherited UI tokens |
 | `026-LAN-REMOTE-PLAYER-SHARING-ANDROID.md` | **Approved future LAN/mobile architecture** | GM browser remote, player-scoped sharing service, offline Android companion; coordinate S25/S10/S09 with main code |
+| `027-DICE-ROLLER-ARCHITECTURE.md` | **Implemented (PR #2)** | Global floating 3D dice tray; parent of 028–031 |
+| `028-DICE-OPEN-SOURCE-INTEGRATION.md` | **Implemented (PR #2)** | Dice Box adoption, licences and offline assets |
+| `029-DICE-RESULT-PROTOCOL.md` | **Implemented (PR #2)** | Roll records, `Sessions/Roll Logs/` session files, visibility and LAN authority |
+| `030-DICE-GM-CONSOLE-INTEGRATION.md` | **API implemented (PR #2)** | Roll-request builders the GM Console, Character Studio and encounters will call |
+| `031-DICE-IMPLEMENTATION-ROADMAP.md` | **Phases 1–3 done (PR #2)** | Remaining phases: player display, LAN, enhancements |
+| `032-CAMPAIGN-WIZARD-IMPLEMENTATION-NOTES.md` | **Implemented (PR #6)** | What was built against 020 and each deviation, including `Sessions/Roll Logs/` |
 
 
 ## Missing dedicated Catalyst architecture documents
@@ -67,12 +75,11 @@ Create these as separate, reviewable design milestones:
 - World Builder RPG taxonomy and entity templates beyond initial wizard seeding.
 - Adventure Studio / quest and encounter documents and transitions.
 - Map Studio manual editor, generators, map schema, asset licenses and VTT interfaces.
-- 3D Dice Roller global tray, physics, roll history and GM Console integration.
 - Game Master Console, campaign state, private/public visibility and LAN authority.
 - Print Studio: player/GM handouts, maps, ink-friendly character sheets.
 - Android companion and offline LAN sync, staged after Windows foundation.
 
-Do not number new architecture docs by collision with currently existing document filenames; choose next available number after inspecting the repository.
+Do not reuse a document number. Before numbering a new architecture doc, check every open branch and PR as well as `main`, and take the next free number (033 at the time of writing).
 
 ## Delivery workflow
 

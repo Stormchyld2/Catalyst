@@ -1,14 +1,14 @@
 @import "tailwindcss";
-@import "./styles/lithomark/fonts.css";
-@import "./styles/lithomark/tokens.css";
-@import "./styles/lithomark/tailwind.css";
+@import "./styles/catalyst/fonts.css";
+@import "./styles/catalyst/tokens.css";
+@import "./styles/catalyst/tailwind.css";
 /* Press foundation (global form controls, selection, scrollbars, paper grain,
    .app-prose-sheet, .app-dialog-surface) then the application layer: one
    implementation per control role (ka-*). Both sit under Tailwind's utilities
    so a utility can tune an element and `.press-app h3` cannot restyle a
    heading that carries its own type role. */
-@import "./styles/lithomark/components.css" layer(components);
-@import "./styles/lithomark/application.css" layer(components);
+@import "./styles/catalyst/components.css" layer(components);
+@import "./styles/catalyst/application.css" layer(components);
 /* Overlay/dialog rules proposed upstream to Press; see the file header. */
 @import "./styles/overlays.css" layer(components);
 

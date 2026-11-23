@@ -1,4 +1,4 @@
-| Feature | Kindling now | LithoMark plan |
+| Feature | Kindling now | Catalyst plan |
 |---|---|---|
 | Full manuscript editor | ✅ | Keep/enhance |
 | Chapters | ✅ | Keep |

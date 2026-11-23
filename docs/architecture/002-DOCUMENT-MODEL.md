@@ -1,25 +1,25 @@
-# LithoMark Writer OS — Document Model
+# Catalyst — Document Model
 
 **Document:** 002-DOCUMENT-MODEL.md  
 **Status:** Locked Baseline  
-**Project:** LithoMark Writer OS  
-**Parent Specification:** 000-LITHOMARK-ARCHITECTURE.md  
+**Project:** Catalyst  
+**Parent Specification:** 000-CATALYST-ARCHITECTURE.md  
 **Related Specification:** 001-PROJECT-FILE-FORMAT.md
 
 ---
 
 # 1. Purpose
 
-This specification defines how LithoMark represents, loads, edits, validates, saves, and exchanges textual documents.
+This specification defines how Catalyst represents, loads, edits, validates, saves, and exchanges textual documents.
 
 The document model separates four concerns:
 
 1. Authoritative project files
-2. LithoMark domain documents
+2. Catalyst domain documents
 3. Editor representation
 4. Rendered or exported output
 
-The editor must not become the permanent definition of a LithoMark document.
+The editor must not become the permanent definition of a Catalyst document.
 
 ---
 
@@ -34,7 +34,7 @@ Authoritative Project File
       File Parser
           │
           ▼
-LithoMark Document Model
+Catalyst Document Model
           │
           ▼
       Editor Adapter
@@ -49,7 +49,7 @@ LithoMark Document Model
       Editor Adapter
           │
           ▼
-LithoMark Document Model
+Catalyst Document Model
           │
           ▼
       Serializer
@@ -60,13 +60,13 @@ Authoritative Project File
 
 TipTap is an implementation component.
 
-The LithoMark Document Model is the application contract.
+The Catalyst Document Model is the application contract.
 
 ---
 
 # 3. Authoritative Format
 
-Markdown is the default authoritative textual format for LithoMark documents.
+Markdown is the default authoritative textual format for Catalyst documents.
 
 YAML front matter contains structured document metadata.
 
@@ -89,13 +89,13 @@ Leah stepped through the gallery doors.
 The smell reached her first.
 ```
 
-The file remains usable outside LithoMark.
+The file remains usable outside Catalyst.
 
 ---
 
 # 4. Document Identity
 
-Every structured LithoMark document must have a stable ID.
+Every structured Catalyst document must have a stable ID.
 
 Example:
 
@@ -148,7 +148,7 @@ note
 template
 ```
 
-Additional types may be introduced by future LithoMark project-format versions.
+Additional types may be introduced by future Catalyst project-format versions.
 
 Plugins may register namespaced extension types through the Plugin API.
 
@@ -156,10 +156,10 @@ Plugins may register namespaced extension types through the Plugin API.
 
 # 6. Domain Document
 
-A LithoMark domain document conceptually contains:
+A Catalyst domain document conceptually contains:
 
 ```text
-LithoMarkDocument
+CatalystDocument
 │
 ├── identity
 ├── type
@@ -257,13 +257,13 @@ However, continuity systems operate on explicit structured facts rather than att
 
 # 10. Editor Independence
 
-LithoMark must not permanently store manuscript content exclusively as TipTap JSON.
+Catalyst must not permanently store manuscript content exclusively as TipTap JSON.
 
 TipTap may use its own internal document representation while editing.
 
 That representation is temporary application state.
 
-The durable representation is the LithoMark project document.
+The durable representation is the Catalyst project document.
 
 This ensures that:
 
@@ -280,7 +280,7 @@ This ensures that:
 The Editor Adapter translates between:
 
 ```text
-LithoMark Document Model
+Catalyst Document Model
 ```
 
 and:
@@ -293,7 +293,7 @@ The adapter is responsible for:
 
 - Parsing supported Markdown structures
 - Creating TipTap nodes and marks
-- Converting editor changes back into LithoMark content
+- Converting editor changes back into Catalyst content
 - Preserving supported metadata
 - Preserving unknown metadata where practical
 - Preventing editor-specific implementation details from leaking into project files
@@ -302,7 +302,7 @@ The adapter is responsible for:
 
 # 12. Markdown Compatibility
 
-LithoMark should support common Markdown constructs where appropriate.
+Catalyst should support common Markdown constructs where appropriate.
 
 Initial support should include:
 
@@ -326,16 +326,16 @@ Research and notes may use a broader Markdown feature set.
 
 # 13. Extended Markdown
 
-LithoMark may define extensions to standard Markdown.
+Catalyst may define extensions to standard Markdown.
 
 Extensions must be:
 
 - Documented
 - Parseable
 - Human-readable where practical
-- Gracefully degradable outside LithoMark
+- Gracefully degradable outside Catalyst
 
-LithoMark should avoid inventing custom syntax when standard Markdown or YAML metadata can represent the same information adequately.
+Catalyst should avoid inventing custom syntax when standard Markdown or YAML metadata can represent the same information adequately.
 
 ---
 
@@ -387,7 +387,7 @@ Comments and annotations must not depend solely upon character offsets.
 
 Character offsets become invalid whenever earlier text changes.
 
-LithoMark should use resilient anchors capable of relocating annotations after reasonable edits.
+Catalyst should use resilient anchors capable of relocating annotations after reasonable edits.
 
 An annotation anchor may include:
 
@@ -461,7 +461,7 @@ A tracked change must preserve enough information to:
 - Identify its document
 - Maintain revision history
 
-Tracked changes should be modeled at the LithoMark domain level rather than existing exclusively as TipTap state.
+Tracked changes should be modeled at the Catalyst domain level rather than existing exclusively as TipTap state.
 
 ---
 
@@ -469,7 +469,7 @@ Tracked changes should be modeled at the LithoMark domain level rather than exis
 
 Editor changes may initially exist in memory.
 
-LithoMark must periodically serialize changed documents to authoritative project files.
+Catalyst must periodically serialize changed documents to authoritative project files.
 
 Conceptually:
 
@@ -502,7 +502,7 @@ Document marked saved
 
 # 20. Dirty State
 
-LithoMark must distinguish between:
+Catalyst must distinguish between:
 
 ```text
 Clean
@@ -545,7 +545,7 @@ A failed write must not destroy the previously valid file.
 
 # 22. Source Revision
 
-LithoMark should track whether the underlying source file changed after loading.
+Catalyst should track whether the underlying source file changed after loading.
 
 A source revision may use:
 
@@ -554,19 +554,19 @@ A source revision may use:
 - Content hash
 - Combination of these methods
 
-Before overwriting an externally modified file, LithoMark must detect the change.
+Before overwriting an externally modified file, Catalyst must detect the change.
 
 ---
 
 # 23. External Modification
 
-If another application changes an open LithoMark document, LithoMark must not silently overwrite it.
+If another application changes an open Catalyst document, Catalyst must not silently overwrite it.
 
 Possible responses include:
 
 ```text
 Reload external version
-Keep LithoMark version
+Keep Catalyst version
 Compare versions
 Merge
 Save both
@@ -578,7 +578,7 @@ Where automatic reconciliation is unsafe, the writer decides.
 
 # 24. File Watcher
 
-LithoMark should monitor authoritative project directories for relevant changes.
+Catalyst should monitor authoritative project directories for relevant changes.
 
 The file watcher may detect:
 
@@ -618,7 +618,7 @@ id: scn-7c42be89
 
 remains unchanged.
 
-LithoMark therefore treats the operation as a rename rather than deletion plus creation.
+Catalyst therefore treats the operation as a rename rather than deletion plus creation.
 
 ---
 
@@ -648,7 +648,7 @@ Structural metadata must be updated appropriately.
 
 Filesystem order is not authoritative manuscript order.
 
-LithoMark maintains explicit logical order.
+Catalyst maintains explicit logical order.
 
 Example:
 
@@ -709,7 +709,7 @@ The project template may define which model is expected.
 
 # 30. Scene Status
 
-LithoMark should support configurable document workflow status.
+Catalyst should support configurable document workflow status.
 
 Default examples may include:
 
@@ -765,7 +765,7 @@ They must be reconstructable from authoritative project data where applicable.
 
 # 33. Links Between Documents
 
-Documents should link to other LithoMark objects using stable IDs internally.
+Documents should link to other Catalyst objects using stable IDs internally.
 
 Example metadata:
 
@@ -786,7 +786,7 @@ Human-facing displays resolve IDs into current names.
 
 # 34. Human-Readable Links and Wikilinks
 
-Markdown body content may use ordinary Markdown links and LithoMark wikilinks.
+Markdown body content may use ordinary Markdown links and Catalyst wikilinks.
 
 The canonical writer-facing wikilink syntax is:
 
@@ -795,7 +795,7 @@ The canonical writer-facing wikilink syntax is:
 [[Display Name|Custom Label]]
 ```
 
-A human-readable wikilink is presentation text, not durable object identity. When a wikilink resolves unambiguously to a structured LithoMark object, LithoMark records or derives the resolved target stable ID through the shared link-resolution layer. Structured metadata and machine-facing APIs use the stable ID.
+A human-readable wikilink is presentation text, not durable object identity. When a wikilink resolves unambiguously to a structured Catalyst object, Catalyst records or derives the resolved target stable ID through the shared link-resolution layer. Structured metadata and machine-facing APIs use the stable ID.
 
 Resolution is scoped to the active project. A normal book-level resolver must not search unrelated projects.
 
@@ -803,12 +803,12 @@ Resolution rules:
 
 1. An explicit stable-ID reference is exact.
 2. A human-readable wikilink may resolve by current title/name and documented aliases.
-3. Multiple matching objects are ambiguous and require writer selection; LithoMark must not guess.
+3. Multiple matching objects are ambiguous and require writer selection; Catalyst must not guess.
 4. A missing target remains a visible unresolved link.
 5. Renaming or moving a resolved target does not change its stable identity.
 6. Backlinks are derived from authoritative project files and may be cached/indexed only in disposable, rebuildable infrastructure.
 
-LithoMark may render resolved wikilinks using the target's current display name while retaining the writer's authored Markdown unless the writer explicitly chooses to rewrite link text.
+Catalyst may render resolved wikilinks using the target's current display name while retaining the writer's authored Markdown unless the writer explicitly chooses to rewrite link text.
 
 Application UI may use an internal navigation URI or object descriptor, but such runtime navigation tokens are not authoritative project storage and must not replace stable IDs.
 
@@ -818,7 +818,7 @@ Application UI may use an internal navigation URI or object descriptor, but such
 
 A document may reference an ID that no longer exists.
 
-LithoMark must not silently discard the reference.
+Catalyst must not silently discard the reference.
 
 Instead, the project integrity system should report:
 
@@ -838,7 +838,7 @@ The writer may then repair or intentionally remove the reference.
 
 # 36. Unknown Metadata Preservation
 
-LithoMark must preserve unknown YAML metadata whenever practical.
+Catalyst must preserve unknown YAML metadata whenever practical.
 
 Example:
 
@@ -847,7 +847,7 @@ future_feature:
   value: example
 ```
 
-An older LithoMark version should not automatically erase the field merely because it does not understand it.
+An older Catalyst version should not automatically erase the field merely because it does not understand it.
 
 This supports:
 
@@ -859,7 +859,7 @@ This supports:
 
 # 37. Plugin Document Access
 
-Plugins must interact with documents through the LithoMark Plugin API.
+Plugins must interact with documents through the Catalyst Plugin API.
 
 Plugins should receive a normalized document representation rather than direct TipTap internals.
 
@@ -872,7 +872,7 @@ Plugin
 Plugin API
    │
    ▼
-LithoMark Document Model
+Catalyst Document Model
 ```
 
 Not:
@@ -915,7 +915,7 @@ Plugins must not bypass normal save, validation, revision, and conflict mechanis
 
 External agents interact with documents through the Agent API.
 
-They must not directly modify files unless LithoMark explicitly exposes such an operation.
+They must not directly modify files unless Catalyst explicitly exposes such an operation.
 
 Preferred flow:
 
@@ -949,7 +949,7 @@ The Agent API is defined in:
 
 # 40. Agent Suggestions
 
-LithoMark may allow an external agent to propose changes without immediately applying them.
+Catalyst may allow an external agent to propose changes without immediately applying them.
 
 Example:
 
@@ -960,7 +960,7 @@ External Agent
 Proposed Change
       │
       ▼
-LithoMark
+Catalyst
       │
       ▼
 Writer Reviews
@@ -968,7 +968,7 @@ Writer Reviews
  Accept   Reject
 ```
 
-This is distinct from LithoMark containing built-in AI.
+This is distinct from Catalyst containing built-in AI.
 
 ---
 
@@ -992,7 +992,7 @@ Closing the application must not make revision protection dependent solely on th
 
 # 42. Revision History
 
-Durable revisions should operate on LithoMark documents rather than TipTap state.
+Durable revisions should operate on Catalyst documents rather than TipTap state.
 
 A revision may include:
 
@@ -1029,7 +1029,7 @@ Snapshots must not rely on TipTap's internal history.
 
 # 44. Document Hashing
 
-LithoMark may calculate content hashes for:
+Catalyst may calculate content hashes for:
 
 - Change detection
 - Revision identification
@@ -1058,7 +1058,7 @@ The raw document should remain accessible.
 
 # 46. YAML Safety
 
-LithoMark should use safe YAML parsing.
+Catalyst should use safe YAML parsing.
 
 Project YAML must be treated as data.
 
@@ -1070,7 +1070,7 @@ It must not permit arbitrary code execution.
 
 All authoritative textual documents use UTF-8.
 
-LithoMark must preserve Unicode content including:
+Catalyst must preserve Unicode content including:
 
 - Accented characters
 - Non-Latin scripts
@@ -1081,7 +1081,7 @@ LithoMark must preserve Unicode content including:
 
 # 48. Typographic Characters
 
-LithoMark may support writer-friendly typography such as:
+Catalyst may support writer-friendly typography such as:
 
 - Curly quotation marks
 - Em dashes
@@ -1096,7 +1096,7 @@ The application should not require proprietary encoding for typography.
 
 # 49. Search
 
-Full-text search operates over the LithoMark Document Model and/or derived indexes.
+Full-text search operates over the Catalyst Document Model and/or derived indexes.
 
 Search indexes may be stored in SQLite.
 
@@ -1125,7 +1125,7 @@ Bulk replacement must not directly perform uncontrolled filesystem text replacem
 
 # 51. Export
 
-Exporters consume LithoMark domain documents.
+Exporters consume Catalyst domain documents.
 
 Conceptually:
 
@@ -1151,7 +1151,7 @@ Exporters should not depend directly upon TipTap.
 
 # 52. Import
 
-Importers convert external content into LithoMark domain documents.
+Importers convert external content into Catalyst domain documents.
 
 Conceptually:
 
@@ -1167,7 +1167,7 @@ Other
 Importer
     │
     ▼
-LithoMark Document Model
+Catalyst Document Model
     │
     ▼
 Validation
@@ -1176,7 +1176,7 @@ Validation
 Project Files
 ```
 
-Imported data must receive stable LithoMark IDs.
+Imported data must receive stable Catalyst IDs.
 
 ---
 
@@ -1188,7 +1188,7 @@ Normal clipboard operations should support:
 - Common rich text
 - Markdown-compatible formatting
 
-Pasted content should be normalized into the LithoMark-supported document model.
+Pasted content should be normalized into the Catalyst-supported document model.
 
 Unsupported hidden formatting should not unnecessarily contaminate project files.
 
@@ -1216,13 +1216,13 @@ Non-image files should normally exist in `Assets` or `Research`.
 
 Documents may reference them through relative links or structured metadata.
 
-LithoMark should not embed large binary attachments directly inside Markdown.
+Catalyst should not embed large binary attachments directly inside Markdown.
 
 ---
 
 # 56. Scene Breaks
 
-LithoMark should support manuscript scene breaks using portable textual representation.
+Catalyst should support manuscript scene breaks using portable textual representation.
 
 A default may use:
 
@@ -1238,7 +1238,7 @@ Export profiles may convert it into publisher-appropriate formatting.
 
 # 57. Formatting Versus Semantics
 
-LithoMark should distinguish semantic structure from visual appearance.
+Catalyst should distinguish semantic structure from visual appearance.
 
 For example:
 
@@ -1297,7 +1297,7 @@ parenthetical
 transition
 ```
 
-These should be represented at the LithoMark domain level rather than permanently depending upon TipTap node types.
+These should be represented at the Catalyst domain level rather than permanently depending upon TipTap node types.
 
 ---
 
@@ -1321,7 +1321,7 @@ The core document abstraction should remain extensible enough to support these w
 
 # 61. Document Validation
 
-Before durable save, LithoMark may validate:
+Before durable save, Catalyst may validate:
 
 - Stable ID
 - Document type
@@ -1410,7 +1410,7 @@ Required architecture:
 Svelte Component
       │
       ▼
-LithoMark Command/API
+Catalyst Command/API
       │
       ▼
 Document Service
@@ -1425,7 +1425,7 @@ This separation is required for integrity, testing, plugins, agents, and future 
 
 # 65. No Direct Plugin Persistence
 
-Plugins must not bypass the Document Service for core LithoMark documents.
+Plugins must not bypass the Document Service for core Catalyst documents.
 
 This protects:
 
@@ -1463,7 +1463,7 @@ TipTap
    │
 Editor Adapter
    │
-LithoMark Document Model
+Catalyst Document Model
    │
 Document Service
    │
@@ -1521,7 +1521,7 @@ File
 
 The resulting document should preserve all supported information and, where practical, unknown information.
 
-LithoMark must avoid gratuitous reformatting of externally edited Markdown.
+Catalyst must avoid gratuitous reformatting of externally edited Markdown.
 
 ---
 
@@ -1537,7 +1537,7 @@ Svelte is replaceable.
 
 SQLite indexes are replaceable.
 
-LithoMark itself is replaceable.
+Catalyst itself is replaceable.
 
 The writer's document is permanent.
 
@@ -1547,7 +1547,7 @@ The writer's document is permanent.
 
 Parent specifications:
 
-- `000-LITHOMARK-ARCHITECTURE.md`
+- `000-CATALYST-ARCHITECTURE.md`
 - `001-PROJECT-FILE-FORMAT.md`
 
 Related specifications:
@@ -1578,13 +1578,13 @@ Outline templates and story-structure frameworks remain separate from manuscript
 
 # 36. Derived Connections and Context Projections
 
-LithoMark distinguishes declared facts from derived connections.
+Catalyst distinguishes declared facts from derived connections.
 
 Authoritative inputs may include stable-ID metadata references, explicit relationship documents or relationship fields, resolved wikilinks, scene participants and locations, timeline-event references, canon facts, and ordinary Markdown/research files.
 
 Derived outputs may include backlinks, mention counts, related-entity lists, relationship graphs, organization charts, scene context panels, entity timelines, and continuity indexes.
 
-Derived outputs may be cached for performance but must be reconstructable from authoritative project files. LithoMark must not require writers to duplicate backlink counts, graph edges discovered from links, or other computed values into YAML.
+Derived outputs may be cached for performance but must be reconstructable from authoritative project files. Catalyst must not require writers to duplicate backlink counts, graph edges discovered from links, or other computed values into YAML.
 
 A right-side context panel or graph is therefore a presentation/index projection, not a separate source of truth.
 

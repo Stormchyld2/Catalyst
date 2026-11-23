@@ -1,5 +1,5 @@
 <script lang="ts">
-  import lithomarkLogo from "../../assets/lithomark-logo.png";
+  import catalystLogo from "../../assets/catalyst-logo.png";
   import { getVersion } from "@tauri-apps/api/app";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { ChevronRight, ExternalLink, Send } from "lucide-svelte";
@@ -41,7 +41,7 @@
 >
   <div class="app-dialog-surface ka-dialog-narrow dialog-shell" data-testid="about-dialog">
     <DialogHeader
-      title="About LithoMark"
+      title="About Catalyst"
       titleId="about-title"
       {onClose}
       closeLabel="Close"
@@ -50,7 +50,7 @@
 
     <div class="ka-dialog-body about">
       <div class="about-identity">
-        <img class="about-logo" src={lithomarkLogo} alt="LithoMark Writer OS" />
+        <img class="about-logo" src={catalystLogo} alt="Catalyst" />
         <p class="about-tagline">Spark your draft &mdash; bridge the gap between outline and prose.</p>
       </div>
 
@@ -72,7 +72,7 @@
         <li>
           <button
             type="button"
-            onclick={() => openLink("https://github.com/Stormchyld2/LithoMark")}
+            onclick={() => openLink("https://github.com/Stormchyld2/Catalyst")}
             class="about-link"
           >
             <ExternalLink class="w-5 h-5" aria-hidden="true" />
@@ -82,7 +82,7 @@
         <li>
           <button
             type="button"
-            onclick={() => openLink("https://github.com/Stormchyld2/LithoMark/issues/new")}
+            onclick={() => openLink("https://github.com/Stormchyld2/Catalyst/issues/new")}
             class="about-link"
           >
             <ExternalLink class="w-5 h-5" aria-hidden="true" />
@@ -92,7 +92,7 @@
         <li>
           <button
             type="button"
-            onclick={() => openLink("https://github.com/Stormchyld2/LithoMark/releases")}
+            onclick={() => openLink("https://github.com/Stormchyld2/Catalyst/releases")}
             class="about-link"
           >
             <ExternalLink class="w-5 h-5" aria-hidden="true" />
@@ -104,7 +104,7 @@
         <p class="ka-error" role="alert">{linkError}</p>
       {/if}
 
-      <p class="ka-help">&copy; 2026 LithoMark</p>
+      <p class="ka-help">&copy; 2026 Catalyst</p>
     </div>
   </div>
 </div>

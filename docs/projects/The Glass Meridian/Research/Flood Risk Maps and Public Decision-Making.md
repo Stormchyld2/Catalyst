@@ -57,4 +57,4 @@ Mara discovers the anomaly appears between policy weighting and rendered public 
 
 ## Canon / Accuracy Notes
 
-This material exists to exercise LithoMark and is not authoritative technical guidance.
+This material exists to exercise Catalyst and is not authoritative technical guidance.

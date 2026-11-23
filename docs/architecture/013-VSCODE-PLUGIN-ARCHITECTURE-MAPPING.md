@@ -1,17 +1,17 @@
-# LithoMark Writer OS — VS Code Plugin Architecture Mapping
+# Catalyst — VS Code Plugin Architecture Mapping
 
 **Document:** 013-VSCODE-PLUGIN-ARCHITECTURE-MAPPING.md
 **Status:** Locked Implementation Direction
-**Project:** LithoMark Writer OS
-**Related:** 002-DOCUMENT-MODEL.md, 003-STABLE-ID-SYSTEM.md, 005-PLUGIN-ARCHITECTURE.md, 012-LITHOMARK-WRITER-OS-INTEGRATION-ARCHITECTURE.md
+**Project:** Catalyst
+**Related:** 002-DOCUMENT-MODEL.md, 003-STABLE-ID-SYSTEM.md, 005-PLUGIN-ARCHITECTURE.md, 012-CATALYST-WRITER-OS-INTEGRATION-ARCHITECTURE.md
 
 ---
 
 # 1. Decision
 
-LithoMark uses the Visual Studio Code extension architecture as its primary conceptual model for plugin development, adapted for a local-first Writer OS.
+Catalyst uses the Visual Studio Code extension architecture as its primary conceptual model for plugin development, adapted for a local-first Writer OS.
 
-LithoMark does not attempt binary or API compatibility with VS Code extensions.
+Catalyst does not attempt binary or API compatibility with VS Code extensions.
 
 The target developer experience is deliberately familiar:
 
@@ -29,9 +29,9 @@ Disposables / Cleanup
 
 Obsidian remains an important source of writing, wiki, backlink, graph, metadata, and knowledge-management plugin concepts.
 
-# 2. What LithoMark Adopts from VS Code
+# 2. What Catalyst Adopts from VS Code
 
-LithoMark adopts these patterns:
+Catalyst adopts these patterns:
 
 - declarative plugin manifest;
 - unique publisher/plugin identity;
@@ -49,9 +49,9 @@ LithoMark adopts these patterns:
 - restricted execution for untrusted or insufficiently authorized capabilities;
 - first-party plugins using the same public contracts where practical.
 
-# 3. What LithoMark Changes
+# 3. What Catalyst Changes
 
-LithoMark is a Writer OS, not a source-code editor.
+Catalyst is a Writer OS, not a source-code editor.
 
 Its plugin API therefore exposes domain concepts rather than VS Code implementation concepts:
 
@@ -78,7 +78,7 @@ Plugins must not treat Svelte, Tauri, TipTap, SQLite, or filesystem layout detai
 
 VS Code's package.json combines package metadata and extension declarations.
 
-LithoMark uses a dedicated:
+Catalyst uses a dedicated:
 
 `lithomark-plugin.json`
 
@@ -131,7 +131,7 @@ Plugins should be lazy by default.
 
 A plugin is not executed merely because it is installed.
 
-Initial LithoMark activation-event vocabulary should support:
+Initial Catalyst activation-event vocabulary should support:
 
 - `onCommand:<id>`
 - `onView:<id>`
@@ -243,7 +243,7 @@ The host activates the owning plugin when required and checks relevant permissio
 
 # 11. Context Conditions
 
-LithoMark should support a constrained equivalent of VS Code's context/when clauses.
+Catalyst should support a constrained equivalent of VS Code's context/when clauses.
 
 Useful context keys include:
 
@@ -261,7 +261,7 @@ The expression language must remain host-controlled and must not evaluate arbitr
 
 # 12. Workspace and Domain API
 
-Unlike a generic filesystem workspace, LithoMark exposes writer-domain operations.
+Unlike a generic filesystem workspace, Catalyst exposes writer-domain operations.
 
 Examples:
 
@@ -279,7 +279,7 @@ All authoritative document writes route through the Document Service.
 
 # 13. Permission Boundary
 
-VS Code-inspired ergonomics do not weaken LithoMark's security model.
+VS Code-inspired ergonomics do not weaken Catalyst's security model.
 
 The host checks the granted permission at the API boundary.
 
@@ -303,7 +303,7 @@ First-party publisher status does not bypass this boundary.
 
 # 14. Project Trust
 
-LithoMark should distinguish plugin authorization from project trust.
+Catalyst should distinguish plugin authorization from project trust.
 
 Opening a project does not imply that project-provided executable plugin code is trusted.
 
@@ -313,7 +313,7 @@ This is particularly important for projects cloned from Git or downloaded from a
 
 # 15. UI Isolation
 
-Plugins must not manipulate LithoMark's application DOM directly.
+Plugins must not manipulate Catalyst's application DOM directly.
 
 UI contributions operate through supported components, views, commands, menus, and controlled plugin surfaces.
 
@@ -323,7 +323,7 @@ Rich plugin views may eventually use a sandboxed webview-like surface with expli
 
 # 16. First-Party Plugin Rule
 
-Official LithoMark plugins are reference consumers of the public API.
+Official Catalyst plugins are reference consumers of the public API.
 
 Candidate first-party plugins include:
 
@@ -345,7 +345,7 @@ The future SDK should provide:
 ```text
 @lithomark/api
 @lithomark/plugin-test
-LithoMark type definitions
+Catalyst type definitions
 manifest JSON schema
 sample plugin
 packaging command
@@ -367,13 +367,13 @@ The sample plugin should be intentionally small and demonstrate:
 
 # 18. Community Development Goal
 
-A TypeScript developer familiar with VS Code extensions should recognize LithoMark's lifecycle and contribution model immediately.
+A TypeScript developer familiar with VS Code extensions should recognize Catalyst's lifecycle and contribution model immediately.
 
-They should only need to learn LithoMark's writer-domain API and permission model.
+They should only need to learn Catalyst's writer-domain API and permission model.
 
 # 19. Explicit Non-Goals
 
-LithoMark will not:
+Catalyst will not:
 
 - execute VS Code extensions unchanged;
 - expose the VS Code API as its own;
@@ -396,7 +396,7 @@ The plugin foundation should be implemented in this order:
 7. Settings/state API.
 8. View/UI contribution host.
 9. TypeScript SDK and type definitions.
-10. First LithoMark sample plugin.
+10. First Catalyst sample plugin.
 11. First optional first-party plugin migrated onto the same API.
 12. Packaging/signing/community registry later.
 

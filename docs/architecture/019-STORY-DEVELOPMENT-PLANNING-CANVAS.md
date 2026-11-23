@@ -2,7 +2,7 @@
 
 **Status:** Locked product/design specification; implementation deferred
 **Date:** 2026-10-11
-**Parent:** 000-LITHOMARK-ARCHITECTURE.md
+**Parent:** 000-CATALYST-ARCHITECTURE.md
 **Related:** 002 Document Model; 003 Stable IDs; 018 Story Development Completion Audit
 
 ## Purpose and boundary
@@ -19,7 +19,7 @@ Support multiple canvases per novel, with names such as Character Ideas, Plot Br
 
 ## Cards and presentation
 
-Use the reference of an **expanded, miniature Wiki page**, not a literal reproduction of Chronicler's Saltstead card. Design in LithoMark's dark theme with gold/blue accents, a readable title and optional subtitle, prominent configurable artwork, a compact type/category treatment, selected structured fields, and clickable linked metadata. Avoid unnecessary oversized empty image space.
+Use the reference of an **expanded, miniature Wiki page**, not a literal reproduction of Chronicler's Saltstead card. Design in Catalyst's dark theme with gold/blue accents, a readable title and optional subtitle, prominent configurable artwork, a compact type/category treatment, selected structured fields, and clickable linked metadata. Avoid unnecessary oversized empty image space.
 
 Provide three per-card presentation modes:
 

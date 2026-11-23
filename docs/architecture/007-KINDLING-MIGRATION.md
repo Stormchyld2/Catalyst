@@ -1,20 +1,20 @@
-# LithoMark Writer OS — Kindling Migration Plan
+# Catalyst — Kindling Migration Plan
 
 **Document:** 007-KINDLING-MIGRATION.md  
 **Status:** Locked Baseline  
-**Project:** LithoMark Writer OS  
-**Parent Specification:** 000-LITHOMARK-ARCHITECTURE.md  
+**Project:** Catalyst  
+**Parent Specification:** 000-CATALYST-ARCHITECTURE.md  
 **Related Specifications:** 001-PROJECT-FILE-FORMAT.md, 002-DOCUMENT-MODEL.md, 003-STABLE-ID-SYSTEM.md, 004-CANON-MODEL.md, 005-PLUGIN-ARCHITECTURE.md, 006-AGENT-API.md
 
 ---
 
 # 1. Purpose
 
-This specification defines the engineering strategy for using the open-source Kindling application as a foundation for LithoMark Writer OS.
+This specification defines the engineering strategy for using the open-source Kindling application as a foundation for Catalyst.
 
 The objective is not to rename Kindling and continue its existing architecture unchanged.
 
-The objective is to reuse mature, compatible components while progressively replacing architectural assumptions that conflict with LithoMark.
+The objective is to reuse mature, compatible components while progressively replacing architectural assumptions that conflict with Catalyst.
 
 The migration must preserve working functionality wherever practical.
 
@@ -22,7 +22,7 @@ The migration must preserve working functionality wherever practical.
 
 # 2. Migration Principle
 
-LithoMark should evolve from Kindling through controlled architectural replacement.
+Catalyst should evolve from Kindling through controlled architectural replacement.
 
 Preferred strategy:
 
@@ -30,7 +30,7 @@ Preferred strategy:
 Working Kindling Foundation
           │
           ▼
-Introduce LithoMark Boundaries
+Introduce Catalyst Boundaries
           │
           ▼
 Replace Incompatible Services
@@ -39,13 +39,13 @@ Replace Incompatible Services
 Migrate Existing Features
           │
           ▼
-Add LithoMark Domain Systems
+Add Catalyst Domain Systems
           │
           ▼
 Remove Legacy Dependencies
           │
           ▼
-LithoMark Writer OS
+Catalyst
 ```
 
 Avoid:
@@ -115,13 +115,13 @@ Rust Models
 SQLite
 ```
 
-LithoMark requires:
+Catalyst requires:
 
 ```text
-LithoMark UI
+Catalyst UI
       │
       ▼
-LithoMark Domain API
+Catalyst Domain API
       │
       ▼
 Domain Services
@@ -151,13 +151,13 @@ The migration is complete when:
 
 1. Writer-owned project data lives in ordinary project files.
 2. SQLite contains only rebuildable or disposable derived data.
-3. UI components operate through LithoMark domain services.
+3. UI components operate through Catalyst domain services.
 4. Editor content is independent from TipTap's internal format.
 5. Stable IDs identify all significant objects.
 6. Kindling-specific product identity has been removed.
 7. Restricted Kindling design assets are not used.
-8. Existing compatible functionality operates against LithoMark services.
-9. LithoMark-specific systems can be added without reintroducing database lock-in.
+8. Existing compatible functionality operates against Catalyst services.
+9. Catalyst-specific systems can be added without reintroducing database lock-in.
 
 ---
 
@@ -188,7 +188,7 @@ Recommended structure:
 ```text
 Development/
 ├── Kindling-Source/
-└── LithoMark/
+└── Catalyst/
 ```
 
 `Kindling-Source` remains useful for:
@@ -199,7 +199,7 @@ Development/
 - Auditing license notices
 - Understanding migration regressions
 
-Development occurs in the LithoMark repository.
+Development occurs in the Catalyst repository.
 
 ---
 
@@ -213,7 +213,7 @@ Conceptually:
 
 ```text
 origin
-    → LithoMark repository
+    → Catalyst repository
 
 kindling-upstream
     → Original Kindling repository
@@ -225,14 +225,14 @@ This allows selected upstream changes to be reviewed later.
 
 # 9. Fork Versus Import
 
-LithoMark may begin from a fork or clean imported copy of Kindling.
+Catalyst may begin from a fork or clean imported copy of Kindling.
 
 The important requirement is preserving:
 
 - Git history where useful
 - License attribution
 - Original copyright notices
-- Clear LithoMark ownership of new work
+- Clear Catalyst ownership of new work
 
 A destructive copy-and-paste process that loses licensing provenance should be avoided.
 
@@ -242,7 +242,7 @@ A destructive copy-and-paste process that loses licensing provenance should be a
 
 Applicable Kindling MIT license notices must be retained as required.
 
-LithoMark may change:
+Catalyst may change:
 
 - Product name
 - Architecture
@@ -264,7 +264,7 @@ Therefore these elements are classified:
 REMOVE / REPLACE
 ```
 
-LithoMark must develop its own:
+Catalyst must develop its own:
 
 - Visual identity
 - Application icon
@@ -336,13 +336,13 @@ This classification guides migration.
 
 ---
 
-# 15. LithoMark New Systems
+# 15. Catalyst New Systems
 
 The following systems are new:
 
 ```text
 Project File Service
-LithoMark Document Model
+Catalyst Document Model
 Stable ID Service
 Story Bible
 Canon Model
@@ -356,7 +356,7 @@ Research System
 Plugin API
 Plugin Permission System
 External Agent API
-LithoMark Template System
+Catalyst Template System
 Project Integrity System
 ```
 
@@ -448,7 +448,7 @@ Kindling
 with:
 
 ```text
-LithoMark
+Catalyst
 ```
 
 where the text represents product identity rather than required attribution.
@@ -479,7 +479,7 @@ Required upstream license notices must remain intact.
 
 Product branding and legal attribution are separate concerns.
 
-LithoMark must not remove legally required attribution during de-branding.
+Catalyst must not remove legally required attribution during de-branding.
 
 ---
 
@@ -499,7 +499,7 @@ Architecture matters more than polished branding at this stage.
 
 ---
 
-# 23. LithoMark Application Identity
+# 23. Catalyst Application Identity
 
 Update appropriate application metadata:
 
@@ -537,7 +537,7 @@ Target intermediate pattern:
 ```text
 UI
  ↓
-LithoMark Domain Commands
+Catalyst Domain Commands
  ↓
 Domain Services
  ↓
@@ -623,7 +623,7 @@ DocumentService
 DocumentRepository
       │
       ▼
-LithoMarkFileRepository
+CatalystFileRepository
 ```
 
 This allows storage migration without rewriting every UI component.
@@ -656,9 +656,9 @@ Later objects use the same service.
 
 # 29. Existing Kindling IDs
 
-Existing Kindling database IDs should not automatically become permanent LithoMark identity.
+Existing Kindling database IDs should not automatically become permanent Catalyst identity.
 
-If existing IDs are implementation-specific database keys, generate LithoMark stable IDs.
+If existing IDs are implementation-specific database keys, generate Catalyst stable IDs.
 
 Maintain migration mapping while needed.
 
@@ -668,7 +668,7 @@ Example:
 Kindling scene ID:
 42
 
-LithoMark:
+Catalyst:
 scn-df925d68-d3ef-4d90-bfa4-6fa7834203c7
 ```
 
@@ -704,13 +704,13 @@ ProjectValidator
 FileRepository
 ```
 
-LithoMark should become capable of creating an empty file-based project before full editor migration.
+Catalyst should become capable of creating an empty file-based project before full editor migration.
 
 ---
 
 # 32. Project Creation
 
-New LithoMark project creation should produce:
+New Catalyst project creation should produce:
 
 ```text
 Project/
@@ -763,7 +763,7 @@ Open Workspace
 
 # 34. Project Scanner
 
-The Project Scanner must discover authoritative LithoMark objects from project files.
+The Project Scanner must discover authoritative Catalyst objects from project files.
 
 It should identify:
 
@@ -790,7 +790,7 @@ Possible temporary architecture:
 Domain Service
       │
       ├── Legacy SQLite Repository
-      └── LithoMark File Repository
+      └── Catalyst File Repository
 ```
 
 This is migration infrastructure only.
@@ -811,7 +811,7 @@ Example transitional rule:
 Legacy projects:
 SQLite authoritative
 
-New LithoMark test projects:
+New Catalyst test projects:
 Files authoritative
 ```
 
@@ -825,7 +825,7 @@ Implement:
 
 `002-DOCUMENT-MODEL.md`
 
-Create a LithoMark document abstraction independent from TipTap.
+Create a Catalyst document abstraction independent from TipTap.
 
 Conceptually:
 
@@ -836,7 +836,7 @@ Project File
 Parser
     │
     ▼
-LithoMarkDocument
+CatalystDocument
     │
     ▼
 Editor Adapter
@@ -867,7 +867,7 @@ Parsing must preserve unknown metadata where practical.
 Implement:
 
 ```text
-LithoMarkDocument
+CatalystDocument
       │
       ▼
 Serializer
@@ -890,7 +890,7 @@ The editor should no longer assume its internal representation is permanent stor
 
 # 41. TipTap JSON Migration
 
-If Kindling currently stores TipTap JSON or related rich-text structures in SQLite, migration must convert them to LithoMark's authoritative document representation.
+If Kindling currently stores TipTap JSON or related rich-text structures in SQLite, migration must convert them to Catalyst's authoritative document representation.
 
 Conversion must be tested against:
 
@@ -981,9 +981,9 @@ This operation should:
 A critical architecture test:
 
 ```text
-Close LithoMark
+Close Catalyst
 Delete .lithomark/index.db
-Open LithoMark
+Open Catalyst
 ```
 
 Expected result:
@@ -1077,7 +1077,7 @@ Kindling Reference
 into:
 
 ```text
-LithoMark Story Bible Object
+Catalyst Story Bible Object
 ```
 
 where appropriate.
@@ -1102,7 +1102,7 @@ Tag indexing may remain in SQLite.
 
 # 53. Comments
 
-Comments must move from database/editor-specific storage into the LithoMark annotation model.
+Comments must move from database/editor-specific storage into the Catalyst annotation model.
 
 They should use resilient document anchors.
 
@@ -1138,7 +1138,7 @@ Deleting the statistics cache must not affect manuscript content.
 
 # 57. Phase 8 — Story Bible
 
-Expand migrated references into the LithoMark Story Bible.
+Expand migrated references into the Catalyst Story Bible.
 
 Initial object types:
 
@@ -1161,7 +1161,7 @@ Story Bible files become authoritative.
 
 Existing Kindling reference UI may be adapted where useful.
 
-The underlying data model must use LithoMark domain services rather than Kindling database records.
+The underlying data model must use Catalyst domain services rather than Kindling database records.
 
 ---
 
@@ -1219,7 +1219,7 @@ Knowledge tracking should be included early in Canon development because it prov
 - Suspense
 - Reveal-heavy fiction
 
-It also demonstrates the value of LithoMark's structured architecture.
+It also demonstrates the value of Catalyst's structured architecture.
 
 ---
 
@@ -1308,7 +1308,7 @@ This provides powerful deterministic story-state tracking.
 
 Migrate and strengthen Kindling revision/snapshot capabilities.
 
-LithoMark Core must provide:
+Catalyst Core must provide:
 
 ```text
 Autosave
@@ -1422,7 +1422,7 @@ The API remains provider-neutral.
 
 # 72. Phase 15 — Import Hardening
 
-Existing Kindling importers should be adapted to produce LithoMark domain objects and files.
+Existing Kindling importers should be adapted to produce Catalyst domain objects and files.
 
 Potential import sources already supported by Kindling should be preserved where practical.
 
@@ -1449,7 +1449,7 @@ External Project
 Importer
       │
       ▼
-LithoMark Domain Objects
+Catalyst Domain Objects
       │
       ▼
 Stable ID Assignment
@@ -1468,7 +1468,7 @@ Index Build
 
 # 74. Import Safety
 
-Import should normally create a new LithoMark project rather than destructively modifying the source project.
+Import should normally create a new Catalyst project rather than destructively modifying the source project.
 
 Original external project files remain untouched.
 
@@ -1476,7 +1476,7 @@ Original external project files remain untouched.
 
 # 75. Export Hardening
 
-Existing Kindling export functionality should be adapted to consume the LithoMark Document Model.
+Existing Kindling export functionality should be adapted to consume the Catalyst Document Model.
 
 Exporters must not depend directly upon:
 
@@ -1493,7 +1493,7 @@ Only after architecture migration is stable should development focus heavily on 
 Productization includes:
 
 ```text
-LithoMark visual identity
+Catalyst visual identity
 Application icons
 Installer
 Updater
@@ -1513,7 +1513,7 @@ Performance optimization
 
 Kindling-specific update infrastructure must be replaced.
 
-LithoMark requires its own:
+Catalyst requires its own:
 
 - Update endpoints
 - Signing
@@ -1526,7 +1526,7 @@ No Kindling production update infrastructure should remain active.
 
 # 78. Migration of Existing Kindling Projects
 
-If LithoMark eventually supports importing Kindling projects, use an explicit migration wizard.
+If Catalyst eventually supports importing Kindling projects, use an explicit migration wizard.
 
 Conceptually:
 
@@ -1537,7 +1537,7 @@ Select Kindling Project
 Read Legacy Database
         │
         ▼
-Create New LithoMark Project Folder
+Create New Catalyst Project Folder
         │
         ▼
 Generate Stable IDs
@@ -1570,7 +1570,7 @@ Migration Report
 
 Migration must not modify the original Kindling project destructively.
 
-Create a new LithoMark project.
+Create a new Catalyst project.
 
 The original remains available as fallback.
 
@@ -1578,7 +1578,7 @@ The original remains available as fallback.
 
 # 80. Migration Report
 
-After migration, LithoMark should report:
+After migration, Catalyst should report:
 
 ```text
 Projects migrated
@@ -1641,10 +1641,10 @@ Kindling content
 Migration
       │
       ▼
-LithoMark file
+Catalyst file
       │
       ▼
-LithoMark parser
+Catalyst parser
       │
       ▼
 Editor
@@ -1706,7 +1706,7 @@ Export time
 Memory usage
 ```
 
-LithoMark should avoid unnecessary regressions.
+Catalyst should avoid unnecessary regressions.
 
 ---
 
@@ -1756,7 +1756,7 @@ Test with:
 - File Explorer rename
 - Cloud-sync changes
 
-LithoMark must not assume exclusive ownership of project files.
+Catalyst must not assume exclusive ownership of project files.
 
 ---
 
@@ -1959,10 +1959,10 @@ When implementation intentionally changes a locked architectural decision:
 
 # 101. First Development Milestone
 
-The first major LithoMark architecture milestone should be:
+The first major Catalyst architecture milestone should be:
 
 ```text
-LithoMark can create a project folder,
+Catalyst can create a project folder,
 create a chapter,
 create a scene,
 edit the scene in TipTap,
@@ -1986,7 +1986,7 @@ After the first milestone:
 Rename scene externally.
 Move scene externally.
 Edit scene in external editor.
-Reopen/rescan in LithoMark.
+Reopen/rescan in Catalyst.
 Preserve stable identity.
 Detect external changes.
 ```
@@ -2024,7 +2024,7 @@ Run deterministic continuity rule.
 Produce explainable warning.
 ```
 
-This proves LithoMark's differentiated story-intelligence architecture.
+This proves Catalyst's differentiated story-intelligence architecture.
 
 ---
 
@@ -2061,9 +2061,9 @@ This proves the external integration boundary.
 
 ---
 
-# 107. Minimum Viable LithoMark
+# 107. Minimum Viable Catalyst
 
-A meaningful initial LithoMark release should include:
+A meaningful initial Catalyst release should include:
 
 ```text
 File-based projects
@@ -2179,16 +2179,16 @@ Architecture exists to protect and empower the writer.
 
 # 113. Success Criteria
 
-The Kindling migration succeeds when Kindling is no longer architecturally necessary to understand LithoMark.
+The Kindling migration succeeds when Kindling is no longer architecturally necessary to understand Catalyst.
 
 At that point:
 
 - Kindling supplied useful starting code.
-- LithoMark owns its domain model.
-- LithoMark owns its project format.
-- LithoMark owns its UI identity.
-- LithoMark owns its extension architecture.
-- LithoMark owns its external integration boundary.
+- Catalyst owns its domain model.
+- Catalyst owns its project format.
+- Catalyst owns its UI identity.
+- Catalyst owns its extension architecture.
+- Catalyst owns its external integration boundary.
 - Writer files remain independent from both applications.
 
 ---
@@ -2198,10 +2198,10 @@ At that point:
 The final target is:
 
 ```text
-                    LithoMark Writer OS
+                    Catalyst
 
                     ┌───────────────┐
-                    │ LithoMark UI  │
+                    │ Catalyst UI  │
                     └───────┬───────┘
                             │
                     ┌───────▼───────┐
@@ -2246,7 +2246,7 @@ The final target is:
 
 Kindling is the foundation.
 
-It is not the architecture LithoMark must remain bound to.
+It is not the architecture Catalyst must remain bound to.
 
 Reuse what is mature.
 
@@ -2258,16 +2258,16 @@ Introduce boundaries before replacing implementations.
 
 Never sacrifice manuscript safety for migration speed.
 
-The end state must be recognizably and architecturally LithoMark.
+The end state must be recognizably and architecturally Catalyst.
 
 ---
 
 # 116. Architecture Set
 
-This document completes the initial LithoMark architecture set:
+This document completes the initial Catalyst architecture set:
 
 ```text
-000-LITHOMARK-ARCHITECTURE.md
+000-CATALYST-ARCHITECTURE.md
 001-PROJECT-FILE-FORMAT.md
 002-DOCUMENT-MODEL.md
 003-STABLE-ID-SYSTEM.md

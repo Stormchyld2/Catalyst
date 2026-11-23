@@ -38,11 +38,11 @@ pub struct CreateReviewPackageResult {
     pub manifest: ReviewManifest,
 }
 
-/// Creates one complete native LithoMark review package and records its
+/// Creates one complete native Catalyst review package and records its
 /// distribution in the author's durable ledger.
 ///
 /// This function is the authoritative orchestration boundary for new
-/// LithoMark review exports:
+/// Catalyst review exports:
 ///
 /// manuscript sources
 /// -> recipient-specific Markdown copies

@@ -1,31 +1,29 @@
-# LithoMark Writer OS — Architecture Specification
+# Catalyst — Architecture Specification
 
-**Document:** 000-LITHOMARK-ARCHITECTURE.md  
-**Status:** Locked Baseline  
-**Project:** LithoMark Writer OS  
-**Purpose:** Primary architectural authority for LithoMark Writer OS
+**Document:** 000-CATALYST-ARCHITECTURE.md  
+**Status:** Locked baseline, amended 2026-11-23 for tabletop campaigns  
+**Project:** Catalyst  
+**Purpose:** Primary architectural authority for Catalyst
 
 ---
 
 # 1. Purpose
 
-LithoMark Writer OS is a local-first writing and story-development environment designed to provide writers with a durable, portable, extensible workspace for developing, writing, revising, organizing, and maintaining complex writing projects.
+Catalyst is an offline-first tabletop RPG campaign, worldbuilding, adventure and Game Master studio. It gives Game Masters a durable, portable, extensible workspace for building worlds, planning adventures and encounters, running sessions, tracking campaign state and keeping their material organized across campaigns.
 
-LithoMark is not intended to be merely a word processor.
+Catalyst is built on a foundation that was originally a writing and story-development environment. The storage, stable-identity, document, canon, timeline, template, plugin and recovery principles in this document come from that foundation and still govern Catalyst. The writing-specific parts (manuscript lifecycle, chapters, review, publishing and audiobook) remain supported for existing book projects but are not the product direction.
 
-It is a Writer Operating System.
+**Amendment (2026-11-23):** For new tabletop campaigns and RPG modules, the documents listed in `CATALYST-DOCUMENTATION-REGISTER.md` under "Active authority" take precedence over the writing-specific sections of this document. These include `020-CAMPAIGN-WIZARD-ARCHITECTURE.md` (campaign layout), `023-CATALYST-SHARED-AND-MODULE-ENGINES.md` (engines) and `025-CATALYST-DESIGN-SYSTEM.md` (visual design). The general principles here (local-first, file-authoritative storage, data ownership, stable IDs, no built-in AI, plugin boundaries) apply to everything.
 
-The system combines manuscript writing with structured story information, project organization, canon tracking, continuity checking, timelines, research, plotting, revision management, extensibility, and external automation capabilities.
+This document establishes the architectural principles that all Catalyst development must follow.
 
-This document establishes the architectural principles that all LithoMark development must follow.
+When an implementation decision conflicts with this document, this document takes precedence unless the architecture is formally amended, as above.
 
-When an implementation decision conflicts with this document, this document takes precedence unless the architecture is formally amended.
-
-LithoMark's canonical manuscript lifecycle is:
+The inherited writing workflow for book projects is:
 
 > **Story Development → Outline → Write → Developmental Review → Revision → Beta Reading → Revision → ARC → Publish**
 
-This lifecycle is a guiding workflow rather than a mandatory wizard. All stages operate on one authoritative project. The detailed cross-workspace contract is defined in **012-LITHOMARK-WRITER-OS-INTEGRATION-ARCHITECTURE.md**.
+This workflow applies only to legacy book projects. It is a guiding workflow rather than a mandatory wizard. The detailed cross-workspace contract for book projects is defined in **012-CATALYST-WRITER-OS-INTEGRATION-ARCHITECTURE.md**.
 
 ---
 
@@ -33,29 +31,29 @@ This lifecycle is a guiding workflow rather than a mandatory wizard. All stages 
 
 Product Name:
 
-**LithoMark**
+**Catalyst**
 
 Product Subtitle:
 
-**Writer OS**
+**Tabletop RPG Campaign & Adventure Studio**
 
-LithoMark is an independent application.
+Catalyst is an independent application.
 
 The application may use, modify, and incorporate open-source software where licensing permits.
 
 The initial application foundation is derived in part from the open-source Kindling writing application.
 
-LithoMark must not depend upon Kindling branding, identity, infrastructure, or continued development.
+Catalyst must not depend upon Kindling branding, identity, infrastructure, or continued development.
 
 Where Kindling code is retained, all applicable open-source license and copyright requirements must remain intact.
 
-LithoMark branding, application identity, documentation, visual language, services, infrastructure, and product direction are independent.
+Catalyst branding, application identity, documentation, visual language, services, infrastructure, and product direction are independent.
 
 ---
 
 # 3. Foundational Technology
 
-The initial LithoMark desktop architecture uses:
+The initial Catalyst desktop architecture uses:
 
 - Tauri 2
 - Rust
@@ -66,27 +64,27 @@ The initial LithoMark desktop architecture uses:
 
 These technologies may evolve over time.
 
-The permanent LithoMark project format must not depend upon any particular frontend framework, editor, database engine, or application implementation.
+The permanent Catalyst project format must not depend upon any particular frontend framework, editor, database engine, or application implementation.
 
-A future LithoMark implementation must be capable of reading an existing LithoMark project without requiring the original UI or database implementation.
+A future Catalyst implementation must be capable of reading an existing Catalyst project without requiring the original UI or database implementation.
 
 ---
 
 # 4. Core Architectural Principle
 
-The fundamental LithoMark architecture is:
+The fundamental Catalyst architecture is:
 
 ```text
-LithoMark UI
+Catalyst UI
       │
       ▼
-LithoMark Domain API
+Catalyst Domain API
       │
       ▼
-LithoMark Domain Models
+Catalyst Domain Models
       │
       ▼
-LithoMark Project Service
+Catalyst Project Service
       │
       ▼
 Authoritative Project Files
@@ -112,7 +110,7 @@ Authoritative project information must never exist solely inside a disposable ca
 
 # 5. Local-First Principle
 
-LithoMark is local-first.
+Catalyst is local-first.
 
 A writer must be able to:
 
@@ -120,10 +118,10 @@ A writer must be able to:
 - Open a project without an internet connection.
 - Write without an internet connection.
 - Access project files directly.
-- Back up a project independently of LithoMark.
+- Back up a project independently of Catalyst.
 - Move a project between computers.
 - Archive a project independently.
-- Recover the writer's work without access to LithoMark services.
+- Recover the writer's work without access to Catalyst services.
 
 Internet connectivity must not be required for normal writing and project-management operations.
 
@@ -137,7 +135,7 @@ Cloud functionality must never become a prerequisite for ownership or access to 
 
 The writer owns the project.
 
-LithoMark must not create artificial dependency on LithoMark software for access to the writer's manuscript or core project information.
+Catalyst must not create artificial dependency on Catalyst software for access to the writer's manuscript or core project information.
 
 Whenever practical, durable project information must use documented, human-readable formats.
 
@@ -156,7 +154,7 @@ Proprietary binary formats should be avoided for authoritative project informati
 
 # 7. Project Storage
 
-A LithoMark project is fundamentally a normal filesystem directory.
+A Catalyst project is fundamentally a normal filesystem directory.
 
 Example:
 
@@ -183,13 +181,13 @@ The exact project format is defined by:
 
 The visible project directories contain durable project information.
 
-The `.lithomark` directory contains LithoMark-specific operational information.
+The `.lithomark` directory contains Catalyst-specific operational information.
 
 ---
 
 # 8. SQLite Policy
 
-SQLite is permitted within LithoMark.
+SQLite is permitted within Catalyst.
 
 SQLite must not be the sole authoritative repository for manuscript or critical project information.
 
@@ -204,19 +202,19 @@ SQLite may be used for:
 - Plugin indexes
 - Rebuildable application state
 
-A corrupted or deleted LithoMark index database must be reconstructable from authoritative project files.
+A corrupted or deleted Catalyst index database must be reconstructable from authoritative project files.
 
-Deleting the LithoMark cache must never destroy the manuscript or core story information.
+Deleting the Catalyst cache must never destroy the manuscript or core story information.
 
 ---
 
-# 9. LithoMark Domain Layer
+# 9. Catalyst Domain Layer
 
-LithoMark must maintain a domain layer between the user interface and physical project storage.
+Catalyst must maintain a domain layer between the user interface and physical project storage.
 
 The UI must not directly manipulate project files.
 
-Plugins must not directly manipulate LithoMark's internal indexes.
+Plugins must not directly manipulate Catalyst's internal indexes.
 
 External agents must not directly manipulate internal indexes.
 
@@ -228,7 +226,7 @@ Plugin
 External Agent
      │
      ▼
-LithoMark Domain API
+Catalyst Domain API
      │
      ▼
 Project Services
@@ -237,15 +235,15 @@ Project Services
 Project Files
 ```
 
-This separation protects project integrity and allows LithoMark's implementation to evolve without breaking projects or extensions.
+This separation protects project integrity and allows Catalyst's implementation to evolve without breaking projects or extensions.
 
 ---
 
 # 10. Document Model
 
-The editor implementation must not define the permanent LithoMark document format.
+The editor implementation must not define the permanent Catalyst document format.
 
-LithoMark maintains its own document abstraction.
+Catalyst maintains its own document abstraction.
 
 The relationship is:
 
@@ -253,7 +251,7 @@ The relationship is:
 Project File
      │
      ▼
-LithoMark Document Model
+Catalyst Document Model
      │
      ▼
 Editor Adapter
@@ -264,7 +262,7 @@ TipTap
 
 TipTap is the initial editor implementation.
 
-TipTap may be replaced in the future without changing the permanent LithoMark project format.
+TipTap may be replaced in the future without changing the permanent Catalyst project format.
 
 The document architecture is defined in:
 
@@ -274,7 +272,7 @@ The document architecture is defined in:
 
 # 11. Stable Object Identity
 
-Every significant LithoMark domain object must have a stable internal identifier.
+Every significant Catalyst domain object must have a stable internal identifier.
 
 Examples include:
 
@@ -319,7 +317,7 @@ The identifier architecture is defined in:
 
 # 12. Core Domain Systems
 
-LithoMark Core is responsible for fundamental writing and project functionality.
+Catalyst Core is responsible for fundamental writing and project functionality.
 
 Core systems include:
 
@@ -399,7 +397,7 @@ Story Development supports planning knowledge such as:
 
 ## Continuity
 
-LithoMark may deterministically compare recorded project information to identify possible conflicts.
+Catalyst may deterministically compare recorded project information to identify possible conflicts.
 
 Continuity checking must be based on explicit project information rather than generative inference.
 
@@ -434,7 +432,7 @@ Review packages are deliberate snapshots and must not replace the authoritative 
 
 ## Import and Export
 
-LithoMark should preserve and expand the mature import/export functionality inherited from Kindling where appropriate.
+Catalyst should preserve and expand the mature import/export functionality inherited from Kindling where appropriate.
 
 ---
 
@@ -442,7 +440,7 @@ LithoMark should preserve and expand the mature import/export functionality inhe
 
 Canon is explicit recorded fact.
 
-LithoMark does not determine what is canon through artificial intelligence.
+Catalyst does not determine what is canon through artificial intelligence.
 
 The writer establishes canon.
 
@@ -456,9 +454,9 @@ location: loc-irish-channel
 status: confirmed
 ```
 
-LithoMark may compare other structured project information against that fact.
+Catalyst may compare other structured project information against that fact.
 
-For example, if a scene dated after November 3, 2023 records the same character as physically present and alive, LithoMark may identify a potential continuity conflict.
+For example, if a scene dated after November 3, 2023 records the same character as physically present and alive, Catalyst may identify a potential continuity conflict.
 
 The writer decides whether the conflict is intentional.
 
@@ -470,7 +468,7 @@ The canon architecture is defined in:
 
 # 14. No Built-In Artificial Intelligence
 
-LithoMark Writer OS does not contain a built-in generative AI writing system.
+Catalyst does not contain a built-in generative AI writing system.
 
 Core writing functionality must not require:
 
@@ -481,15 +479,15 @@ Core writing functionality must not require:
 - Cloud AI services
 - Any other generative AI provider
 
-LithoMark remains fully functional without generative AI.
+Catalyst remains fully functional without generative AI.
 
-This does not prohibit externally authorized software from interacting with LithoMark through documented interfaces.
+This does not prohibit externally authorized software from interacting with Catalyst through documented interfaces.
 
 ---
 
 # 15. External Agent Architecture
 
-LithoMark may expose a controlled interface for external agents and automation systems.
+Catalyst may expose a controlled interface for external agents and automation systems.
 
 External access must be:
 
@@ -514,7 +512,7 @@ Potential permissions include:
 
 Destructive permissions require stronger authorization.
 
-External agents must not receive unrestricted filesystem or database access merely because they are connected to LithoMark.
+External agents must not receive unrestricted filesystem or database access merely because they are connected to Catalyst.
 
 The agent architecture is defined in:
 
@@ -524,9 +522,9 @@ The agent architecture is defined in:
 
 # 16. Plugin Architecture
 
-LithoMark supports extensibility through a formal plugin architecture.
+Catalyst supports extensibility through a formal plugin architecture.
 
-Community plugins must interact with LithoMark through documented APIs.
+Community plugins must interact with Catalyst through documented APIs.
 
 Plugins must not depend upon undocumented internal implementation details.
 
@@ -567,13 +565,13 @@ The plugin architecture is defined in:
 
 # 17. Core Versus Plugins
 
-LithoMark uses a **Core + First-Party Plugins + Community Plugins** model.
+Catalyst uses a **Core + First-Party Plugins + Community Plugins** model.
 
 Core contains the minimum capabilities required to keep a project trustworthy, portable, openable, editable, and recoverable. This includes the project/file format services, authoritative Document Service, stable IDs, safe saving and recovery primitives, shared domain/application context, plugin host/API/permissions, and the minimum Write and Story Development model required to understand the project.
 
 Optional product capabilities should be first-party plugins where practical. Official plugins may be bundled and enabled by default, but bundling does not make their data authoritative Core state.
 
-First-party plugins must use the documented, permission-controlled Plugin API wherever reasonably possible. LithoMark must not depend on secret first-party persistence shortcuts that make the community API a second-class architecture.
+First-party plugins must use the documented, permission-controlled Plugin API wherever reasonably possible. Catalyst must not depend on secret first-party persistence shortcuts that make the community API a second-class architecture.
 
 Disabling an optional first-party or community plugin must not make the core manuscript inaccessible or delete durable writer-owned plugin data.
 
@@ -594,11 +592,11 @@ Examples:
 
 # 18. Version Control
 
-LithoMark Core provides writer-friendly revision history, snapshots, backup, and recovery.
+Catalyst Core provides writer-friendly revision history, snapshots, backup, and recovery.
 
 Users must not be required to understand Git.
 
-Advanced Git functionality may be implemented as a first-party LithoMark extension.
+Advanced Git functionality may be implemented as a first-party Catalyst extension.
 
 GitHub integration may be implemented separately.
 
@@ -608,7 +606,7 @@ The standard filesystem project architecture should remain compatible with exter
 
 # 19. Template Architecture
 
-Templates are first-class LithoMark resources.
+Templates are first-class Catalyst resources.
 
 Templates may define:
 
@@ -622,7 +620,7 @@ Templates may define:
 - Research structures
 - Genre-specific structures
 
-LithoMark must not hard-code one genre or writing methodology into the core application.
+Catalyst must not hard-code one genre or writing methodology into the core application.
 
 Potential templates include:
 
@@ -645,7 +643,7 @@ Community-created templates may be supported.
 
 # 20. Portability
 
-A LithoMark project must remain portable.
+A Catalyst project must remain portable.
 
 A user should be able to copy:
 
@@ -665,7 +663,7 @@ Where machine-specific information is unavoidable, it must remain separate from 
 
 Loss prevention is a core architectural requirement.
 
-LithoMark must be designed under the assumption that:
+Catalyst must be designed under the assumption that:
 
 - Applications crash.
 - Computers lose power.
@@ -675,7 +673,7 @@ LithoMark must be designed under the assumption that:
 - Plugins fail.
 - Synchronization tools create conflicts.
 
-LithoMark must therefore support layered protection including:
+Catalyst must therefore support layered protection including:
 
 - Safe writes
 - Autosave
@@ -689,12 +687,12 @@ These mechanisms have distinct responsibilities and must not be presented as int
 
 - **Autosave** persists the writer's current edits safely and promptly. It is not a historical backup.
 - **Revision history** preserves recoverable prior document states at a useful editing granularity. It is not a substitute for an independent backup.
-- **Snapshots** are deliberate point-in-time project recovery states managed by LithoMark. They must identify what project state they represent.
+- **Snapshots** are deliberate point-in-time project recovery states managed by Catalyst. They must identify what project state they represent.
 - **Backups** are independent recoverable copies intended to survive damage, deletion, or corruption of the working project. A backup should not rely solely on the same disposable database/cache as the working project.
-- **Git/version control** records repository history when configured. It is useful protection and collaboration infrastructure, but LithoMark must not describe Git as a complete backup strategy.
+- **Git/version control** records repository history when configured. It is useful protection and collaboration infrastructure, but Catalyst must not describe Git as a complete backup strategy.
 - **Integrity checks** detect missing, malformed, inconsistent, or corrupted project state; detection does not itself constitute recovery.
 
-Recovery operations must favor preservation over destructive replacement. When practical, LithoMark should preserve the damaged/current state before restoring an older state so recovery itself does not erase potentially recoverable work.
+Recovery operations must favor preservation over destructive replacement. When practical, Catalyst should preserve the damaged/current state before restoring an older state so recovery itself does not erase potentially recoverable work.
 
 Backups, snapshots, and migrations should record sufficient project-format/version information to support safe restoration. Machine-specific caches and indexes should be rebuildable after recovery rather than treated as essential backup payloads.
 
@@ -704,9 +702,9 @@ A single corrupted database must never make the manuscript unrecoverable.
 
 # 22. Import Philosophy
 
-LithoMark should make adoption easy.
+Catalyst should make adoption easy.
 
-Where practical, LithoMark should support migration from established writing systems.
+Where practical, Catalyst should support migration from established writing systems.
 
 Kindling-derived import capabilities should be retained or adapted where licensing and architecture permit.
 
@@ -721,13 +719,13 @@ Potential import sources include:
 - Markdown
 - Standard text/document formats
 
-Imported projects must be converted into the native LithoMark project architecture.
+Imported projects must be converted into the native Catalyst project architecture.
 
 ---
 
 # 23. Export Philosophy
 
-LithoMark must never intentionally trap a writer's work.
+Catalyst must never intentionally trap a writer's work.
 
 Writers must be able to export manuscripts and project information into useful external formats.
 
@@ -745,7 +743,7 @@ Export capabilities may expand through plugins.
 
 # 24. User Interface Philosophy
 
-LithoMark should behave as a Writer OS rather than a conventional word processor overloaded with controls.
+Catalyst should behave as a Writer OS rather than a conventional word processor overloaded with controls.
 
 The interface should emphasize:
 
@@ -765,7 +763,7 @@ The application should progressively reveal complexity as needed.
 
 # 25. Kindling-Derived Architecture
 
-Kindling provides the initial implementation foundation for several LithoMark systems.
+Kindling provides the initial implementation foundation for several Catalyst systems.
 
 Components considered candidates for retention or adaptation include:
 
@@ -788,11 +786,11 @@ Components considered candidates for retention or adaptation include:
 - Screenplay functionality
 - Testing infrastructure
 
-Kindling's SQLite-as-authoritative-project-storage architecture must not become LithoMark's permanent storage model.
+Kindling's SQLite-as-authoritative-project-storage architecture must not become Catalyst's permanent storage model.
 
 Kindling-specific branding must be removed.
 
-Third-party branding, artwork, icons, or design assets not licensed for LithoMark use must not be incorporated.
+Third-party branding, artwork, icons, or design assets not licensed for Catalyst use must not be incorporated.
 
 The migration strategy is defined in:
 
@@ -802,7 +800,7 @@ The migration strategy is defined in:
 
 # 26. Architectural Boundaries
 
-LithoMark development should maintain clear boundaries between:
+Catalyst development should maintain clear boundaries between:
 
 ```text
 Presentation
@@ -828,7 +826,7 @@ Project files must remain independent of the current UI implementation.
 
 # 27. Forward Compatibility
 
-LithoMark project formats and APIs must be versioned.
+Catalyst project formats and APIs must be versioned.
 
 Project metadata must identify the applicable format version.
 
@@ -839,7 +837,7 @@ lithomark:
   project_format: 1
 ```
 
-Future LithoMark versions must provide migrations when project structures change.
+Future Catalyst versions must provide migrations when project structures change.
 
 Migrations must preserve user data.
 
@@ -872,7 +870,7 @@ The project format and domain architecture must not unnecessarily prevent future
 
 # 29. Security Principle
 
-LithoMark should follow least-privilege principles.
+Catalyst should follow least-privilege principles.
 
 Core functionality, plugins, and external integrations should receive only the capabilities necessary to perform their tasks.
 
@@ -893,7 +891,7 @@ Security restrictions must not compromise the writer's ownership of their own pr
 
 # 30. Architectural Decision Rule
 
-When choosing between two implementations, LithoMark development should prefer the solution that better preserves:
+When choosing between two implementations, Catalyst development should prefer the solution that better preserves:
 
 1. Writer ownership
 2. Data durability
@@ -912,7 +910,7 @@ Convenience for the current implementation must not override long-term project i
 
 # 31. Governing Principle
 
-LithoMark exists to help writers create and maintain their work.
+Catalyst exists to help writers create and maintain their work.
 
 The software is replaceable.
 
@@ -920,13 +918,13 @@ The writer's work is not.
 
 Therefore:
 
-**The manuscript and project belong to the writer, remain accessible outside LithoMark, and must never depend upon LithoMark's continued existence for their survival.**
+**The manuscript and project belong to the writer, remain accessible outside Catalyst, and must never depend upon Catalyst's continued existence for their survival.**
 
 ---
 
 # 32. Project Isolation and Optional Series Scope
 
-Every LithoMark writing project is an independent project root with its own `lithomark.yaml`, authoritative files, project identity, indexes/caches, and optional Git repository.
+Every Catalyst writing project is an independent project root with its own `lithomark.yaml`, authoritative files, project identity, indexes/caches, and optional Git repository.
 
 Opening one project must not implicitly expose manuscript content, entities, canon, timeline data, review state, publishing configuration, or audiobook production state from another project.
 
@@ -944,7 +942,7 @@ A future **Series Workspace** may coordinate multiple independent projects for l
 
 A Series Workspace must reference member projects rather than merge them into one proprietary container. Each member book must remain independently openable, portable, archivable, publishable, and recoverable without the Series Workspace.
 
-Series-level information must be clearly distinguishable from book-level information. LithoMark must not silently copy a book's authoritative entities into another book or treat similarly named entities in different projects as identical.
+Series-level information must be clearly distinguishable from book-level information. Catalyst must not silently copy a book's authoritative entities into another book or treat similarly named entities in different projects as identical.
 
 Where a series-level record references a project entity, it should use explicit project identity plus stable entity identity rather than name matching alone.
 
@@ -954,7 +952,7 @@ The Series Workspace is an optional coordination layer, not a replacement for th
 
 # 33. Core TTS and Optional Audiobook Studio
 
-LithoMark's basic **TTS Reader is a Core capability**. It is part of the everyday writing and accessibility experience and must remain available without Audiobook Studio.
+Catalyst's basic **TTS Reader is a Core capability**. It is part of the everyday writing and accessibility experience and must remain available without Audiobook Studio.
 
 Core TTS responsibilities include:
 
@@ -983,7 +981,7 @@ Audiobook Studio must consume supported Core APIs, including the public audio/TT
 Conceptually:
 
 ```text
-LithoMark Core
+Catalyst Core
 ├── Write
 ├── Story Development
 ├── Document / Manuscript Services
@@ -1033,7 +1031,7 @@ These documents may provide implementation detail but must remain consistent wit
 
 # 35. Connected Story Intelligence and Workspace Projections
 
-LithoMark's planning, manuscript, Story Development, research, timeline, canon, relationship, and review capabilities must operate on shared authoritative project documents and stable identities rather than becoming isolated feature silos.
+Catalyst's planning, manuscript, Story Development, research, timeline, canon, relationship, and review capabilities must operate on shared authoritative project documents and stable identities rather than becoming isolated feature silos.
 
 The same story object may be presented through multiple workspace projections. For example, a scene may appear in Outline for planning, Write for prose, Timeline for chronology, a relationship or entity view for context, and Review for feedback. Those projections must not create competing scene identities or duplicate authoritative prose.
 
@@ -1047,7 +1045,7 @@ Write should progressively expose relevant context without forcing the author to
 
 ## 35.3 Research Workspace
 
-Research remains ordinary project-owned files in a dedicated top-level Research/ hierarchy. LithoMark may provide richer list, grid, folder, favorites, recent, search, tagging, and linked-entity presentations over those files. Presentation state and indexes are derived; the research files remain authoritative and portable.
+Research remains ordinary project-owned files in a dedicated top-level Research/ hierarchy. Catalyst may provide richer list, grid, folder, favorites, recent, search, tagging, and linked-entity presentations over those files. Presentation state and indexes are derived; the research files remain authoritative and portable.
 
 ## 35.4 Flexible Entity and Codex Model
 

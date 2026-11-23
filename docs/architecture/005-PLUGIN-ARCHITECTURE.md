@@ -1,20 +1,20 @@
-# LithoMark Writer OS — Plugin Architecture
+# Catalyst — Plugin Architecture
 
 **Document:** 005-PLUGIN-ARCHITECTURE.md  
 **Status:** Locked Baseline  
-**Project:** LithoMark Writer OS  
-**Parent Specification:** 000-LITHOMARK-ARCHITECTURE.md  
+**Project:** Catalyst  
+**Parent Specification:** 000-CATALYST-ARCHITECTURE.md  
 **Related Specifications:** 001-PROJECT-FILE-FORMAT.md, 002-DOCUMENT-MODEL.md, 003-STABLE-ID-SYSTEM.md, 004-CANON-MODEL.md
 
 ---
 
 # 1. Purpose
 
-This specification defines the LithoMark Writer OS plugin architecture.
+This specification defines the Catalyst plugin architecture.
 
-LithoMark is designed as an extensible writing platform.
+Catalyst is designed as an extensible writing platform.
 
-The plugin system allows first-party and community developers to extend LithoMark without requiring modifications to LithoMark Core.
+The plugin system allows first-party and community developers to extend Catalyst without requiring modifications to Catalyst Core.
 
 The system must balance:
 
@@ -26,7 +26,7 @@ The system must balance:
 - Project portability
 - Community development
 
-Plugins must extend LithoMark through documented APIs rather than depending upon internal implementation details.
+Plugins must extend Catalyst through documented APIs rather than depending upon internal implementation details.
 
 ---
 
@@ -38,16 +38,16 @@ The plugin architecture is:
 Community / First-Party Plugin
             │
             ▼
-     LithoMark Plugin API
+     Catalyst Plugin API
             │
             ▼
       Permission Layer
             │
             ▼
-      LithoMark Domain API
+      Catalyst Domain API
             │
             ▼
-        LithoMark Core
+        Catalyst Core
             │
             ▼
       Project Services
@@ -59,33 +59,33 @@ Plugins must not normally bypass this architecture.
 
 # 3. Core Principle
 
-Plugins extend LithoMark.
+Plugins extend Catalyst.
 
-Plugins do not become LithoMark Core.
+Plugins do not become Catalyst Core.
 
 Core project integrity must not depend upon an optional plugin unless the writer explicitly chooses to use a plugin-defined project feature.
 
-LithoMark must remain usable when optional plugins are disabled.
+Catalyst must remain usable when optional plugins are disabled.
 
 ---
 
 # 4. Plugin Tiers
 
-LithoMark defines two primary plugin tiers:
+Catalyst defines two primary plugin tiers:
 
 ```text
 Tier 1
-LithoMark Extension
+Catalyst Extension
 
 Tier 2
-Native LithoMark Plugin
+Native Catalyst Plugin
 ```
 
 These tiers have different security and capability requirements.
 
 ---
 
-# 5. Tier 1 — LithoMark Extensions
+# 5. Tier 1 — Catalyst Extensions
 
 Tier 1 extensions are the standard community plugin format.
 
@@ -97,9 +97,9 @@ Typical technologies may include:
 - JavaScript
 - HTML
 - CSS
-- LithoMark Plugin API
+- Catalyst Plugin API
 
-Tier 1 extensions must operate within LithoMark-defined capabilities.
+Tier 1 extensions must operate within Catalyst-defined capabilities.
 
 They should not receive unrestricted operating-system access.
 
@@ -141,7 +141,7 @@ Scene Progress Dashboard
 
 ---
 
-# 7. Tier 2 — Native LithoMark Plugins
+# 7. Tier 2 — Native Catalyst Plugins
 
 Tier 2 plugins may contain native code.
 
@@ -181,7 +181,7 @@ Therefore Tier 2 plugins require stronger review and authorization.
 
 # 9. Default Community Model
 
-The standard LithoMark Community Plugin ecosystem should prioritize Tier 1 extensions.
+The standard Catalyst Community Plugin ecosystem should prioritize Tier 1 extensions.
 
 Native plugins should be exceptional.
 
@@ -192,7 +192,7 @@ Most plugins
     ↓
 Tier 1 Extension
     ↓
-Controlled LithoMark APIs
+Controlled Catalyst APIs
 ```
 
 rather than:
@@ -224,11 +224,11 @@ com.example.fantasy-calendar
 First-party plugins may use:
 
 ```text
-app.lithomark.git
-app.lithomark.github
+app.catalyst.git
+app.catalyst.github
 ```
 
-The final LithoMark-owned namespace should correspond to the project's eventual official domain.
+The final Catalyst-owned namespace should correspond to the project's eventual official domain.
 
 ---
 
@@ -250,7 +250,7 @@ Example:
   "id": "com.example.fantasy-calendar",
   "name": "Fantasy Calendar",
   "version": "1.4.2",
-  "description": "Fantasy calendar and chronology tools for LithoMark.",
+  "description": "Fantasy calendar and chronology tools for Catalyst.",
   "author": "Example Developer",
   "license": "MIT",
   "apiVersion": "1",
@@ -279,8 +279,8 @@ The manifest should define at minimum:
 - Author
 - Plugin type
 - Entry point
-- Required LithoMark API version
-- Minimum supported LithoMark version
+- Required Catalyst API version
+- Minimum supported Catalyst version
 - Requested permissions
 
 Optional fields may include:
@@ -308,7 +308,7 @@ Example:
 1.4.2
 ```
 
-LithoMark Plugin API versions must be explicitly declared.
+Catalyst Plugin API versions must be explicitly declared.
 
 Compatibility must not be inferred solely from plugin version.
 
@@ -316,12 +316,12 @@ Compatibility must not be inferred solely from plugin version.
 
 # 14. API Versioning
 
-The LithoMark Plugin API is versioned independently from the LithoMark application.
+The Catalyst Plugin API is versioned independently from the Catalyst application.
 
 Example:
 
 ```text
-LithoMark application:
+Catalyst application:
 3.2.0
 
 Plugin API:
@@ -342,7 +342,7 @@ This allows application development without unnecessarily breaking plugins.
 
 # 15. Compatibility
 
-Before loading a plugin, LithoMark must verify:
+Before loading a plugin, Catalyst must verify:
 
 - Manifest validity
 - Plugin API compatibility
@@ -419,7 +419,7 @@ manuscript.delete
 
 Reading an unpublished manuscript is a meaningful permission.
 
-LithoMark should clearly communicate this during installation.
+Catalyst should clearly communicate this during installation.
 
 ---
 
@@ -525,7 +525,7 @@ Example:
 import.register
 ```
 
-Importers should convert external content through LithoMark domain services.
+Importers should convert external content through Catalyst domain services.
 
 They must not bypass stable ID generation or project validation.
 
@@ -561,7 +561,7 @@ A plugin without network permission must not be capable of transmitting manuscri
 
 # 29. Network Domains
 
-LithoMark may support domain-scoped network permissions.
+Catalyst may support domain-scoped network permissions.
 
 Example:
 
@@ -581,7 +581,7 @@ This is preferable to unrestricted internet access where practical.
 
 # 30. External Filesystem Permission
 
-Access outside the current LithoMark project must require explicit permission.
+Access outside the current Catalyst project must require explicit permission.
 
 Examples:
 
@@ -596,7 +596,7 @@ A plugin should not automatically receive access to the user's entire computer.
 
 # 31. Project Filesystem Access
 
-Plugins should normally use LithoMark APIs rather than raw filesystem access even inside the current project.
+Plugins should normally use Catalyst APIs rather than raw filesystem access even inside the current project.
 
 Preferred:
 
@@ -620,7 +620,7 @@ Directly rewrite manuscript file
 
 # 32. Permission Prompt
 
-During installation, LithoMark should display requested permissions clearly.
+During installation, Catalyst should display requested permissions clearly.
 
 Example:
 
@@ -644,7 +644,7 @@ The writer must be able to make an informed choice.
 
 # 33. Permission Changes
 
-If an update requests additional permissions, LithoMark must not silently grant them.
+If an update requests additional permissions, Catalyst must not silently grant them.
 
 Example:
 
@@ -672,7 +672,7 @@ Depending upon the permission, revocation may:
 - Require restart
 - Remove access immediately
 
-LithoMark should clearly communicate the result.
+Catalyst should clearly communicate the result.
 
 ---
 
@@ -692,7 +692,7 @@ Updated
 Uninstalled
 ```
 
-LithoMark Core controls the lifecycle.
+Catalyst Core controls the lifecycle.
 
 ---
 
@@ -700,7 +700,7 @@ LithoMark Core controls the lifecycle.
 
 Plugins may eventually be installed from:
 
-- LithoMark Community Registry
+- Catalyst Community Registry
 - Local plugin package
 - Developer directory
 - First-party distribution
@@ -711,11 +711,11 @@ Installation must validate the plugin before activation.
 
 # 37. Community Registry
 
-LithoMark should support a public Community Plugin Registry.
+Catalyst should support a public Community Plugin Registry.
 
 The registry contains metadata about approved or listed community plugins.
 
-The registry itself should not require LithoMark to host every plugin's source repository.
+The registry itself should not require Catalyst to host every plugin's source repository.
 
 A plugin may remain independently developed.
 
@@ -735,7 +735,7 @@ Plugin Release
 Community Registry Metadata
         │
         ▼
-LithoMark Plugin Browser
+Catalyst Plugin Browser
         │
         ▼
 User Installation
@@ -766,7 +766,7 @@ Verification status
 
 # 40. Community Plugin Browser
 
-LithoMark may provide:
+Catalyst may provide:
 
 ```text
 Settings
@@ -783,7 +783,7 @@ The exact UI may evolve.
 
 # 41. Plugin Verification
 
-LithoMark may support verification states such as:
+Catalyst may support verification states such as:
 
 ```text
 First-party
@@ -816,7 +816,7 @@ Downloaded plugin packages should be integrity checked.
 
 A registry may provide cryptographic hashes for released packages.
 
-LithoMark must reject corrupted packages.
+Catalyst must reject corrupted packages.
 
 ---
 
@@ -837,7 +837,7 @@ Updates requesting new privileges require writer approval.
 
 # 45. Rollback
 
-Where practical, LithoMark should preserve the previous plugin version long enough to allow rollback after a failed update.
+Where practical, Catalyst should preserve the previous plugin version long enough to allow rollback after a failed update.
 
 Plugin updates must not be allowed to silently corrupt project data.
 
@@ -845,9 +845,9 @@ Plugin updates must not be allowed to silently corrupt project data.
 
 # 46. Plugin Failure Isolation
 
-A failing plugin should not crash the entire LithoMark application where practical.
+A failing plugin should not crash the entire Catalyst application where practical.
 
-LithoMark should isolate plugin failures and report:
+Catalyst should isolate plugin failures and report:
 
 ```text
 Plugin:
@@ -861,12 +861,12 @@ Disabled after repeated errors
 
 # 47. Startup Failure
 
-If a plugin prevents normal startup, LithoMark should support Safe Mode.
+If a plugin prevents normal startup, Catalyst should support Safe Mode.
 
 Example:
 
 ```text
-LithoMark Safe Mode
+Catalyst Safe Mode
 
 Community plugins disabled.
 ```
@@ -902,7 +902,7 @@ Example:
 com.example.fantasy-calendar
 ```
 
-Plugin settings must not collide with LithoMark Core settings.
+Plugin settings must not collide with Catalyst Core settings.
 
 ---
 
@@ -963,7 +963,7 @@ Durable plugin-created content belongs to the writer.
 
 Uninstalling a plugin must not silently delete durable writer-created data.
 
-LithoMark should offer options such as:
+Catalyst should offer options such as:
 
 ```text
 Uninstall plugin
@@ -978,7 +978,7 @@ Destructive removal of durable data requires explicit confirmation.
 
 # 54. Unknown Plugin Data
 
-If a project contains durable data belonging to a plugin that is not installed, LithoMark should preserve the data.
+If a project contains durable data belonging to a plugin that is not installed, Catalyst should preserve the data.
 
 It may display:
 
@@ -1013,7 +1013,7 @@ This prevents collisions with Core types.
 
 # 56. Plugin Stable IDs
 
-Plugins requiring stable object identity should request IDs through LithoMark Core.
+Plugins requiring stable object identity should request IDs through Catalyst Core.
 
 Plugins must not create IDs that conflict with Core prefixes.
 
@@ -1078,7 +1078,7 @@ depending upon declared UI contributions.
 
 # 60. Command Palette
 
-LithoMark should provide a central command registry.
+Catalyst should provide a central command registry.
 
 Core and plugin commands should use the same discoverable mechanism where practical.
 
@@ -1139,7 +1139,7 @@ Editor extensions require special care.
 
 Plugins must not depend directly upon undocumented TipTap internals.
 
-LithoMark should expose stable editor-extension APIs.
+Catalyst should expose stable editor-extension APIs.
 
 Conceptually:
 
@@ -1147,7 +1147,7 @@ Conceptually:
 Plugin
    │
    ▼
-LithoMark Editor API
+Catalyst Editor API
    │
    ▼
 Editor Adapter
@@ -1160,11 +1160,11 @@ TipTap
 
 # 65. TipTap Isolation
 
-TipTap is not the LithoMark Plugin API.
+TipTap is not the Catalyst Plugin API.
 
 A plugin must not assume TipTap will always be the editor.
 
-If LithoMark changes editor implementation, compliant plugins should continue functioning wherever their declared API remains supported.
+If Catalyst changes editor implementation, compliant plugins should continue functioning wherever their declared API remains supported.
 
 ---
 
@@ -1178,7 +1178,7 @@ Example:
 editor.read-selection
 ```
 
-This should return a normalized LithoMark representation.
+This should return a normalized Catalyst representation.
 
 It should not expose unnecessary editor internals.
 
@@ -1297,13 +1297,13 @@ Romance Beat Sheet
 Screenwriting Structure
 ```
 
-Templates must use standard LithoMark project mechanisms.
+Templates must use standard Catalyst project mechanisms.
 
 ---
 
 # 73. Importers
 
-A plugin importer converts an external format into LithoMark domain objects.
+A plugin importer converts an external format into Catalyst domain objects.
 
 Imported objects must:
 
@@ -1316,7 +1316,7 @@ Imported objects must:
 
 # 74. Exporters
 
-A plugin exporter receives permitted normalized LithoMark data.
+A plugin exporter receives permitted normalized Catalyst data.
 
 It may generate external files.
 
@@ -1334,7 +1334,7 @@ Example:
 This plugin can send data over the internet.
 ```
 
-If manuscript access is also requested, LithoMark should make the combination especially clear.
+If manuscript access is also requested, Catalyst should make the combination especially clear.
 
 ---
 
@@ -1349,7 +1349,7 @@ Example:
 
 This combination creates a potential path for unpublished work to leave the computer.
 
-LithoMark should prominently disclose this.
+Catalyst should prominently disclose this.
 
 ---
 
@@ -1368,7 +1368,7 @@ Example:
 ```text
 Native Plugin
 
-This plugin contains native code and may have capabilities beyond standard LithoMark extensions.
+This plugin contains native code and may have capabilities beyond standard Catalyst extensions.
 ```
 
 Installation requires explicit authorization.
@@ -1377,7 +1377,7 @@ Installation requires explicit authorization.
 
 # 79. Native Plugin Review
 
-Plugins distributed as verified native plugins through an official LithoMark registry should undergo stronger review than standard extensions.
+Plugins distributed as verified native plugins through an official Catalyst registry should undergo stronger review than standard extensions.
 
 Review may include:
 
@@ -1394,7 +1394,7 @@ The exact review program may evolve.
 
 # 80. First-Party Plugins
 
-LithoMark may distribute optional first-party plugins.
+Catalyst may distribute optional first-party plugins.
 
 Initial candidates include:
 
@@ -1420,7 +1420,7 @@ A first-party Git plugin may provide:
 - Restore
 - Push/pull where configured
 
-Basic LithoMark revision history remains Core.
+Basic Catalyst revision history remains Core.
 
 ---
 
@@ -1434,13 +1434,13 @@ A GitHub plugin may provide:
 - Remote status
 - Conflict assistance
 
-GitHub must not be required for normal LithoMark operation.
+GitHub must not be required for normal Catalyst operation.
 
 ---
 
 # 83. No Built-In AI Requirement
 
-LithoMark's plugin architecture does not imply built-in AI.
+Catalyst's plugin architecture does not imply built-in AI.
 
 Community developers may eventually create integrations with external services where permitted by project policy.
 
@@ -1451,7 +1451,7 @@ Such plugins must obey:
 - Writer authorization
 - Plugin security requirements
 
-LithoMark Core remains AI-free.
+Catalyst Core remains AI-free.
 
 ---
 
@@ -1469,9 +1469,9 @@ External Application / Agent
 Agent API
 ```
 
-A plugin is code loaded by LithoMark.
+A plugin is code loaded by Catalyst.
 
-An external agent communicates with LithoMark from outside the application.
+An external agent communicates with Catalyst from outside the application.
 
 Their security models differ.
 
@@ -1479,7 +1479,7 @@ Their security models differ.
 
 # 85. Developer Mode
 
-LithoMark should provide Developer Mode.
+Catalyst should provide Developer Mode.
 
 Potential features:
 
@@ -1512,7 +1512,7 @@ Development plugins should display an appropriate warning.
 
 # 87. Plugin SDK
 
-LithoMark should eventually provide an official Plugin SDK.
+Catalyst should eventually provide an official Plugin SDK.
 
 The SDK may include:
 
@@ -1548,7 +1548,7 @@ Documentation should include:
 
 # 89. Example Plugin
 
-LithoMark should maintain at least one minimal reference plugin.
+Catalyst should maintain at least one minimal reference plugin.
 
 Example:
 
@@ -1614,7 +1614,7 @@ v1 removed in later major compatibility window
 
 # 93. Internal APIs
 
-LithoMark may contain internal APIs that are not available to plugins.
+Catalyst may contain internal APIs that are not available to plugins.
 
 Community developers must not rely on undocumented internal interfaces.
 
@@ -1624,7 +1624,7 @@ Internal APIs may change without plugin compatibility guarantees.
 
 # 94. Resource Limits
 
-LithoMark may enforce reasonable limits on plugin resource consumption.
+Catalyst may enforce reasonable limits on plugin resource consumption.
 
 Examples:
 
@@ -1682,9 +1682,9 @@ If a plugin is later reinstalled, it should be capable of rediscovering compatib
 
 # 99. Project Portability
 
-A LithoMark project must remain portable even when it uses plugins.
+A Catalyst project must remain portable even when it uses plugins.
 
-If required plugins are missing, LithoMark should identify them.
+If required plugins are missing, Catalyst should identify them.
 
 Example:
 
@@ -1721,7 +1721,7 @@ A missing required plugin should produce a warning, not make the entire project 
 
 # 101. Plugin Lock-In Prevention
 
-LithoMark should discourage plugin designs that trap writer-owned content in inaccessible proprietary storage.
+Catalyst should discourage plugin designs that trap writer-owned content in inaccessible proprietary storage.
 
 Community guidelines should encourage:
 
@@ -1734,7 +1734,7 @@ Community guidelines should encourage:
 
 # 102. Security Incident Response
 
-LithoMark should eventually support disabling or warning about known malicious plugin versions through registry metadata.
+Catalyst should eventually support disabling or warning about known malicious plugin versions through registry metadata.
 
 This mechanism must be transparent.
 
@@ -1746,7 +1746,7 @@ It should not silently delete writer data.
 
 Removing a plugin from the Community Registry must not automatically uninstall it from existing users.
 
-LithoMark may warn users when a plugin has been removed for security reasons.
+Catalyst may warn users when a plugin has been removed for security reasons.
 
 ---
 
@@ -1781,7 +1781,7 @@ Core integrity checking must continue even when plugins are missing.
 
 # 107. Accessibility
 
-Plugin UI should follow LithoMark accessibility guidelines.
+Plugin UI should follow Catalyst accessibility guidelines.
 
 Community guidelines should cover:
 
@@ -1795,7 +1795,7 @@ Community guidelines should cover:
 
 # 108. Theme Compatibility
 
-Plugins should use LithoMark theme tokens and UI APIs rather than hard-coding assumptions about appearance.
+Plugins should use Catalyst theme tokens and UI APIs rather than hard-coding assumptions about appearance.
 
 This allows compatibility with:
 
@@ -1810,13 +1810,13 @@ This allows compatibility with:
 
 Plugins must not depend upon Kindling or Press design-system internals.
 
-LithoMark's plugin UI contract is independent.
+Catalyst's plugin UI contract is independent.
 
 ---
 
 # 110. Migration From Kindling
 
-Kindling does not define LithoMark's community plugin architecture.
+Kindling does not define Catalyst's community plugin architecture.
 
 During migration:
 
@@ -1824,10 +1824,10 @@ During migration:
 Kindling/Tauri Foundation
         │
         ▼
-LithoMark Domain Layer
+Catalyst Domain Layer
         │
         ▼
-LithoMark Plugin API
+Catalyst Plugin API
 ```
 
 The Plugin API should be introduced only after core domain boundaries are sufficiently stable.
@@ -1839,7 +1839,7 @@ The Plugin API should be introduced only after core domain boundaries are suffic
 Recommended implementation sequence:
 
 ```text
-1. LithoMark Domain Layer
+1. Catalyst Domain Layer
 2. Document Service
 3. Project Service
 4. Stable ID Service
@@ -1907,17 +1907,17 @@ Which plugins contain native code?
 Which plugins are currently enabled?
 ```
 
-LithoMark should make these answers easy to obtain.
+Catalyst should make these answers easy to obtain.
 
 ---
 
 # 115. Governing Principle
 
-LithoMark Core provides the stable writing platform.
+Catalyst Core provides the stable writing platform.
 
 Plugins expand what the platform can do.
 
-The plugin ecosystem should make LithoMark more capable without making the writer surrender control of:
+The plugin ecosystem should make Catalyst more capable without making the writer surrender control of:
 
 - Their manuscript
 - Their computer
@@ -1931,7 +1931,7 @@ Extensibility must serve writer ownership rather than undermine it.
 
 # 116. Interactive Map Plugin Boundary
 
-Interactive cartography is intentionally deferred from LithoMark Core.
+Interactive cartography is intentionally deferred from Catalyst Core.
 
 A future official map capability should be implemented as an optional first-party plugin through documented Plugin APIs. It may provide:
 
@@ -1952,7 +1952,7 @@ Disabling or uninstalling the map plugin must not remove the writer's underlying
 
 Parent specifications:
 
-- `000-LITHOMARK-ARCHITECTURE.md`
+- `000-CATALYST-ARCHITECTURE.md`
 - `001-PROJECT-FILE-FORMAT.md`
 - `002-DOCUMENT-MODEL.md`
 - `003-STABLE-ID-SYSTEM.md`
@@ -1976,9 +1976,9 @@ Future supporting specifications should include:
 
 ## First-Party Plugin Model
 
-LithoMark uses a **Core + First-Party Plugins + Community Plugins** architecture.
+Catalyst uses a **Core + First-Party Plugins + Community Plugins** architecture.
 
-LithoMark Core contains the capabilities required for project integrity and for a project to remain openable and recoverable:
+Catalyst Core contains the capabilities required for project integrity and for a project to remain openable and recoverable:
 
 - project-root and project-format services
 - authoritative document model and persistence
@@ -2002,11 +2002,11 @@ Candidate first-party plugins include:
 - advanced or specialized Story Development views
 - optional importers/exporters and integrations
 
-A first-party plugin is an official LithoMark component, not privileged project truth. It may be bundled with LithoMark and enabled by default when appropriate, but optional first-party plugins should be individually enableable/disableable.
+A first-party plugin is an official Catalyst component, not privileged project truth. It may be bundled with Catalyst and enabled by default when appropriate, but optional first-party plugins should be individually enableable/disableable.
 
 ### Public API parity rule
 
-First-party plugins must use the documented LithoMark Plugin API wherever reasonably possible.
+First-party plugins must use the documented Catalyst Plugin API wherever reasonably possible.
 
 First-party code must not depend on secret database access, undocumented TipTap internals, or private persistence shortcuts merely to obtain capabilities denied to community plugins.
 
@@ -2042,7 +2042,7 @@ Validation + Conflict Detection + Safe Save
 Authoritative Markdown/YAML
 ```
 
-The Document Service therefore forms part of the stable domain boundary now being built. Plugin APIs should expose document operations in terms of stable LithoMark documents and IDs rather than filesystem implementation details.
+The Document Service therefore forms part of the stable domain boundary now being built. Plugin APIs should expose document operations in terms of stable Catalyst documents and IDs rather than filesystem implementation details.
 
 ### Capability granularity
 
@@ -2065,13 +2065,13 @@ The initial API design should favor capability-oriented operations such as:
 
 Bundling a first-party plugin with the installer does not make it Core. Bundled plugins retain manifests, versions, permissions/capabilities, lifecycle state, and clear ownership.
 
-LithoMark may grant bundled first-party plugins a trusted publisher status, but trust must not bypass project-integrity rules.
+Catalyst may grant bundled first-party plugins a trusted publisher status, but trust must not bypass project-integrity rules.
 
 ### Community compatibility objective
 
-The plugin API must be versioned independently of the application and designed so a compliant community plugin does not need to know whether LithoMark currently uses Svelte, TipTap, SQLite indexes, or another internal implementation.
+The plugin API must be versioned independently of the application and designed so a compliant community plugin does not need to know whether Catalyst currently uses Svelte, TipTap, SQLite indexes, or another internal implementation.
 
-The public contract is the LithoMark domain/plugin API. Internal implementation remains replaceable.
+The public contract is the Catalyst domain/plugin API. Internal implementation remains replaceable.
 
 ---
 
@@ -2083,7 +2083,7 @@ The public contract is the LithoMark domain/plugin API. Internal implementation 
 
 ## Theme Extension Architecture
 
-LithoMark themes are a formal extension class, but they are not executable plugins.
+Catalyst themes are a formal extension class, but they are not executable plugins.
 
 A theme changes presentation only. Installing a theme must never grant manuscript, project, filesystem, network, process, editor-write, or Story Development permissions.
 
@@ -2101,7 +2101,7 @@ The manifest identifies the theme, author, version, compatibility, supported app
 
 ### Stable Design Tokens
 
-LithoMark's application shell and first-party workspaces must consume public design tokens rather than hard-coded component-specific colors wherever practical. Public tokens use a stable `--lm-*` namespace.
+Catalyst's application shell and first-party workspaces must consume public design tokens rather than hard-coded component-specific colors wherever practical. Public tokens use a stable `--lm-*` namespace.
 
 Initial token families cover backgrounds, editor/manuscript surfaces, text, accents/focus, borders, links/wikilinks, selection, controls, typography, Story Development cards/timeline/graph semantics, Review annotations, Git/status semantics, and audio/publishing status surfaces.
 
@@ -2109,7 +2109,7 @@ Themes target documented tokens and supported theme surfaces, not arbitrary inte
 
 ### Built-in Theme Rule
 
-LithoMark Dark and LithoMark Light use the same public token/theme mechanism expected of community themes wherever practical. Built-in themes are reference implementations of the public contract.
+Catalyst Dark and Catalyst Light use the same public token/theme mechanism expected of community themes wherever practical. Built-in themes are reference implementations of the public contract.
 
 ### Safety Boundary
 
@@ -2121,7 +2121,7 @@ Appearance should expose active theme, installed/community themes, accent color 
 
 ### Theme Creator
 
-A future built-in Theme Creator should allow non-programmers to start from a theme, edit supported tokens visually, preview representative LithoMark surfaces live, name/describe the theme, receive contrast/accessibility guidance, and export a valid LithoMark theme package. Advanced authors may edit the stylesheet directly.
+A future built-in Theme Creator should allow non-programmers to start from a theme, edit supported tokens visually, preview representative Catalyst surfaces live, name/describe the theme, receive contrast/accessibility guidance, and export a valid Catalyst theme package. Advanced authors may edit the stylesheet directly.
 
 ### Community Themes
 

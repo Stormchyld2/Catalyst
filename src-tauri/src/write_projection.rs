@@ -1,6 +1,6 @@
 //! File-authoritative Write workspace projection.
 //!
-//! This module reads ordinary LithoMark project files and derives the chapter /
+//! This module reads ordinary Catalyst project files and derives the chapter /
 //! scene / beat structure consumed by the existing Write UI. It owns no content
 //! and does not write to the transitional SQLite cache.
 
@@ -13,7 +13,7 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 use walkdir::WalkDir;
 
-use crate::document::service::{read_document, save_document, DocumentIdentity, LithoMarkDocument};
+use crate::document::service::{read_document, save_document, DocumentIdentity, CatalystDocument};
 use crate::entity_templates::EntityTemplate;
 use crate::models::{
     Beat, Chapter, EditorMode, PlanningStatus, Scene, SceneStatus, SceneType,
@@ -65,13 +65,13 @@ struct PlanChapter {
 
 #[derive(Clone, Debug)]
 struct ManuscriptChapter {
-    document: LithoMarkDocument,
+    document: CatalystDocument,
     position: i32,
 }
 
 #[derive(Clone, Debug)]
 struct ManuscriptScene {
-    document: LithoMarkDocument,
+    document: CatalystDocument,
 }
 
 pub fn build_write_projection(project_root: &Path, project_id: Uuid) -> Result<WriteProjection, String> {
@@ -477,7 +477,7 @@ pub fn save_chapter_prose(
     } else {
         let mut metadata = std::collections::BTreeMap::new();
         metadata.insert("position".into(), serde_yaml::Value::Number(chapter.position.into()));
-        let document = LithoMarkDocument {
+        let document = CatalystDocument {
             identity: DocumentIdentity {
                 document_type: "chapter".into(),
                 id: format!("ch-{chapter_id}"),
@@ -535,7 +535,7 @@ pub fn stage_legacy_chapter_scenes(
         metadata.insert("position".into(), serde_yaml::Value::Number((index as i32).into()));
         metadata.insert("staged_from".into(), serde_yaml::Value::String(source.to_string()));
         metadata.insert("source_hash".into(), serde_yaml::Value::String(source_document.source_hash.clone()));
-        pending.push(LithoMarkDocument {
+        pending.push(CatalystDocument {
             identity: DocumentIdentity { document_type: "scene".into(), id: format!("scn-{}", scene.id) },
             title: Some(scene.title.clone()),
             metadata,
@@ -700,7 +700,7 @@ pub fn save_scene_prose(
         metadata.insert("chapter_id".into(), serde_yaml::Value::String(chapter.id.to_string()));
         metadata.insert("chapter_title".into(), serde_yaml::Value::String(chapter.title.clone()));
         metadata.insert("position".into(), serde_yaml::Value::Number(scene.position.into()));
-        let document = LithoMarkDocument {
+        let document = CatalystDocument {
             identity: DocumentIdentity {
                 document_type: "scene".into(),
                 id: format!("scn-{scene_id}"),
@@ -812,7 +812,7 @@ pub fn append_planned_chapter(
         if !synopsis.is_empty() {
             metadata.insert("synopsis".into(), serde_yaml::Value::String(synopsis.to_string()));
         }
-        let manuscript = LithoMarkDocument {
+        let manuscript = CatalystDocument {
             identity: DocumentIdentity {
                 document_type: "chapter".into(),
                 id: format!("ch-{chapter_id}"),
@@ -928,7 +928,7 @@ pub fn append_planned_scene(
             metadata.insert(key.into(), serde_yaml::Value::String(value.trim().to_string()));
         }
     }
-    let scene = LithoMarkDocument {
+    let scene = CatalystDocument {
         identity: DocumentIdentity { document_type: "scene".into(), id: format!("scn-{scene_id}") },
         title: Some(scene_title.to_string()),
         metadata,
@@ -1289,7 +1289,7 @@ mod tests {
         let root = std::env::temp_dir().join(format!("lithomark-scene-test-{}", Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
         let chapter_id = Uuid::new_v4();
-        let chapter = LithoMarkDocument {
+        let chapter = CatalystDocument {
             identity: DocumentIdentity { document_type: "chapter".into(), id: format!("ch-{chapter_id}") },
             title: Some("Opening".into()),
             metadata: Default::default(),
@@ -1445,7 +1445,7 @@ mod tests {
         let project_id = Uuid::new_v4();
         let chapter_id = Uuid::new_v4();
         let source_path = Path::new("Manuscript/Chapter One.md");
-        let source = LithoMarkDocument {
+        let source = CatalystDocument {
             identity: DocumentIdentity { document_type: "chapter".into(), id: format!("ch-{chapter_id}") },
             title: Some("Chapter One".into()),
             metadata: Default::default(),
@@ -1486,7 +1486,7 @@ mod tests {
         let project_id = Uuid::new_v4();
         let chapter_id = Uuid::new_v4();
         let chapter_path = Path::new("Manuscript/Chapter One.md");
-        let chapter = LithoMarkDocument {
+        let chapter = CatalystDocument {
             identity: DocumentIdentity { document_type: "chapter".into(), id: format!("ch-{chapter_id}") },
             title: Some("Chapter One".into()),
             metadata: Default::default(),
@@ -1520,7 +1520,7 @@ mod tests {
         let project_id = Uuid::new_v4();
         let chapter_id = Uuid::new_v4();
         let chapter_path = Path::new("Manuscript/Chapter One.md");
-        let chapter = LithoMarkDocument {
+        let chapter = CatalystDocument {
             identity: DocumentIdentity { document_type: "chapter".into(), id: format!("ch-{chapter_id}") },
             title: Some("Chapter One".into()),
             metadata: Default::default(),
@@ -1567,7 +1567,7 @@ mod tests {
             (first_id, first_path, "Chapter One", "First chapter prose."),
             (second_id, second_path, "Chapter Two", "Second chapter prose."),
         ] {
-            save_document(temp.path(), &LithoMarkDocument {
+            save_document(temp.path(), &CatalystDocument {
                 identity: DocumentIdentity { document_type: "chapter".into(), id: format!("ch-{id}") },
                 title: Some(title.into()),
                 metadata: Default::default(),
@@ -1614,7 +1614,7 @@ mod tests {
         let project_id = Uuid::new_v4();
         let chapter_id = Uuid::new_v4();
         let chapter_path = Path::new("Manuscript/Chapter One.md");
-        let chapter = LithoMarkDocument {
+        let chapter = CatalystDocument {
             identity: DocumentIdentity { document_type: "chapter".into(), id: format!("ch-{chapter_id}") },
             title: Some("Chapter One".into()),
             metadata: Default::default(),
@@ -1648,7 +1648,7 @@ mod tests {
         let project_id = Uuid::new_v4();
         let chapter_id = Uuid::new_v4();
         let original = "# Chapter One\n\nFirst passage.\n\n---\n\nSecond passage.";
-        let document = LithoMarkDocument {
+        let document = CatalystDocument {
             identity: DocumentIdentity { document_type: "chapter".into(), id: format!("ch-{chapter_id}") },
             title: Some("Chapter One".into()),
             metadata: Default::default(),
@@ -1675,7 +1675,7 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let id = Uuid::new_v4();
         for (name, prose) in [("One.md", "First original"), ("Two.md", "Second original")] {
-            let document = LithoMarkDocument {
+            let document = CatalystDocument {
                 identity: DocumentIdentity {
                     document_type: "scene".into(),
                     id: format!("scn-{id}"),
@@ -1700,7 +1700,7 @@ mod tests {
     fn cross_chapter_move_survives_outline_save_and_project_reopen() {
         let temp = tempfile::tempdir().unwrap();
         let project_id = Uuid::new_v4();
-        let planning = LithoMarkDocument {
+        let planning = CatalystDocument {
             identity: DocumentIdentity {
                 document_type: "note".into(),
                 id: format!("note-{}", Uuid::new_v4()),
@@ -1750,7 +1750,7 @@ mod tests {
     fn scene_save_updates_parent_metadata_without_changing_identity_or_path() {
         let temp = tempfile::tempdir().unwrap();
         let project_id = Uuid::new_v4();
-        let planning = LithoMarkDocument {
+        let planning = CatalystDocument {
             identity: DocumentIdentity {
                 document_type: "note".into(),
                 id: format!("note-{}", Uuid::new_v4()),
@@ -1795,7 +1795,7 @@ mod tests {
         // A planning-only chapter provides a stable projected scene identity.
         let planning_path = temp.path().join("Planning/Legacy.md");
         fs::create_dir_all(planning_path.parent().unwrap()).unwrap();
-        let planning = LithoMarkDocument {
+        let planning = CatalystDocument {
             identity: DocumentIdentity {
                 document_type: "note".into(),
                 id: format!("note-{}", Uuid::new_v4()),
@@ -1893,7 +1893,7 @@ mod tests {
             &chapter_id.to_string(),
             "chapter one:scene:0:chapter one",
         );
-        let chapter = LithoMarkDocument {
+        let chapter = CatalystDocument {
             identity: DocumentIdentity { document_type: "chapter".into(), id: format!("ch-{chapter_id}") },
             title: Some("Chapter One".into()),
             metadata: Default::default(),
@@ -1902,7 +1902,7 @@ mod tests {
             source_hash: String::new(),
         };
         save_document(temp.path(), &chapter, None).unwrap();
-        let scene = LithoMarkDocument {
+        let scene = CatalystDocument {
             identity: DocumentIdentity { document_type: "scene".into(), id: format!("scn-{scene_id}") },
             title: Some("Chapter One".into()),
             metadata: Default::default(),

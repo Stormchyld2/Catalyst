@@ -1,4 +1,4 @@
-LithoMark
+Catalyst
 │
 ├── Kindling-derived core
 │   ├── manuscript editor
@@ -28,10 +28,10 @@ LithoMark
 │   ├── backlinks / referenced-by
 │   └── wiki view
 │
-└── LithoMark-original systems
+└── Catalyst-original systems
     ├── Markdown-first vault
     ├── GitHub Pull / Commit / Push
     ├── integrated terminal
     ├── Obsidian-style wikilinks/backlinks
     ├── workspace views
-    └── LithoMark branding/UI
+    └── Catalyst branding/UI

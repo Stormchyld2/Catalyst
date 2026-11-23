@@ -73,6 +73,7 @@
   import ExportSuccessDialog from "./ExportSuccessDialog.svelte";
   import SnapshotsPanel from "./SnapshotsPanel.svelte";
   import BrandWordmark from "./BrandWordmark.svelte";
+  import catalystIcon from "../../assets/catalyst-icon.png";
   import { menuKeyboard } from "../utils/menuKeyboard";
   import { stepMoveOrder } from "../utils/outlineMove";
 
@@ -1574,7 +1575,7 @@
       >
         <PanelLeftOpen class="w-5 h-5" aria-hidden="true" />
       </button>
-      <span class="sb-rail-mark" role="img" aria-label="LithoMark">L</span>
+      <img class="sb-rail-mark" src={catalystIcon} alt="Catalyst" />
     </div>
   {/if}
   <!-- Header -->
@@ -2540,17 +2541,11 @@
     padding: var(--space-2xs) 6px;
   }
   .sb-rail-mark {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     width: 24px;
     height: 24px;
     margin: 10px 0;
-    color: #b88a44;
-    font-family: "Libre Baskerville", Georgia, serif;
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1;
+    object-fit: contain;
     user-select: none;
   }
   .on-dark {

@@ -1,4 +1,4 @@
-//! Native LithoMark review-package IPC commands.
+//! Native Catalyst review-package IPC commands.
 //!
 //! These commands expose the new file-based review architecture without
 //! replacing the legacy Kindling-compatible editorial command surface yet.

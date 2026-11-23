@@ -46,7 +46,7 @@
       const selected = await open({
         directory: true,
         multiple: false,
-        title: "Choose an empty folder for this LithoMark project",
+        title: "Choose an empty folder for this Catalyst project",
       });
       if (typeof selected === "string") projectRoot = selected;
     } catch (e) {

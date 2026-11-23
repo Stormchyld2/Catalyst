@@ -1,4 +1,4 @@
-//! File-authoritative writing statistics for LithoMark projects.
+//! File-authoritative writing statistics for Catalyst projects.
 //!
 //! Durable daily history lives in an ordinary JSON file inside the project.
 //! Manuscript totals are always derived from manuscript files, never stored here.
