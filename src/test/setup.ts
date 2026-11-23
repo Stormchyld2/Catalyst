@@ -1,6 +1,14 @@
 // Vitest setup file
 // Mock Tauri APIs for testing
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
+import { cleanup } from "@testing-library/svelte";
+
+// Vitest globals are disabled, so @testing-library/svelte cannot register its
+// automatic cleanup. Unmount rendered components after every test so one
+// test's DOM never leaks into the next.
+afterEach(() => {
+  cleanup();
+});
 
 // Mock @tauri-apps/api/core
 vi.mock("@tauri-apps/api/core", () => ({
