@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    Dices,
     BookOpenText,
     BookOpen,
     GitBranch,
@@ -14,6 +15,7 @@
   } from "lucide-svelte";
   import { WORKSPACES, type WorkspaceId } from "../workspaces";
   import { workspace } from "../stores/workspace.svelte";
+  import { diceTray } from "../dice";
 
   let {
     hasActiveProject,
@@ -116,6 +118,23 @@
       </button>
     {/each}
   </div>
+
+  <!-- Global utilities open over any workspace instead of replacing it. -->
+  <div class="module-rail__utilities">
+    <button
+      type="button"
+      class="module-rail__button"
+      class:module-rail__button--active={diceTray.isOpen}
+      aria-label="Dice roller"
+      aria-pressed={diceTray.isOpen}
+      title="Dice roller"
+      data-testid="utility-dice"
+      onclick={() => diceTray.toggle()}
+    >
+      <Dices size={20} aria-hidden="true" />
+      <span>Dice</span>
+    </button>
+  </div>
 </nav>
 
 <style>
@@ -140,6 +159,13 @@
     border-bottom: 1px solid var(--color-border);
     color: var(--color-accent-text);
     font: 700 22px/1 var(--font-display);
+  }
+
+  .module-rail__utilities {
+    margin-top: auto;
+    display: grid;
+    padding: 6px;
+    border-top: 1px solid var(--color-border);
   }
 
   .module-rail__modules {

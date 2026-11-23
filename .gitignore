@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# @3d-dice/dice-box copies its assets here on install. Catalyst serves the
+# pinned copy from static/assets/dice-box instead (see DICE-OPEN-SOURCE-INTEGRATION.md).
+/public/assets/ammo/
+/public/assets/themes/
