@@ -670,12 +670,12 @@ it.each(["export", "export success"])(
   async (background) => {
     vi.useFakeTimers();
     currentProject.setChapters(mockChapters);
-    localStorage.setItem("kindling:lastExportPath", "/tmp/lithomark-review-export");
+    localStorage.setItem("kindling:lastExportPath", "/tmp/catalyst-review-export");
     vi.mocked(invoke).mockImplementation(async (cmd) => {
       if (cmd === "save_scene_synopsis") throw new Error("disk full");
       if (cmd === "export_to_markdown")
         return {
-          output_path: "/tmp/lithomark-review-export",
+          output_path: "/tmp/catalyst-review-export",
           chapters_exported: 1,
           scenes_exported: 1,
           files_created: 1,
@@ -838,7 +838,7 @@ it("attempts writing saves and offers explicit recovery when an editorial save b
     ],
   };
   vi.mocked(invoke).mockImplementation(async (cmd) => {
-    if (cmd === "take_editorial_open_files") return ["/review.lithomark-review"];
+    if (cmd === "take_editorial_open_files") return ["/review.catalyst-review"];
     if (cmd === "open_editorial_package")
       return { format: "kindling-editorial", version: 1, kind: "review", round, session: null };
     return [];
@@ -919,7 +919,7 @@ it("ignores shortcuts while a dialog is open even when focus has fallen to the p
 
 it("moves focus into Export complete after an export, not back to the page", async () => {
   currentProject.setChapters(mockChapters);
-  localStorage.setItem("kindling:lastExportPath", "/tmp/lithomark-review-export");
+  localStorage.setItem("kindling:lastExportPath", "/tmp/catalyst-review-export");
   vi.mocked(invoke).mockImplementation(async (cmd) =>
     cmd === "export_to_markdown"
       ? { output_path: "/tmp/out", chapters_exported: 1, scenes_exported: 1, files_created: 1 }

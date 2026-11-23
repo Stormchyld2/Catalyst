@@ -82,7 +82,7 @@ pub fn write_review_package(
         .ok_or_else(|| "Review package target must have a valid directory name.".to_string())?;
 
     let staging = parent.join(format!(
-        ".{target_name}.lithomark-staging-{}",
+        ".{target_name}.catalyst-staging-{}",
         Uuid::new_v4()
     ));
 
@@ -226,7 +226,7 @@ mod tests {
         );
 
         let manifest_text = fs::read_to_string(target.join(REVIEW_MANIFEST_FILENAME)).unwrap();
-        assert!(manifest_text.contains("format: lithomark-review"));
+        assert!(manifest_text.contains("format: catalyst-review"));
         assert!(manifest_text.contains("review_id: review-1"));
     }
 

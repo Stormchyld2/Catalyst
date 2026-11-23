@@ -49,7 +49,7 @@
     const projectRoot = currentProject.value?.project_root;
     if (!projectRoot || !candidate.valid_document || !candidate.original_path || restoring) return;
     const pendingDocumentSaves: Promise<boolean>[] = [];
-    window.dispatchEvent(new CustomEvent("lithomark:before-workspace-change", {
+    window.dispatchEvent(new CustomEvent("catalyst:before-workspace-change", {
       detail: { pendingDocumentSaves },
     }));
     if ((await Promise.all(pendingDocumentSaves)).some((ok) => !ok)) {
@@ -77,7 +77,7 @@
       });
       if (currentProject.value?.project_root !== projectRoot) return;
       notice = "Restored " + review.original_path + ". Safety backup: " + backup;
-      window.dispatchEvent(new CustomEvent("lithomark:recovery-restored", {
+      window.dispatchEvent(new CustomEvent("catalyst:recovery-restored", {
         detail: { relativePath: review.original_path, projectRoot },
       }));
       await scan();

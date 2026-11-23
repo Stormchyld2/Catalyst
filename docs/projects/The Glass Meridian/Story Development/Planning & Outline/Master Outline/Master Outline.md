@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-7cbe4e88-03a6-48d8-a0a2-529f6f4fd801
 title: Master Outline

@@ -144,7 +144,7 @@ fn collect_markdown_paths(project_root: &Path, directory: &Path, output: &mut Ve
     for entry in fs::read_dir(directory).map_err(|e| format!("Could not read '{}': {e}", directory.display()))? {
         let entry = entry.map_err(|e| format!("Could not read project entry: {e}"))?;
         let path = entry.path();
-        if path.file_name().and_then(|v| v.to_str()) == Some(".lithomark") {
+        if matches!(path.file_name().and_then(|v| v.to_str()), Some(".catalyst" | ".lithomark")) {
             continue;
         }
         if path.is_dir() {

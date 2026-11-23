@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-fbe7ee1c-218f-4f9a-8e7e-6f2cf43deae3
 title: Synopsis

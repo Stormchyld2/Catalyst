@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: character
   id: chr-1c2bfe24-7269-4e7e-bd41-2c3299fe8801
 title: Elias Venn

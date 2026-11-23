@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: location
   id: loc-3d66d982-2fe7-4db8-b048-8b8742601487
 title: Meridian Operations Center

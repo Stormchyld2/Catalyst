@@ -10,7 +10,7 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
 const projectRoot = "C:/Temp/Catalyst/Recovery Test";
 const candidate = {
-  artifact_path: "Characters/.lithomark-save-recovery.tmp",
+  artifact_path: "Characters/.catalyst-save-recovery.tmp",
   original_path: "Characters/Mara.md",
   kind: "staged",
   valid_document: true,
@@ -43,7 +43,7 @@ describe("Recovery Manager", () => {
   it("reviews both hashes and requires confirmation before restoring", async () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     const restored = vi.fn();
-    window.addEventListener("lithomark:recovery-restored", restored);
+    window.addEventListener("catalyst:recovery-restored", restored);
     try {
       render(RecoveryManagerDialog, { props: { onClose: vi.fn() } });
       await screen.findByText(candidate.original_path);
@@ -59,7 +59,7 @@ describe("Recovery Manager", () => {
       expect(confirm).toHaveBeenCalled();
       expect(restored).toHaveBeenCalled();
     } finally {
-      window.removeEventListener("lithomark:recovery-restored", restored);
+      window.removeEventListener("catalyst:recovery-restored", restored);
     }
   });
 
@@ -78,7 +78,7 @@ describe("Recovery Manager", () => {
     const guard = (event: Event) => {
       (event as CustomEvent<{ pendingDocumentSaves: Promise<boolean>[] }>).detail.pendingDocumentSaves.push(Promise.resolve(false));
     };
-    window.addEventListener("lithomark:before-workspace-change", guard);
+    window.addEventListener("catalyst:before-workspace-change", guard);
     try {
       render(RecoveryManagerDialog, { props: { onClose: vi.fn() } });
       await screen.findByText(candidate.original_path);
@@ -86,7 +86,7 @@ describe("Recovery Manager", () => {
       expect(await screen.findByRole("alert")).toHaveProperty("textContent", "Save the current document before restoring a recovery copy.");
       expect(invoke).not.toHaveBeenCalledWith("review_document_recovery_restore", expect.anything());
     } finally {
-      window.removeEventListener("lithomark:before-workspace-change", guard);
+      window.removeEventListener("catalyst:before-workspace-change", guard);
     }
   });
 });

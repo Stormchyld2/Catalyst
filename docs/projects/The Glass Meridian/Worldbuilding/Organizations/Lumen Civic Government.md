@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: organization
   id: org-7eee0bf2-c835-457d-8a61-83fdd45eced8
 title: Lumen Civic Government

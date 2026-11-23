@@ -81,7 +81,7 @@ mod tests {
                 "version": "1.0.0",
                 "author": "Example",
                 "apiVersion": "1",
-                "minimumLithoMarkVersion": "0.1.0",
+                "minimumCatalystVersion": "0.1.0",
                 "type": "extension",
                 "entry": "dist/index.js",
                 "permissions": permissions

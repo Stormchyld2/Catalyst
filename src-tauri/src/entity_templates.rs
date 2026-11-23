@@ -167,18 +167,23 @@ fn collect_markdown(root: &Path, directory: &Path, output: &mut Vec<PathBuf>) ->
     Ok(())
 }
 
+const TEMPLATE_KEY: &str = "catalyst_template";
+const LEGACY_TEMPLATE_KEY: &str = "lithomark_template";
+
 fn read_user_template(path: &Path, relative_path: &Path) -> Result<EntityTemplate, String> {
     let raw = fs::read_to_string(path)
         .map_err(|e| format!("Could not read template '{}': {e}", path.display()))?;
     let (yaml, body) = split_frontmatter(&raw)?;
     let root: BTreeMap<String, serde_yaml::Value> =
         serde_yaml::from_str(yaml).map_err(|e| format!("Invalid template YAML: {e}"))?;
+    // Templates saved before the Catalyst rename use the legacy key; read both.
     let value = root
-        .get("lithomark_template")
-        .ok_or_else(|| "Template frontmatter is missing 'lithomark_template'.".to_string())?
+        .get(TEMPLATE_KEY)
+        .or_else(|| root.get(LEGACY_TEMPLATE_KEY))
+        .ok_or_else(|| format!("Template frontmatter is missing '{TEMPLATE_KEY}'."))?
         .clone();
     let manifest: EntityTemplateManifest = serde_yaml::from_value(value)
-        .map_err(|e| format!("Invalid lithomark_template metadata: {e}"))?;
+        .map_err(|e| format!("Invalid {TEMPLATE_KEY} metadata: {e}"))?;
     validate_manifest(&manifest)?;
 
     Ok(EntityTemplate {
@@ -278,7 +283,7 @@ fn validate_user_relative_path(relative_path: &str) -> Result<PathBuf, String> {
 fn serialize_user_template(manifest: &EntityTemplateManifest, body: &str) -> Result<String, String> {
     let mut root = BTreeMap::new();
     root.insert(
-        "lithomark_template".to_string(),
+        TEMPLATE_KEY.to_string(),
         serde_yaml::to_value(manifest)
             .map_err(|e| format!("Could not serialize template metadata: {e}"))?,
     );
@@ -1573,6 +1578,28 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             &["map_scale", "status"],
             &[("image","Image","image"),("map_scale","Scale","text"),("status","Status","text"),VIS,("tags","Tags","list")],
             "## Map Files\n\n## Key\n\n## Notes",
+        ),
+        built_in(
+            "gm-guide",
+            "GM Guide",
+            "campaign",
+            "note",
+            Some("gm-guide"),
+            "Offline Game Master advice. Catalyst's starter guides are original and editable.",
+            &["guide_topic", "source", "license"],
+            &[("image","Image","image"),("guide_topic","Topic","text"),("source","Source","text"),("license","License","text"),VIS,("tags","Tags","list")],
+            "",
+        ),
+        built_in(
+            "random-table",
+            "Random Table",
+            "campaign",
+            "note",
+            Some("random-table"),
+            "A rollable table. Roll the listed die and read the matching row.",
+            &["die", "table_category", "source"],
+            &[("image","Image","image"),("die","Die","text"),("table_category","Category","text"),("source","Source","text"),("license","License","text"),VIS,("tags","Tags","list")],
+            "",
         ),
     ]
 }
