@@ -1,0 +1,45 @@
+name: Windows build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Portable Catalyst.exe (MSVC)
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      # Release builds use --no-default-features so the unlicensed QA (mcp) plugin is not compiled in.
+      # Updater artifacts need a signing key, so they are turned off here.
+      - name: Build portable exe
+        run: npx tauri build --no-bundle -c '{"bundle":{"createUpdaterArtifacts":false}}' -- --no-default-features
+        shell: bash
+
+      - name: Upload Catalyst.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: Catalyst-windows-x64-${{ github.sha }}
+          path: src-tauri/target/release/catalyst.exe
+          if-no-files-found: error
