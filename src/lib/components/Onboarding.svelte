@@ -221,15 +221,15 @@
             <div class="tour-sheet">
               <div class="tour-row">
                 <ChevronDown class="w-4 h-4 ka-icon" />
-                <span class="tour-strong">The Letter</span>
+                <span class="tour-strong">Chapter 1 — The Missing Block</span>
                 <span class="ka-badge">Chapter</span>
               </div>
               <div class="tour-row tour-child is-current">
-                <span>On the Cliff</span>
+                <span>Bellwether Row</span>
                 <small>Current scene</small>
               </div>
               <div class="tour-row tour-child">
-                <span class="tour-muted">The Seventh Step</span>
+                <span class="tour-muted">Fourteen Parcels</span>
                 <span class="ka-badge">Scene</span>
               </div>
             </div>
