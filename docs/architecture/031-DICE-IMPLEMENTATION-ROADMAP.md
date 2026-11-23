@@ -23,7 +23,7 @@ Done:
 - All dice with physics: d4, d6, d8, d10, d12, d20, d100 (each verified in Chromium against the settled faces).
 - Mixed expressions, modifiers, keep-highest/lowest (`4d6kh3`), typed expression entry; +/- for dice and the modifier.
 - Advantage/disadvantage as distinct roll kinds; natural 20 and natural 1 shown as criticals.
-- Compact result panel with an amber-gold total, readable at small sizes.
+- Compact result panel with a highlighted total, readable at small sizes; Frost Blue chrome per the design system (doc 025).
 - Dice colour, size, mat surface, roll speed, animation, low-performance mode; synthesized sound with volume.
 - Muted Catalyst wordmark printed into the mat.
 - Custom parser kept instead of `@3d-dice/dice-roller-parser`: the supported notation is small and fully tested.

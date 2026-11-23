@@ -92,12 +92,12 @@
     font: 15px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   input:focus-visible {
-    outline: 2px solid var(--dice-gold);
+    outline: 2px solid var(--dice-accent);
     outline-offset: 0;
   }
   .go {
-    background: linear-gradient(180deg, var(--dice-gold), var(--dice-gold-strong)) !important;
-    color: #1b1408 !important;
+    background: var(--dice-accent) !important;
+    color: var(--dice-on-accent) !important;
     font-weight: 700;
   }
   .problem {

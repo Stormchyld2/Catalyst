@@ -576,7 +576,7 @@
 
 <style>
   .dice-tray {
-    /* Charcoal, metallic silver and amber-gold, as in the approved Catalyst identity. */
+    /* Obsidian, charcoal, silver and Frost Blue (Catalyst design system, doc 025). */
     --dice-charcoal: #18181b;
     --dice-panel: #1f1f23;
     --dice-glass: rgba(24, 24, 27, 0.72);
@@ -584,8 +584,12 @@
     --dice-text: #e7e9ec;
     --dice-muted: #a3a8b0;
     --dice-silver: #c9ced6;
-    --dice-gold: #d8ab5f;
-    --dice-gold-strong: #c4914a;
+    /* Frost Blue chrome (design system, doc 025). Gold is only a dice skin. */
+    --dice-accent: var(--cat-accent, #6ea9cf);
+    --dice-accent-hover: var(--cat-accent-hover, #8cc0e1);
+    --dice-accent-strong: #5b97bf;
+    --dice-accent-soft: var(--cat-accent-soft, #223646);
+    --dice-on-accent: #0b1620;
     --dice-glyph-fill: #e7e9ec;
     --dice-glyph-text: #18181b;
     /* Catalyst draws disabled buttons from this token pair (app.css), never opacity. */
@@ -625,7 +629,7 @@
     cursor: grabbing;
   }
   .dice-tray__grip:focus-visible {
-    outline: 2px solid var(--dice-gold);
+    outline: 2px solid var(--dice-accent);
     outline-offset: -2px;
   }
   .dice-tray__title {
@@ -639,7 +643,7 @@
   }
   .dice-tray__session {
     font-size: 11px;
-    color: var(--dice-gold);
+    color: var(--dice-accent);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -668,16 +672,16 @@
     background: rgba(255, 255, 255, 0.07);
   }
   .dice-mode-button[aria-pressed="true"] {
-    border-color: var(--dice-gold);
-    background: rgba(216, 171, 95, 0.18);
-    color: var(--dice-gold);
+    border-color: var(--dice-accent);
+    background: rgba(110, 169, 207, 0.18);
+    color: var(--dice-accent);
   }
   .dice-mode-button:focus-visible {
-    outline: 2px solid var(--dice-gold);
+    outline: 2px solid var(--dice-accent);
     outline-offset: 2px;
   }
   .dice-icon-button[aria-pressed="true"] {
-    color: var(--dice-gold);
+    color: var(--dice-accent);
   }
 
   .dice-tray__body {
@@ -718,7 +722,7 @@
     padding: 10px 12px 12px;
     overflow: hidden;
     background:
-      radial-gradient(ellipse at 50% 40%, rgba(216, 171, 95, 0.06), transparent 60%),
+      radial-gradient(ellipse at 50% 40%, rgba(110, 169, 207, 0.06), transparent 60%),
       linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 40px 40px,
       linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 40px 40px,
       radial-gradient(ellipse at center, #1c1c20, #0f0f11 85%);
@@ -817,10 +821,10 @@
     border-right: 0;
   }
   .dice-strip__cell--active {
-    background: linear-gradient(rgba(216, 171, 95, 0.28), rgba(216, 171, 95, 0.1));
+    background: var(--dice-accent-soft);
   }
   .dice-strip__cell--target {
-    box-shadow: inset 0 -2px 0 var(--dice-gold);
+    box-shadow: inset 0 -2px 0 var(--dice-accent);
   }
   .dice-strip__mod {
     font-size: 10px;
@@ -888,7 +892,7 @@
     height: 34px;
   }
   .dice-die-button--counted {
-    background: rgba(216, 171, 95, 0.08);
+    background: rgba(110, 169, 207, 0.08);
   }
   .dice-icon-button:hover:not(:disabled),
   .dice-die-button:hover:not(:disabled) {
@@ -896,13 +900,13 @@
     color: #fff;
   }
   .dice-icon-button[aria-expanded="true"] {
-    color: var(--dice-gold);
-    background: rgba(216, 171, 95, 0.12);
+    color: var(--dice-accent);
+    background: rgba(110, 169, 207, 0.12);
   }
   .dice-die-button--selected {
-    border-color: var(--dice-gold);
-    background: rgba(216, 171, 95, 0.12);
-    --dice-glyph-fill: var(--dice-gold);
+    border-color: var(--dice-accent);
+    background: rgba(110, 169, 207, 0.12);
+    --dice-glyph-fill: var(--dice-accent);
   }
   .dice-die-button:disabled {
     cursor: default;
@@ -916,7 +920,7 @@
   .dice-roll-button:focus-visible,
   .dice-strip__cell:focus-visible,
   .dice-tray :global(.dice-text-button:focus-visible) {
-    outline: 2px solid var(--dice-gold);
+    outline: 2px solid var(--dice-accent);
     outline-offset: 2px;
   }
 
@@ -931,17 +935,17 @@
     padding: 6px 2px;
     border: 0;
     border-radius: 14px;
-    background: linear-gradient(180deg, var(--dice-gold), var(--dice-gold-strong));
-    color: #1b1408;
+    background: var(--dice-accent);
+    color: var(--dice-on-accent);
     font-size: 11px;
     font-weight: 700;
     line-height: 1.1;
     text-align: center;
     cursor: pointer;
-    box-shadow: 0 6px 16px rgba(216, 171, 95, 0.22);
+    box-shadow: 0 6px 16px rgba(110, 169, 207, 0.22);
   }
   .dice-roll-button:hover:not(:disabled) {
-    filter: brightness(1.08);
+    background: var(--dice-accent-hover);
   }
   .dice-roll-button:disabled {
     cursor: default;

@@ -90,7 +90,7 @@
   .session {
     margin: 0 0 6px;
     font-size: 11px;
-    color: var(--dice-gold);
+    color: var(--dice-accent);
   }
   ol {
     list-style: none;
@@ -117,7 +117,7 @@
   }
   em {
     font-style: normal;
-    color: var(--dice-gold);
+    color: var(--dice-accent);
     font-size: 10px;
     margin-left: 3px;
   }
@@ -129,10 +129,10 @@
     color: var(--dice-muted);
   }
   strong {
-    color: var(--dice-gold);
+    color: var(--dice-accent);
   }
   strong.crit {
-    text-shadow: 0 0 8px rgba(216, 171, 95, 0.7);
+    text-shadow: 0 0 8px rgba(110, 169, 207, 0.7);
   }
   strong.fumble {
     color: #f1b3aa;

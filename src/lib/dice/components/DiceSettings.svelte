@@ -169,7 +169,7 @@
     cursor: pointer;
   }
   .swatch[aria-checked="true"] {
-    border-color: var(--dice-gold);
+    border-color: var(--dice-accent);
   }
   .field {
     display: flex;
@@ -193,8 +193,8 @@
     cursor: pointer;
   }
   .segmented button[aria-checked="true"] {
-    background: rgba(216, 171, 95, 0.2);
-    color: var(--dice-gold);
+    background: rgba(110, 169, 207, 0.2);
+    color: var(--dice-accent);
   }
   select {
     padding: 3px 6px;
@@ -206,7 +206,7 @@
   }
   input[type="range"] {
     width: 140px;
-    accent-color: var(--dice-gold);
+    accent-color: var(--dice-accent);
   }
   .check {
     display: flex;
@@ -217,7 +217,7 @@
   }
   .check input {
     margin-top: 3px;
-    accent-color: var(--dice-gold);
+    accent-color: var(--dice-accent);
   }
   small {
     display: block;

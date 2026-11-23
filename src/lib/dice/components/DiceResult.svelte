@@ -132,10 +132,10 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
   .dice-result__panel.crit-success {
-    border-color: color-mix(in srgb, var(--dice-gold) 70%, transparent);
+    border-color: color-mix(in srgb, var(--dice-accent) 70%, transparent);
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--dice-gold) 30%, transparent),
-      0 8px 28px rgba(216, 171, 95, 0.25);
+      0 0 0 1px color-mix(in srgb, var(--dice-accent) 30%, transparent),
+      0 8px 28px rgba(110, 169, 207, 0.25);
   }
   .dice-result__panel.crit-failure {
     border-color: rgba(229, 139, 127, 0.55);
@@ -158,8 +158,8 @@
     gap: 3px;
     padding: 1px 7px;
     border-radius: 999px;
-    background: rgba(216, 171, 95, 0.16);
-    color: var(--dice-gold);
+    background: rgba(110, 169, 207, 0.16);
+    color: var(--dice-accent);
     font-weight: 600;
   }
   .dice-result__badge--private {
@@ -203,11 +203,11 @@
     color: var(--dice-muted);
   }
   .dice-chip.nat-high {
-    background: var(--dice-gold);
-    color: #1b1408;
+    background: var(--dice-accent);
+    color: var(--dice-on-accent);
   }
   .dice-chip.nat-high .dice-chip__type {
-    color: #3d2c10;
+    color: #14324a;
   }
   .dice-chip.nat-low {
     background: rgba(229, 139, 127, 0.2);
@@ -242,8 +242,8 @@
     min-width: 2ch;
     padding: 2px 12px;
     border-radius: 10px;
-    background: linear-gradient(180deg, var(--dice-gold), var(--dice-gold-strong));
-    color: #1b1408;
+    background: var(--dice-accent);
+    color: var(--dice-on-accent);
     font-size: 28px;
     font-weight: 750;
     line-height: 1.15;
@@ -254,10 +254,10 @@
     margin: 0;
     padding: 1px 7px;
     border-radius: 999px;
-    background: rgba(216, 171, 95, 0.22);
+    background: rgba(110, 169, 207, 0.22);
     font-size: 11px;
     font-weight: 600;
-    color: var(--dice-gold);
+    color: var(--dice-accent);
   }
   .crit-failure .dice-result__crit {
     color: #f1b3aa;
