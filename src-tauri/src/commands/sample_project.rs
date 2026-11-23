@@ -1,7 +1,7 @@
-//! LithoMark first-run sample project.
+//! Catalyst first-run sample project.
 //!
 //! The bundled sample is The Glass Meridian, a normal file-authoritative
-//! LithoMark project. It is copied into a disposable local sample folder and
+//! Catalyst project. It is copied into a disposable local sample folder and
 //! opened through the same project-root model used by user-created books.
 
 use std::fs;
@@ -11,7 +11,7 @@ use crate::models::{Project, SourceType};
 use crate::project_root::read_project_manifest;
 use uuid::Uuid;
 
-const SAMPLE_DIR_NAME: &str = "LithoMark Sample - The Glass Meridian";
+const SAMPLE_DIR_NAME: &str = "Catalyst Sample - The Glass Meridian";
 
 const TEXT_FILES: &[(&str, &str)] = &[
     ("project.yaml", include_str!("../../../docs/projects/The Glass Meridian/project.yaml")),
@@ -59,10 +59,10 @@ pub async fn create_sample_project() -> Result<Project, String> {
 fn seed_glass_meridian_sample(root: &Path) -> Result<Project, String> {
     if root.exists() {
         fs::remove_dir_all(root)
-            .map_err(|e| format!("Could not refresh LithoMark sample project '{}': {e}", root.display()))?;
+            .map_err(|e| format!("Could not refresh Catalyst sample project '{}': {e}", root.display()))?;
     }
     fs::create_dir_all(root)
-        .map_err(|e| format!("Could not create LithoMark sample project '{}': {e}", root.display()))?;
+        .map_err(|e| format!("Could not create Catalyst sample project '{}': {e}", root.display()))?;
 
     for (relative, contents) in TEXT_FILES {
         write_sample_file(root, relative, contents.as_bytes())?;

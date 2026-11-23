@@ -1,6 +1,6 @@
 //! File-authoritative manuscript structure.
 //!
-//! Chapters and scenes are normal LithoMark documents. Structure is expressed
+//! Chapters and scenes are normal Catalyst documents. Structure is expressed
 //! with stable IDs in YAML metadata, never inferred from filenames or SQLite.
 
 use std::collections::BTreeMap;
@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 
-use crate::document::service::{read_document, save_document, LithoMarkDocument};
+use crate::document::service::{read_document, save_document, CatalystDocument};
 
 const CHAPTER_TYPE: &str = "chapter";
 const SCENE_TYPE: &str = "scene";
@@ -66,7 +66,7 @@ pub fn validate_manuscript_structure(project_root: &Path) -> Result<StructureInt
 
     let mut documents = Vec::new();
     collect_markdown_paths(project_root, &manuscript_root, &mut documents)?;
-    let mut by_id: BTreeMap<String, Vec<LithoMarkDocument>> = BTreeMap::new();
+    let mut by_id: BTreeMap<String, Vec<CatalystDocument>> = BTreeMap::new();
     for relative_path in documents {
         let document = read_document(project_root, &relative_path)?;
         if matches!(document.identity.document_type.as_str(), CHAPTER_TYPE | SCENE_TYPE) {
@@ -93,11 +93,11 @@ pub fn validate_manuscript_structure(project_root: &Path) -> Result<StructureInt
         }
     }
 
-    let unique: BTreeMap<&str, &LithoMarkDocument> = by_id
+    let unique: BTreeMap<&str, &CatalystDocument> = by_id
         .iter()
         .filter_map(|(id, docs)| (docs.len() == 1).then_some((id.as_str(), &docs[0])))
         .collect();
-    let mut listed_by: BTreeMap<String, Vec<&LithoMarkDocument>> = BTreeMap::new();
+    let mut listed_by: BTreeMap<String, Vec<&CatalystDocument>> = BTreeMap::new();
 
     for chapter in unique.values().filter(|doc| doc.identity.document_type == CHAPTER_TYPE) {
         let structure = chapter_structure(chapter)?;
@@ -197,7 +197,7 @@ fn collect_markdown_paths(
     Ok(())
 }
 
-pub fn chapter_structure(document: &LithoMarkDocument) -> Result<ChapterStructure, String> {
+pub fn chapter_structure(document: &CatalystDocument) -> Result<ChapterStructure, String> {
     require_type(document, CHAPTER_TYPE)?;
     let scene_ids = string_list(document.metadata.get(ORDER_KEY), ORDER_KEY)?;
     for id in &scene_ids {
@@ -211,7 +211,7 @@ pub fn chapter_structure(document: &LithoMarkDocument) -> Result<ChapterStructur
     })
 }
 
-pub fn scene_parent(document: &LithoMarkDocument) -> Result<Option<String>, String> {
+pub fn scene_parent(document: &CatalystDocument) -> Result<Option<String>, String> {
     require_type(document, SCENE_TYPE)?;
     let Some(value) = document.metadata.get(PARENT_CHAPTER_KEY) else {
         return Ok(None);
@@ -225,7 +225,7 @@ pub fn scene_parent(document: &LithoMarkDocument) -> Result<Option<String>, Stri
 
 pub fn set_chapter_order(
     project_root: &Path,
-    chapter: &mut LithoMarkDocument,
+    chapter: &mut CatalystDocument,
     scene_ids: Vec<String>,
 ) -> Result<(), String> {
     require_type(chapter, CHAPTER_TYPE)?;
@@ -243,7 +243,7 @@ pub fn set_chapter_order(
 
 pub fn set_scene_parent(
     project_root: &Path,
-    scene: &mut LithoMarkDocument,
+    scene: &mut CatalystDocument,
     chapter_id: Option<&str>,
 ) -> Result<(), String> {
     require_type(scene, SCENE_TYPE)?;
@@ -352,13 +352,13 @@ pub fn reorder_scene(
     set_chapter_order(project_root, &mut chapter, structure.scene_ids)
 }
 
-fn persist(project_root: &Path, document: &mut LithoMarkDocument) -> Result<(), String> {
+fn persist(project_root: &Path, document: &mut CatalystDocument) -> Result<(), String> {
     let result = save_document(project_root, document, Some(&document.source_hash))?;
     document.source_hash = result.source_hash;
     Ok(())
 }
 
-fn require_type(document: &LithoMarkDocument, expected: &str) -> Result<(), String> {
+fn require_type(document: &CatalystDocument, expected: &str) -> Result<(), String> {
     if document.identity.document_type != expected {
         return Err(format!(
             "Expected a {expected} document, found '{}'.",

@@ -1,6 +1,6 @@
 /**
  * Transition bridge from the current editor's EditorialSource shape to the
- * native LithoMark review service.
+ * native Catalyst review service.
  *
  * This file is deliberately separate from the native review adapter. The
  * native package format must not depend on legacy Kindling editorial models.

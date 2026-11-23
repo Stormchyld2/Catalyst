@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./App.css";
-import lithomarkLogo from "./assets/lithomark-logo.png";
+import catalystLogo from "./assets/catalyst-logo.png";
 
 type ViewId =
   | "vault"
@@ -65,7 +65,7 @@ function App() {
             <div className="empty-panel">
               <p className="empty-title">No vault open</p>
               <p className="empty-copy">
-                Open a local LithoMark project to browse its folders and files.
+                Open a local Catalyst project to browse its folders and files.
               </p>
               <button className="primary-button">Open Project</button>
             </div>
@@ -73,7 +73,7 @@ function App() {
             <div className="empty-panel">
               <p className="empty-title">{activeLabel}</p>
               <p className="empty-copy">
-                This workspace will be connected to LithoMark&apos;s file-first
+                This workspace will be connected to Catalyst&apos;s file-first
                 project model.
               </p>
             </div>
@@ -86,7 +86,7 @@ function App() {
           </div>
 
           <section className="welcome">
-            <img className="welcome-logo" src={lithomarkLogo} alt="LithoMark" />
+            <img className="welcome-logo" src={catalystLogo} alt="Catalyst" />
             <div className="welcome-actions">
               <button className="welcome-action">
                 <span>New Project</span>
@@ -103,7 +103,7 @@ function App() {
             </div>
 
             <p className="principle">
-              Your files are the source of truth. LithoMark is the workspace
+              Your files are the source of truth. Catalyst is the workspace
               around them.
             </p>
           </section>

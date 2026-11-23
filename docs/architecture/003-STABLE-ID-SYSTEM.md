@@ -1,20 +1,20 @@
-# LithoMark Writer OS — Stable ID System
+# Catalyst — Stable ID System
 
 **Document:** 003-STABLE-ID-SYSTEM.md  
 **Status:** Locked Baseline  
-**Project:** LithoMark Writer OS  
-**Parent Specification:** 000-LITHOMARK-ARCHITECTURE.md  
+**Project:** Catalyst  
+**Parent Specification:** 000-CATALYST-ARCHITECTURE.md  
 **Related Specifications:** 001-PROJECT-FILE-FORMAT.md, 002-DOCUMENT-MODEL.md
 
 ---
 
 # 1. Purpose
 
-This specification defines permanent identity for objects within LithoMark Writer OS.
+This specification defines permanent identity for objects within Catalyst.
 
 Stable identifiers allow objects to be renamed, moved, reorganized, reordered, or displayed differently without breaking relationships.
 
-A LithoMark object's identity must never depend solely upon:
+A Catalyst object's identity must never depend solely upon:
 
 - Name
 - Title
@@ -29,7 +29,7 @@ A LithoMark object's identity must never depend solely upon:
 
 # 2. Fundamental Rule
 
-Every significant LithoMark domain object receives a stable ID.
+Every significant Catalyst domain object receives a stable ID.
 
 Example:
 
@@ -105,7 +105,7 @@ rather than the character's name.
 
 # 5. Identifier Format
 
-LithoMark stable IDs use:
+Catalyst stable IDs use:
 
 ```text
 <prefix>-<uuid>
@@ -137,7 +137,7 @@ UUIDs provide:
 - Git-friendly project creation
 - Future synchronization compatibility
 
-LithoMark must not require an internet service to create object IDs.
+Catalyst must not require an internet service to create object IDs.
 
 ---
 
@@ -238,7 +238,7 @@ Creating a new project from another project may require generating a new project
 
 # 10. Duplicate Project Operation
 
-LithoMark must distinguish between:
+Catalyst must distinguish between:
 
 ```text
 Backup Project
@@ -262,7 +262,7 @@ The duplication operation must preserve all internal relationships.
 
 # 11. Object Creation
 
-When a new structured object is created, LithoMark generates its stable ID immediately.
+When a new structured object is created, Catalyst generates its stable ID immediately.
 
 Example:
 
@@ -307,9 +307,9 @@ Therefore stable IDs are treated as immutable identity.
 
 # 13. Manual Editing
 
-Because LithoMark projects are human-readable, users may manually edit IDs.
+Because Catalyst projects are human-readable, users may manually edit IDs.
 
-LithoMark must tolerate this possibility but should warn when changing an ID breaks references.
+Catalyst must tolerate this possibility but should warn when changing an ID breaks references.
 
 If:
 
@@ -323,7 +323,7 @@ becomes:
 id: chr-BBB
 ```
 
-LithoMark's integrity system should identify references still pointing to:
+Catalyst's integrity system should identify references still pointing to:
 
 ```text
 chr-AAA
@@ -345,13 +345,13 @@ Story Development/Characters/Main Cast/Leah Copy.md
 chr-550e8400-e29b-41d4-a716-446655440000
 ```
 
-LithoMark must report this as an integrity error.
+Catalyst must report this as an integrity error.
 
 ---
 
 # 15. Duplicate Resolution
 
-When duplicate IDs are detected, LithoMark should not silently choose one.
+When duplicate IDs are detected, Catalyst should not silently choose one.
 
 The user should be given repair options.
 
@@ -371,7 +371,7 @@ Repair operations should create a backup or revision before changing authoritati
 
 # 16. Missing IDs
 
-If LithoMark discovers a structured object requiring an ID but none exists, the project integrity system may offer to generate one.
+If Catalyst discovers a structured object requiring an ID but none exists, the project integrity system may offer to generate one.
 
 Example:
 
@@ -382,7 +382,7 @@ lithomark:
 name: Leah Bennett
 ```
 
-LithoMark may propose:
+Catalyst may propose:
 
 ```yaml
 id: chr-550e8400-e29b-41d4-a716-446655440000
@@ -565,7 +565,7 @@ does not change:
 chr-550e8400-e29b-41d4-a716-446655440000
 ```
 
-LithoMark should detect this as a rename or move where possible.
+Catalyst should detect this as a rename or move where possible.
 
 ---
 
@@ -601,7 +601,7 @@ The file and its embedded stable ID remain authoritative.
 
 # 28. Missing References
 
-If an object references an ID that cannot be found, LithoMark records a broken reference.
+If an object references an ID that cannot be found, Catalyst records a broken reference.
 
 Example:
 
@@ -617,7 +617,7 @@ The reference must not be silently removed.
 
 # 29. Orphan Detection
 
-LithoMark may identify objects that exist but are not referenced by expected structures.
+Catalyst may identify objects that exist but are not referenced by expected structures.
 
 Examples:
 
@@ -632,7 +632,7 @@ Orphan status does not automatically mean the object should be deleted.
 
 # 30. ID Lookup
 
-LithoMark should provide efficient lookup:
+Catalyst should provide efficient lookup:
 
 ```text
 stable ID
@@ -649,7 +649,7 @@ document
 
 This may use SQLite for performance.
 
-If the index is unavailable, LithoMark reconstructs it from project files.
+If the index is unavailable, Catalyst reconstructs it from project files.
 
 ---
 
@@ -657,7 +657,7 @@ If the index is unavailable, LithoMark reconstructs it from project files.
 
 Stable IDs are globally collision-resistant.
 
-However, LithoMark references should normally remain project-scoped unless a future specification explicitly supports cross-project references.
+However, Catalyst references should normally remain project-scoped unless a future specification explicitly supports cross-project references.
 
 A project must not assume another project is available.
 
@@ -665,7 +665,7 @@ A project must not assume another project is available.
 
 # 32. Series Support
 
-Future LithoMark versions may support series-level workspaces.
+Future Catalyst versions may support series-level workspaces.
 
 A series may contain multiple projects.
 
@@ -677,7 +677,7 @@ Series-level identity must be defined separately before implementation.
 
 # 33. Import
 
-Imported objects receive LithoMark stable IDs.
+Imported objects receive Catalyst stable IDs.
 
 Example:
 
@@ -685,7 +685,7 @@ Example:
 Scrivener Character
       │
       ▼
-LithoMark Importer
+Catalyst Importer
       │
       ▼
 Generate chr-UUID
@@ -694,13 +694,13 @@ Generate chr-UUID
 Create Character Document
 ```
 
-Where imported formats contain reliable permanent IDs, LithoMark may record them as external IDs.
+Where imported formats contain reliable permanent IDs, Catalyst may record them as external IDs.
 
 ---
 
 # 34. External IDs
 
-LithoMark may preserve identifiers from external systems.
+Catalyst may preserve identifiers from external systems.
 
 Example:
 
@@ -709,17 +709,17 @@ external_ids:
   scrivener: "ABC-123"
 ```
 
-External IDs do not replace the LithoMark stable ID.
+External IDs do not replace the Catalyst stable ID.
 
 ---
 
 # 35. Export
 
-Exporters may include or omit LithoMark IDs depending upon the target format.
+Exporters may include or omit Catalyst IDs depending upon the target format.
 
-A DOCX manuscript normally does not need LithoMark IDs visible to the reader.
+A DOCX manuscript normally does not need Catalyst IDs visible to the reader.
 
-A LithoMark-compatible Markdown export may preserve them.
+A Catalyst-compatible Markdown export may preserve them.
 
 ---
 
@@ -741,7 +741,7 @@ Plugin-created objects requiring durable identity must use stable IDs.
 
 # 37. Plugin Prefixes
 
-Plugins must not invent unregistered short prefixes that could collide with LithoMark Core.
+Plugins must not invent unregistered short prefixes that could collide with Catalyst Core.
 
 Plugin APIs should provide an ID-generation service.
 
@@ -768,19 +768,19 @@ Plugin
 requestStableId(type)
    │
    ▼
-LithoMark
+Catalyst
    │
    ▼
 Generated ID
 ```
 
-This allows LithoMark to enforce consistency.
+This allows Catalyst to enforce consistency.
 
 ---
 
 # 39. External Agents
 
-External agents must use stable IDs when referencing LithoMark objects.
+External agents must use stable IDs when referencing Catalyst objects.
 
 Example:
 
@@ -797,7 +797,7 @@ Agents should not depend upon ambiguous names.
 
 # 40. Name Resolution
 
-For human convenience, LithoMark may allow searching by name.
+For human convenience, Catalyst may allow searching by name.
 
 Example:
 
@@ -837,7 +837,7 @@ Both names may refer to the same stable character ID when they represent the sam
 
 # 42. Canonical Identity
 
-When two apparent identities are revealed to be the same person, LithoMark should support merging or aliasing them without destroying historical project information.
+When two apparent identities are revealed to be the same person, Catalyst should support merging or aliasing them without destroying historical project information.
 
 This operation must be deliberate.
 
@@ -873,7 +873,7 @@ A future split operation should support generating a new stable ID and selective
 
 Deleting an object does not permit silent deletion of every reference to it.
 
-LithoMark should identify dependencies before destructive deletion.
+Catalyst should identify dependencies before destructive deletion.
 
 Example:
 
@@ -896,7 +896,7 @@ The writer chooses how to proceed.
 
 # 46. Soft Delete
 
-LithoMark may support a recoverable trash or soft-delete mechanism.
+Catalyst may support a recoverable trash or soft-delete mechanism.
 
 A soft-deleted object retains its stable ID.
 
@@ -910,7 +910,7 @@ Permanent deletion removes the authoritative object.
 
 References may become broken unless deliberately reassigned or removed.
 
-LithoMark must warn before destructive permanent deletion.
+Catalyst must warn before destructive permanent deletion.
 
 ---
 
@@ -931,7 +931,7 @@ Revision identity must therefore be based on stable ID rather than file path alo
 
 Git may interpret a rename differently depending on content changes.
 
-LithoMark does not depend upon Git's rename detection.
+Catalyst does not depend upon Git's rename detection.
 
 The embedded stable ID establishes application identity independently.
 
@@ -948,7 +948,7 @@ Leah Bennett.md
 Leah Bennett (conflicted copy).md
 ```
 
-If both contain the same stable ID, LithoMark detects the duplicate-ID conflict.
+If both contain the same stable ID, Catalyst detects the duplicate-ID conflict.
 
 It must not silently treat them as separate characters.
 
@@ -956,9 +956,9 @@ It must not silently treat them as separate characters.
 
 # 51. Copy and Paste of Files
 
-Manually copying a structured LithoMark document may duplicate its stable ID.
+Manually copying a structured Catalyst document may duplicate its stable ID.
 
-LithoMark must detect this during indexing.
+Catalyst must detect this during indexing.
 
 The user may choose:
 
@@ -984,7 +984,7 @@ Instantiation should generate new project object IDs.
 
 # 53. Deterministic Template Relationships
 
-When a template creates several linked objects, LithoMark should:
+When a template creates several linked objects, Catalyst should:
 
 1. Generate new IDs.
 2. Maintain a temporary old-to-new mapping.
@@ -1098,7 +1098,7 @@ Sensitive manuscript content should not be unnecessarily included in logs.
 
 # 59. API Contract
 
-LithoMark APIs should accept stable IDs for precise object operations.
+Catalyst APIs should accept stable IDs for precise object operations.
 
 Example:
 
@@ -1115,7 +1115,7 @@ Name-based APIs may exist for search but should not replace ID-based operations.
 
 # 60. Referential Integrity
 
-LithoMark must maintain a referential-integrity layer.
+Catalyst must maintain a referential-integrity layer.
 
 The system should be capable of identifying:
 
@@ -1197,7 +1197,7 @@ Stable identity belongs to the project domain, not the editor.
 
 # 65. Future UI Changes
 
-Changing Svelte or redesigning the LithoMark UI must not change object IDs.
+Changing Svelte or redesigning the Catalyst UI must not change object IDs.
 
 Stable identity is independent of presentation.
 
@@ -1205,7 +1205,7 @@ Stable identity is independent of presentation.
 
 # 66. Future Mobile Applications
 
-Desktop and mobile LithoMark implementations must recognize the same stable IDs.
+Desktop and mobile Catalyst implementations must recognize the same stable IDs.
 
 A character created on one supported platform remains the same character on another.
 
@@ -1221,7 +1221,7 @@ The UUID architecture allows IDs to be generated independently without a central
 
 # 68. No Sequential Primary Identity
 
-LithoMark must not use database-style sequential integers as permanent cross-file identity.
+Catalyst must not use database-style sequential integers as permanent cross-file identity.
 
 Avoid:
 
@@ -1239,7 +1239,7 @@ They must not replace stable project IDs.
 
 # 69. No Name-Based Identity
 
-LithoMark must never assume:
+Catalyst must never assume:
 
 ```text
 "Leah Bennett" == permanent identity
@@ -1260,7 +1260,7 @@ Stable IDs solve this ambiguity.
 
 # 70. No Path-Based Identity
 
-LithoMark must never assume:
+Catalyst must never assume:
 
 ```text
 Story Development/Characters/Main Cast/Leah Bennett.md
@@ -1276,7 +1276,7 @@ The embedded stable ID persists.
 
 # 71. No Order-Based Identity
 
-LithoMark must never assume:
+Catalyst must never assume:
 
 ```text
 Chapter 5
@@ -1291,7 +1291,7 @@ Chapters and scenes are routinely reordered during writing.
 
 # 72. Migration From Kindling
 
-Kindling records migrated into LithoMark must receive stable LithoMark IDs if equivalent durable IDs are unavailable.
+Kindling records migrated into Catalyst must receive stable Catalyst IDs if equivalent durable IDs are unavailable.
 
 Migration must create a mapping:
 
@@ -1299,7 +1299,7 @@ Migration must create a mapping:
 Kindling record
       │
       ▼
-LithoMark stable ID
+Catalyst stable ID
 ```
 
 All migrated relationships must use the new stable IDs.
@@ -1324,7 +1324,7 @@ The temporary mapping may be discarded after successful migration unless needed 
 
 # 74. Stable ID Service
 
-LithoMark Core should expose a centralized Stable ID Service.
+Catalyst Core should expose a centralized Stable ID Service.
 
 Conceptually:
 
@@ -1377,7 +1377,7 @@ CHR 123
 chr-not-a-uuid
 ```
 
-These may be external labels but are not valid LithoMark stable IDs.
+These may be external labels but are not valid Catalyst stable IDs.
 
 ---
 
@@ -1399,7 +1399,7 @@ Human labels may change freely without affecting identity.
 
 # 79. Slugs
 
-LithoMark may support optional slugs.
+Catalyst may support optional slugs.
 
 Example:
 
@@ -1448,7 +1448,7 @@ Only the stable ID is permanent identity.
 
 Parent specifications:
 
-- `000-LITHOMARK-ARCHITECTURE.md`
+- `000-CATALYST-ARCHITECTURE.md`
 - `001-PROJECT-FILE-FORMAT.md`
 - `002-DOCUMENT-MODEL.md`
 

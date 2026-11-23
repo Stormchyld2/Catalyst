@@ -1,15 +1,15 @@
-Kindling is very usable as a donor/reference base, but we should not copy its architecture wholesale because its core persistence model is exactly what we decided LithoMark should avoid: Kindling stores project data in SQLite, and many of its Rust commands and frontend stores are built around that database layer. GitHub
+Kindling is very usable as a donor/reference base, but we should not copy its architecture wholesale because its core persistence model is exactly what we decided Catalyst should avoid: Kindling stores project data in SQLite, and many of its Rust commands and frontend stores are built around that database layer. GitHub
 The good news is that the UI, editor, workflow, and parser layers are much more reusable than the persistence layer.
 Here is the practical map.
 Strong candidates to reuse or port
 src/lib/components/Sidebar.svelte
-Good donor for chapter/scene navigation behavior, collapse/expand logic, selection handling, ordering, and writer-oriented hierarchy. We should port the behavior and presentation, but wire it to LithoMark’s folder tree instead of database records. Kindling explicitly uses this component as its chapter/scene tree. GitHub
+Good donor for chapter/scene navigation behavior, collapse/expand logic, selection handling, ordering, and writer-oriented hierarchy. We should port the behavior and presentation, but wire it to Catalyst’s folder tree instead of database records. Kindling explicitly uses this component as its chapter/scene tree. GitHub
 src/lib/components/ScenePanel.svelte
-Very important donor. This is Kindling’s main writing area and handles beats + prose workflow. The underlying UX idea is valuable for LithoMark’s Manuscript view. We should keep the editing patterns but replace database reads/writes with Markdown-file loading and saving. GitHub
+Very important donor. This is Kindling’s main writing area and handles beats + prose workflow. The underlying UX idea is valuable for Catalyst’s Manuscript view. We should keep the editing patterns but replace database reads/writes with Markdown-file loading and saving. GitHub
 src/lib/components/ReferencesPanel.svelte
-Very useful for LithoMark’s Story Bible/context panel. Kindling already supports characters, locations, items, objectives, and organizations in this panel. We can port the panel concept and adapt it to LithoMark nodes/files. GitHub
+Very useful for Catalyst’s Story Bible/context panel. Kindling already supports characters, locations, items, objectives, and organizations in this panel. We can port the panel concept and adapt it to Catalyst nodes/files. GitHub
 src/lib/components/StartScreen.svelte
-Good reference for project creation/opening/import workflow. We can adapt it to LithoMark’s:
+Good reference for project creation/opening/import workflow. We can adapt it to Catalyst’s:
 - New Project
 - Open Local Project
 - Clone GitHub Repository
@@ -25,7 +25,7 @@ Good architectural pattern for UI-only state like:
 - modal state
 This kind of store is safe to reuse conceptually because it is not tied to SQLite. GitHub
 TipTap 3 editor stack
-Kindling uses TipTap 3 for rich-text editing, with underline, alignment, starter kit, etc. That is worth serious consideration for LithoMark’s manuscript editor because it is already proven in Kindling’s writing workflow. GitHub
+Kindling uses TipTap 3 for rich-text editing, with underline, alignment, starter kit, etc. That is worth serious consideration for Catalyst’s manuscript editor because it is already proven in Kindling’s writing workflow. GitHub
 Kindling’s import parsers
 This is a very valuable donor area. Kindling already has native Rust parsers for:
 - Plottr
@@ -34,15 +34,15 @@ This is a very valuable donor area. Kindling already has native Rust parsers for
 - novelWriter
 - Longform/Obsidian
 - Markdown
-Those parsers currently feed a ParsedProject into SQLite, but the parsing itself can be adapted to emit LithoMark folders/files instead. GitHub
+Those parsers currently feed a ParsedProject into SQLite, but the parsing itself can be adapted to emit Catalyst folders/files instead. GitHub
 Export logic
 Kindling already exports DOCX, EPUB, Markdown, Longform, Scrivener, novelWriter, HTML, text, and treatments. That is a strong donor subsystem later. GitHub
 Revision/editorial review concepts
-Kindling already has named drafts, compare/restore, comments, tracked suggestions, review packages, status tracking, etc. These are excellent later-stage features. We should port them only after we decide how LithoMark stores revisions as files rather than database rows. GitHub
+Kindling already has named drafts, compare/restore, comments, tracked suggestions, review packages, status tracking, etc. These are excellent later-stage features. We should port them only after we decide how Catalyst stores revisions as files rather than database rows. GitHub
 Useful conceptually, but needs major rewrite
 src/lib/stores/project.svelte.ts
 This is Kindling’s main project state. It exposes chapters, scenes, beats, characters, locations, etc., but it assumes the Rust backend is returning database-backed records. GitHub
-For LithoMark we should keep the idea of a central project store, but redefine it around:
+For Catalyst we should keep the idea of a central project store, but redefine it around:
 Project root folder
 File tree
 Parsed frontmatter
@@ -63,7 +63,7 @@ get_chapters(projectId)
 create_chapter(...)
 delete_scene(...)
 
-LithoMark:
+Catalyst:
 scan_project(rootPath)
 read_markdown(path)
 write_markdown(path, content)
@@ -74,12 +74,12 @@ move_node(...)
 Same pattern, different persistence.
 src-tauri/src/models/
 Kindling’s models are good references for concepts like Project, Chapter, Scene, Beat, Character, Location, ReferenceItem. But those models map directly to database tables today. GitHub
-We should derive LithoMark’s own file-backed node model instead.
+We should derive Catalyst’s own file-backed node model instead.
 Do not reuse as architecture
 src-tauri/src/db/
 This is the part we should leave behind completely.
 Kindling’s schema, migrations, queries, and database ownership are the opposite of the storage philosophy we just locked in. GitHub
-For LithoMark, there should be no equivalent authoritative database layer.
+For Catalyst, there should be no equivalent authoritative database layer.
 At most we might someday have:
 .lithomark/cache/
 
@@ -87,7 +87,7 @@ for disposable indexes, but it must always be rebuildable.
 Also do not reuse Kindling branding/design system
 Kindling’s current UI is built around its Press design system, which supplies colors, typography, controls, themes, and brand artwork. GitHub
 We should not carry that over.
-LithoMark gets its own:
+Catalyst gets its own:
 - #242424 primary background
 - gold accent family
 - muted blue interactions
@@ -99,7 +99,7 @@ So structurally:
 Kindling Press
 → discard
 
-LithoMark Design System
+Catalyst Design System
 → build fresh
 
 What Kindling already gives us that overlaps Plottr
@@ -127,7 +127,7 @@ Custom wiki/entity views
 That is still a real gap.
 My recommendation after this code audit
 The best engineering path now is:
-LithoMark
+Catalyst
 │
 ├── Kindling-derived
 │   ├── app shell patterns
@@ -146,7 +146,7 @@ LithoMark
 │   ├── graph
 │   └── richer wiki/codex UX
 │
-└── LithoMark-original
+└── Catalyst-original
     ├── filesystem-first project model
     ├── Markdown/YAML node model
     ├── backlinks/wiki links
@@ -157,4 +157,4 @@ LithoMark
 
 The most important conclusion from the code-level check is this:
 Kindling’s frontend/editor/workflow code is valuable. Kindling’s database architecture is not.
-That means we should not fork Kindling and then try to remove SQLite later. We should treat Kindling as a donor source and port the useful pieces into LithoMark’s filesystem-first architecture from the beginning.
+That means we should not fork Kindling and then try to remove SQLite later. We should treat Kindling as a donor source and port the useful pieces into Catalyst’s filesystem-first architecture from the beginning.

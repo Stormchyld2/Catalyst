@@ -1,17 +1,17 @@
-# LithoMark Writer OS — Project File Format
+# Catalyst — Project File Format
 
 **Document:** 001-PROJECT-FILE-FORMAT.md  
 **Status:** Locked Baseline  
-**Project:** LithoMark Writer OS  
-**Parent Specification:** 000-LITHOMARK-ARCHITECTURE.md
+**Project:** Catalyst  
+**Parent Specification:** 000-CATALYST-ARCHITECTURE.md
 
 ---
 
 # 1. Purpose
 
-This specification defines the permanent on-disk structure of a LithoMark Writer OS project.
+This specification defines the permanent on-disk structure of a Catalyst project.
 
-The LithoMark project format is designed around five primary requirements:
+The Catalyst project format is designed around five primary requirements:
 
 1. Writer ownership
 2. Human-readable storage
@@ -19,9 +19,9 @@ The LithoMark project format is designed around five primary requirements:
 4. Recoverability
 5. Long-term compatibility
 
-A LithoMark project is a standard filesystem directory.
+A Catalyst project is a standard filesystem directory.
 
-The project must remain understandable and recoverable even without the LithoMark application.
+The project must remain understandable and recoverable even without the Catalyst application.
 
 SQLite databases, search indexes, caches, and other generated application data are not authoritative project storage.
 
@@ -41,15 +41,15 @@ Project Files
      └── Assets
 ```
 
-LithoMark may generate indexes and caches from these files.
+Catalyst may generate indexes and caches from these files.
 
-If all generated LithoMark application data is deleted, LithoMark must be capable of reconstructing its project state from the authoritative files.
+If all generated Catalyst application data is deleted, Catalyst must be capable of reconstructing its project state from the authoritative files.
 
 ---
 
 # 3. Project Root
 
-Every LithoMark project is contained within a single root directory.
+Every Catalyst project is contained within a single root directory.
 
 Example:
 
@@ -67,7 +67,7 @@ The directory may therefore be renamed without changing the project's internal i
 
 # 4. Required Project Manifest
 
-Every LithoMark project must contain:
+Every Catalyst project must contain:
 
 ```text
 lithomark.yaml
@@ -106,14 +106,14 @@ lithomark:
   project_format: 1
 ```
 
-This value describes the structure and schema of the LithoMark project.
+This value describes the structure and schema of the Catalyst project.
 
-It is independent of the installed LithoMark application version.
+It is independent of the installed Catalyst application version.
 
 For example:
 
 ```text
-LithoMark application: 3.4.1
+Catalyst application: 3.4.1
 Project format:        2
 ```
 
@@ -178,13 +178,13 @@ Short Story/
 └── .lithomark/
 ```
 
-LithoMark must tolerate optional unused directories.
+Catalyst must tolerate optional unused directories.
 
 ---
 
 # 8. Directory Naming
 
-Default LithoMark directories use readable names.
+Default Catalyst directories use readable names.
 
 Examples:
 
@@ -196,9 +196,9 @@ Templates
 Assets
 ```
 
-These names are intended to make a project understandable outside LithoMark.
+These names are intended to make a project understandable outside Catalyst.
 
-LithoMark must not rely exclusively on folder display names to determine object identity.
+Catalyst must not rely exclusively on folder display names to determine object identity.
 
 Where necessary, stable IDs and metadata determine identity.
 
@@ -223,7 +223,7 @@ Manuscript/
 └── Epilogue.md
 ```
 
-LithoMark must support multiple organizational models.
+Catalyst must support multiple organizational models.
 
 A writer may use:
 
@@ -266,13 +266,13 @@ The YAML front matter contains structured metadata.
 
 The Markdown body contains manuscript content.
 
-LithoMark's editor may visually hide the YAML front matter during normal writing.
+Catalyst's editor may visually hide the YAML front matter during normal writing.
 
 ---
 
 # 11. Front Matter
 
-LithoMark documents may contain YAML front matter.
+Catalyst documents may contain YAML front matter.
 
 Front matter begins and ends with:
 
@@ -294,9 +294,9 @@ pov: chr-leah-bennett
 ---
 ```
 
-The `lithomark` namespace is reserved for LithoMark-defined metadata.
+The `lithomark` namespace is reserved for Catalyst-defined metadata.
 
-Plugins must not place arbitrary values inside the reserved LithoMark namespace.
+Plugins must not place arbitrary values inside the reserved Catalyst namespace.
 
 ---
 
@@ -322,7 +322,7 @@ This prevents plugins from creating conflicting metadata fields.
 
 # 13. Chapter Representation
 
-A chapter is a stable LithoMark object.
+A chapter is a stable Catalyst object.
 
 A chapter may be represented by a directory:
 
@@ -428,13 +428,13 @@ The hierarchy is writer-facing organization, not object identity. Stable IDs and
 
 Story Development is one domain/workspace. Plot/Outline, Story Bible/Wiki, Timeline, Research, relationships, arcs, reveals, clues, foreshadowing, and payoffs are areas within that domain rather than competing top-level persistence systems.
 
-Legacy projects may contain older top-level `Story Bible/`, `Story/`, `Timeline/`, or `Research/` directories. LithoMark must tolerate and read supported legacy locations during migration. New projects and newly generated content use the canonical `Story Development/` hierarchy. Migration must be explicit and non-destructive; LithoMark must not silently move or delete writer files.
+Legacy projects may contain older top-level `Story Bible/`, `Story/`, `Timeline/`, or `Research/` directories. Catalyst must tolerate and read supported legacy locations during migration. New projects and newly generated content use the canonical `Story Development/` hierarchy. Migration must be explicit and non-destructive; Catalyst must not silently move or delete writer files.
 
 ---
 
 # 16. Story Development Entity Documents
 
-Each significant entity should normally have its own human-readable Markdown/YAML document with a stable LithoMark ID.
+Each significant entity should normally have its own human-readable Markdown/YAML document with a stable Catalyst ID.
 
 Example:
 
@@ -500,7 +500,7 @@ Story Development/
         └── Irish Channel Shooting.md
 ```
 
-A timeline event is a normal authoritative LithoMark document:
+A timeline event is a normal authoritative Catalyst document:
 
 ```yaml
 lithomark:
@@ -528,7 +528,7 @@ Timeline dates may support exact dates, approximate dates, date ranges, relative
 
 Story-specific research normally lives under `Story Development/Research/` and may contain Markdown notes, sources, images, attachments, links, and source metadata.
 
-LithoMark should avoid modifying external research files unnecessarily. Project-managed research references should use portable project-relative paths where practical.
+Catalyst should avoid modifying external research files unnecessarily. Project-managed research references should use portable project-relative paths where practical.
 
 ---
 
@@ -566,7 +566,7 @@ Templates/
 
 Application-wide templates may exist outside individual projects.
 
-Project templates override or supplement global templates according to LithoMark template rules.
+Project templates override or supplement global templates according to Catalyst template rules.
 
 ---
 
@@ -618,7 +618,7 @@ Example:
 └── state.json
 ```
 
-Information stored here must be considered replaceable unless another LithoMark specification explicitly states otherwise.
+Information stored here must be considered replaceable unless another Catalyst specification explicitly states otherwise.
 
 ---
 
@@ -638,7 +638,7 @@ Information stored here must be considered replaceable unless another LithoMark 
 
 Deleting it must not destroy authoritative project information.
 
-LithoMark should automatically rebuild the database when necessary.
+Catalyst should automatically rebuild the database when necessary.
 
 ---
 
@@ -680,7 +680,7 @@ Recovery information must not replace proper durable project storage.
 
 # 35. Revision History
 
-LithoMark may maintain local revision information under:
+Catalyst may maintain local revision information under:
 
 ```text
 .lithomark/history/
@@ -696,7 +696,7 @@ The exact revision storage strategy should be defined separately before implemen
 
 # 36. Safe File Writes
 
-LithoMark must avoid directly overwriting authoritative project files in a manner that risks corruption.
+Catalyst must avoid directly overwriting authoritative project files in a manner that risks corruption.
 
 Preferred write process:
 
@@ -736,7 +736,7 @@ However, the durable autosave destination is the project filesystem.
 
 # 38. File Change Detection
 
-LithoMark must assume that project files may be changed outside the application.
+Catalyst must assume that project files may be changed outside the application.
 
 Examples include:
 
@@ -748,19 +748,19 @@ Examples include:
 - Backup restoration
 - Manual file editing
 
-LithoMark should monitor project files for external changes.
+Catalyst should monitor project files for external changes.
 
 External changes must trigger appropriate reload, reconciliation, or conflict handling.
 
-LithoMark must not silently overwrite externally modified authoritative files.
+Catalyst must not silently overwrite externally modified authoritative files.
 
 ---
 
 # 39. Conflict Detection
 
-Before saving an open document, LithoMark should determine whether the underlying file has changed externally since it was loaded or last saved.
+Before saving an open document, Catalyst should determine whether the underlying file has changed externally since it was loaded or last saved.
 
-If a conflict exists, LithoMark should preserve both versions until the writer resolves the conflict.
+If a conflict exists, Catalyst should preserve both versions until the writer resolves the conflict.
 
 The writer's work must not be silently discarded.
 
@@ -768,7 +768,7 @@ The writer's work must not be silently discarded.
 
 # 40. File Encoding
 
-Text-based LithoMark project files must use:
+Text-based Catalyst project files must use:
 
 **UTF-8**
 
@@ -785,12 +785,12 @@ This ensures broad language compatibility and cross-platform portability.
 
 # 41. Line Endings
 
-LithoMark should tolerate:
+Catalyst should tolerate:
 
 - LF
 - CRLF
 
-LithoMark should avoid unnecessary line-ending churn.
+Catalyst should avoid unnecessary line-ending churn.
 
 This is particularly important for Git compatibility.
 
@@ -846,7 +846,7 @@ All structured relationships therefore remain valid.
 
 Deleting a file representing a structured object must be treated as deletion of that object.
 
-LithoMark should detect references to missing IDs.
+Catalyst should detect references to missing IDs.
 
 Example:
 
@@ -855,7 +855,7 @@ Missing reference:
 chr-a84f2931
 ```
 
-LithoMark should provide repair options rather than silently deleting dependent relationships.
+Catalyst should provide repair options rather than silently deleting dependent relationships.
 
 ---
 
@@ -863,7 +863,7 @@ LithoMark should provide repair options rather than silently deleting dependent 
 
 Two authoritative objects must not share the same stable ID.
 
-During project indexing, LithoMark must detect duplicate IDs.
+During project indexing, Catalyst must detect duplicate IDs.
 
 Example:
 
@@ -883,11 +883,11 @@ The application must require or assist with resolution.
 
 # 46. Unknown Files
 
-LithoMark must tolerate files it does not recognize.
+Catalyst must tolerate files it does not recognize.
 
 A writer may place additional files inside a project.
 
-LithoMark must not automatically delete unknown files.
+Catalyst must not automatically delete unknown files.
 
 This is essential for filesystem ownership.
 
@@ -895,7 +895,7 @@ This is essential for filesystem ownership.
 
 # 47. Unknown Metadata
 
-LithoMark should preserve unknown metadata whenever possible.
+Catalyst should preserve unknown metadata whenever possible.
 
 This allows:
 
@@ -904,13 +904,13 @@ This allows:
 - Manual customization
 - Newer project versions
 
-Reading and rewriting a document should not unnecessarily destroy fields LithoMark does not understand.
+Reading and rewriting a document should not unnecessarily destroy fields Catalyst does not understand.
 
 ---
 
 # 48. Plugin Storage
 
-Plugins must not freely modify internal LithoMark data.
+Plugins must not freely modify internal Catalyst data.
 
 Plugin-specific durable data should use documented plugin storage locations.
 
@@ -932,7 +932,7 @@ Plugin storage rules are defined further in:
 
 # 49. Git Compatibility
 
-LithoMark projects are intentionally compatible with Git.
+Catalyst projects are intentionally compatible with Git.
 
 Human-readable files allow meaningful version history for:
 
@@ -960,7 +960,7 @@ Revision-history rules will determine whether `.lithomark/history/` should be tr
 
 # 50. Project Reconstruction
 
-LithoMark must support reconstruction of generated state.
+Catalyst must support reconstruction of generated state.
 
 Conceptually:
 
@@ -1004,13 +1004,13 @@ This operation may occur automatically when:
 - Index schema changes
 - Index corruption is detected
 - User requests rebuild
-- LithoMark detects major filesystem changes
+- Catalyst detects major filesystem changes
 
 ---
 
 # 51. Project Integrity Check
 
-LithoMark should provide a project integrity operation.
+Catalyst should provide a project integrity operation.
 
 Potential checks include:
 
@@ -1033,7 +1033,7 @@ Integrity checking must not modify project content without user authorization.
 
 # 52. Project Migration
 
-When a newer LithoMark version requires a project-format migration:
+When a newer Catalyst version requires a project-format migration:
 
 1. Validate the existing project.
 2. Create a backup or snapshot.
@@ -1048,7 +1048,7 @@ A failed migration must not destroy the original project.
 
 # 53. Portability Requirement
 
-A complete LithoMark project should normally be movable by copying its root directory.
+A complete Catalyst project should normally be movable by copying its root directory.
 
 Example:
 
@@ -1056,7 +1056,7 @@ Example:
 All That Remains/
 ```
 
-The copied project should remain recognizable on another supported LithoMark installation.
+The copied project should remain recognizable on another supported Catalyst installation.
 
 No registry entry, machine-specific database, cloud account, or hidden external metadata may be required to identify the project.
 
@@ -1064,7 +1064,7 @@ No registry entry, machine-specific database, cloud account, or hidden external 
 
 # 54. Archive Requirement
 
-A writer should be able to archive a LithoMark project using ordinary filesystem tools.
+A writer should be able to archive a Catalyst project using ordinary filesystem tools.
 
 For example:
 
@@ -1080,7 +1080,7 @@ Generated indexes need not be preserved.
 
 # 55. Sync Compatibility
 
-LithoMark projects may be stored in directories managed by external synchronization systems.
+Catalyst projects may be stored in directories managed by external synchronization systems.
 
 Examples may include:
 
@@ -1091,29 +1091,29 @@ Examples may include:
 - Git
 - Network storage
 
-LithoMark must not assume that it has exclusive permanent control over project files.
+Catalyst must not assume that it has exclusive permanent control over project files.
 
 Conflict detection and safe writes are therefore architectural requirements.
 
-LithoMark should not claim that all third-party synchronization systems are inherently safe for simultaneous multi-device editing.
+Catalyst should not claim that all third-party synchronization systems are inherently safe for simultaneous multi-device editing.
 
 ---
 
 # 56. Project Locking
 
-LithoMark may use temporary project locks to reduce accidental simultaneous editing.
+Catalyst may use temporary project locks to reduce accidental simultaneous editing.
 
 Locks must not become permanent barriers to accessing a writer's files.
 
 Stale locks must be detectable and recoverable.
 
-A lock must never make the underlying manuscript inaccessible outside LithoMark.
+A lock must never make the underlying manuscript inaccessible outside Catalyst.
 
 ---
 
 # 57. Human Readability Requirement
 
-A technically competent user should be able to inspect a LithoMark project without LithoMark and understand its basic organization.
+A technically competent user should be able to inspect a Catalyst project without Catalyst and understand its basic organization.
 
 For example:
 
@@ -1131,7 +1131,7 @@ Stable internal IDs provide machine identity.
 
 Human-readable names provide writer usability.
 
-LithoMark uses both.
+Catalyst uses both.
 
 ---
 
@@ -1182,19 +1182,19 @@ Portable project files must not require this information.
 
 When deciding where information belongs, ask:
 
-> If LithoMark disappeared tomorrow, would the writer need this information to understand, recover, continue, or publish the project?
+> If Catalyst disappeared tomorrow, would the writer need this information to understand, recover, continue, or publish the project?
 
 If yes, it should normally exist in authoritative project storage.
 
-If no, and LithoMark can regenerate it, it may belong in `.lithomark`.
+If no, and Catalyst can regenerate it, it may belong in `.lithomark`.
 
 ---
 
 # 61. Governing Storage Principle
 
-LithoMark's internal databases serve the project.
+Catalyst's internal databases serve the project.
 
-The project does not serve LithoMark's databases.
+The project does not serve Catalyst's databases.
 
 The authoritative work remains:
 
@@ -1206,7 +1206,7 @@ The authoritative work remains:
 
 A project root is an ownership and namespace boundary.
 
-Stable IDs are stable within their documented scope, but cross-project references must include enough information to identify both the target project and target entity. LithoMark must not resolve cross-project identity from a display name alone.
+Stable IDs are stable within their documented scope, but cross-project references must include enough information to identify both the target project and target entity. Catalyst must not resolve cross-project identity from a display name alone.
 
 Example conceptual reference:
 
@@ -1215,7 +1215,7 @@ project_id: prj-550e8400-e29b-41d4-a716-446655440000
 entity_id: chr-a84f2931
 ```
 
-A future Series Workspace may maintain its own ordinary, human-readable manifest and series-level files outside or above member project roots. Member projects remain normal LithoMark projects and must not require the series manifest to open.
+A future Series Workspace may maintain its own ordinary, human-readable manifest and series-level files outside or above member project roots. Member projects remain normal Catalyst projects and must not require the series manifest to open.
 
 Series membership must be explicit. Merely storing two projects beside each other on disk does not make them related and must not cause their indexes, autocomplete, canon, search results, or other project data to overlap.
 
@@ -1227,7 +1227,7 @@ Shared author-level resources such as application preferences, installed plugins
 
 This specification operates under:
 
-- `000-LITHOMARK-ARCHITECTURE.md`
+- `000-CATALYST-ARCHITECTURE.md`
 
 Related specifications:
 

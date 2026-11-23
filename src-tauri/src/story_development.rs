@@ -1,6 +1,6 @@
 //! File-authoritative Story Development index.
 //!
-//! The index is a projection over ordinary LithoMark Markdown files. It owns no
+//! The index is a projection over ordinary Catalyst Markdown files. It owns no
 //! content and can be rebuilt at any time by scanning the project tree.
 
 use std::fs;
@@ -9,9 +9,9 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_yaml::Value;
 
-use crate::document::service::{read_document, save_document, LithoMarkDocument};
+use crate::document::service::{read_document, save_document, CatalystDocument};
 
-// New LithoMark projects write story-domain documents beneath this canonical root.
+// New Catalyst projects write story-domain documents beneath this canonical root.
 // Legacy roots remain readable so existing Kindling/early-LithoMark projects can be
 // opened without destructive migration.
 const CANONICAL_STORY_DEVELOPMENT_ROOT: &str = "Story Development";
@@ -133,7 +133,7 @@ pub fn update_metadata_field(
     key: &str,
     value: Value,
     expected_source_hash: &str,
-) -> Result<LithoMarkDocument, String> {
+) -> Result<CatalystDocument, String> {
     let key = key.trim();
     if key.is_empty() {
         return Err("Metadata key must not be empty.".into());
@@ -153,7 +153,7 @@ pub fn update_document_body(
     relative_path: &Path,
     body: &str,
     expected_source_hash: &str,
-) -> Result<LithoMarkDocument, String> {
+) -> Result<CatalystDocument, String> {
     let mut document = read_document(project_root, relative_path)?;
     document.body = body.to_string();
     save_document(project_root, &document, Some(expected_source_hash))?;
@@ -686,7 +686,7 @@ mod tests {
         let error = update_document_body(
             &root,
             path,
-            "LithoMark edit.",
+            "Catalyst edit.",
             &created.source_hash,
         )
         .unwrap_err();

@@ -152,7 +152,7 @@
     const selected = await open({
       directory: true,
       multiple: false,
-      title: "Choose an empty folder for this LithoMark book",
+      title: "Choose an empty folder for this Catalyst book",
     });
     if (typeof selected === "string") projectRoot = selected;
   }
@@ -458,7 +458,7 @@
         {:else if step === 8}
           <section class="manuscript-structure-step">
             <div class="step-intro">
-              <p>Choose how LithoMark should organize the Manuscript folder. You can also leave it undecided and set it up later from the Write workspace.</p>
+              <p>Choose how Catalyst should organize the Manuscript folder. You can also leave it undecided and set it up later from the Write workspace.</p>
             </div>
 
             <div class="structure-options" role="radiogroup" aria-label="Manuscript structure">
@@ -510,7 +510,7 @@
               <div class="template-review__heading">
                 <div>
                   <h3 id="template-review-heading">Entity templates</h3>
-                  <p>Review LithoMark's proposed template for each file. Change any assignment before the book is created.</p>
+                  <p>Review Catalyst's proposed template for each file. Change any assignment before the book is created.</p>
                 </div>
                 {#if templatesLoading}<span>Loading templates…</span>{/if}
               </div>
@@ -570,7 +570,7 @@
               {/if}
             </section>
 
-            <p class="review-note">Create Book writes the normal LithoMark project files, preserves these template assignments in YAML, assigns stable IDs, then opens the project in Story Development. Setup data does not remain a second source of truth.</p>
+            <p class="review-note">Create Book writes the normal Catalyst project files, preserves these template assignments in YAML, assigns stable IDs, then opens the project in Story Development. Setup data does not remain a second source of truth.</p>
           </section>
         {/if}
 

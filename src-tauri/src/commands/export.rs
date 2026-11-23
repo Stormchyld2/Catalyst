@@ -1692,17 +1692,17 @@ fn remove_owned_export_folder(folder: &Path, export_root: &Path) -> Result<(), S
         .unwrap_or_else(|| folder.display().to_string());
     let refuse = |why: String| {
         Err(format!(
-            "kindling didn't replace “{name}”: {why}. It only replaces export folders it \
+            "Catalyst didn't replace “{name}”: {why}. It only replaces export folders it \
              created itself, holding only the files it wrote. Move or delete the folder \
              yourself, or choose another export name."
         ))
     };
     let Some(written) = read_export_manifest(export_root) else {
         return refuse(if folder == export_root {
-            "it wasn't created by a kindling export (exports made before kindling 1.3 aren't marked)"
+            "it wasn't created by a Catalyst export (exports made before Kindling 1.3 aren't marked)"
                 .into()
         } else {
-            "the export folder containing it wasn't created by a kindling export".into()
+            "the export folder containing it wasn't created by a Catalyst export".into()
         });
     };
     for entry in walkdir::WalkDir::new(folder).min_depth(1) {
@@ -1721,7 +1721,7 @@ fn remove_owned_export_folder(folder: &Path, export_root: &Path) -> Result<(), S
         if !expected {
             let relative = entry.path().strip_prefix(folder).unwrap_or(entry.path());
             return refuse(format!(
-                "it contains “{}”, which kindling didn't write",
+                "it contains “{}”, which Catalyst didn't write",
                 relative.display()
             ));
         }
@@ -5252,14 +5252,14 @@ mod tests {
             markdown_options(home.path(), "Documents", true),
         )
         .unwrap_err();
-        assert!(err.contains("wasn't created by a kindling export"), "{err}");
+        assert!(err.contains("wasn't created by a Catalyst export"), "{err}");
         let err = export_to_longform_with_connection(
             &conn,
             project.id,
             longform_options(home.path(), "Documents", true),
         )
         .unwrap_err();
-        assert!(err.contains("wasn't created by a kindling export"), "{err}");
+        assert!(err.contains("wasn't created by a Catalyst export"), "{err}");
 
         assert_eq!(
             fs::read_to_string(documents.join("Taxes").join("2025.pdf")).unwrap(),
@@ -5369,7 +5369,7 @@ mod tests {
                 let err = run(true).unwrap_err();
 
                 assert!(
-                    err.contains("which kindling didn't write"),
+                    err.contains("which Catalyst didn't write"),
                     "{export} {what}: {err}"
                 );
                 assert_eq!(

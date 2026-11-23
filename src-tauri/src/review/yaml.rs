@@ -1,6 +1,6 @@
 use super::model::ReviewManifest;
 
-/// Serializes a validated LithoMark review manifest to deterministic YAML.
+/// Serializes a validated Catalyst review manifest to deterministic YAML.
 ///
 /// The returned string is the YAML payload only. Markdown frontmatter
 /// delimiters are added by the review-copy assembler, not here.
@@ -8,7 +8,7 @@ pub fn to_yaml(manifest: &ReviewManifest) -> Result<String, String> {
     manifest.validate()?;
 
     let mut yaml = serde_yaml::to_string(manifest)
-        .map_err(|error| format!("Failed to serialize LithoMark review manifest: {error}"))?;
+        .map_err(|error| format!("Failed to serialize Catalyst review manifest: {error}"))?;
 
     // Keep package output stable across platforms and ensure exactly one
     // trailing newline before a caller adds a closing frontmatter delimiter.
@@ -23,17 +23,17 @@ pub fn to_yaml(manifest: &ReviewManifest) -> Result<String, String> {
     Ok(yaml)
 }
 
-/// Deserializes and validates a LithoMark review manifest from YAML.
+/// Deserializes and validates a Catalyst review manifest from YAML.
 ///
 /// Validation after deserialization is deliberate: syntactically valid YAML
-/// is not automatically a valid or supported LithoMark review package.
+/// is not automatically a valid or supported Catalyst review package.
 pub fn from_yaml(yaml: &str) -> Result<ReviewManifest, String> {
     if yaml.trim().is_empty() {
         return Err("Review manifest YAML must not be empty.".into());
     }
 
     let manifest: ReviewManifest = serde_yaml::from_str(yaml)
-        .map_err(|error| format!("Failed to deserialize LithoMark review manifest: {error}"))?;
+        .map_err(|error| format!("Failed to deserialize Catalyst review manifest: {error}"))?;
 
     manifest.validate()?;
     Ok(manifest)

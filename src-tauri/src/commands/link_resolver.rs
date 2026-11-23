@@ -1,4 +1,4 @@
-//! Tauri boundary for the file-derived LithoMark project link resolver.
+//! Tauri boundary for the file-derived Catalyst project link resolver.
 
 use std::path::PathBuf;
 

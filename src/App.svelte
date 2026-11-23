@@ -53,10 +53,10 @@
   // Keep the native window title in sync with the selected book.
   $effect(() => {
     const bookTitle = currentProject.value?.name?.trim();
-    const title = bookTitle ? `${bookTitle} — LithoMark` : "LithoMark";
+    const title = bookTitle ? `${bookTitle} — Catalyst` : "Catalyst";
     document.title = title;
     void getCurrentWindow().setTitle(title).catch((error) => {
-      console.warn("Unable to update LithoMark window title:", error);
+      console.warn("Unable to update Catalyst window title:", error);
     });
   });
 
@@ -156,7 +156,7 @@
     if (!project) return false;
     if (project.project_root) return true;
     ui.showError(
-      `${project.name} does not have a LithoMark project folder yet. Story Development requires a file-authoritative project folder. You can keep writing or return Home to open another project.`
+      `${project.name} does not have a Catalyst project folder yet. Story Development requires a file-authoritative project folder. You can keep writing or return Home to open another project.`
     );
     return false;
   }
@@ -246,7 +246,7 @@
     const rootPath = await open({
       directory: true,
       multiple: false,
-      title: "Open LithoMark Project Folder",
+      title: "Open Catalyst Project Folder",
       defaultPath: "C:\\Users\\storm\\Documents\\LithoMark Writer OS\\LithoMark\\docs\\projects",
     });
     if (!rootPath) return;
@@ -260,7 +260,7 @@
       workspace.enterProject("home");
       ui.refreshRecentProjects();
     } catch (error) {
-      ui.showError(`Could not open LithoMark project folder: ${String(error)}`);
+      ui.showError(`Could not open Catalyst project folder: ${String(error)}`);
     }
   }
 
@@ -441,7 +441,7 @@
       event.preventDefault();
       const documentsSaved = await Promise.allSettled(pendingDocumentSaves);
       if (documentsSaved.some((result) => result.status === "rejected" || !result.value)) {
-        ui.showError("Some documents could not be saved. LithoMark will remain open.");
+        ui.showError("Some documents could not be saved. Catalyst will remain open.");
         return;
       }
       if (!(await requestProjectChange())) return;
@@ -841,7 +841,7 @@
     {:else}
       <section class="workspace-placeholder" aria-live="polite">
         <div class="workspace-placeholder__card">
-          <p class="workspace-placeholder__eyebrow">LithoMark Writer OS</p>
+          <p class="workspace-placeholder__eyebrow">Catalyst</p>
           <h1>{workspace.active.charAt(0).toUpperCase() + workspace.active.slice(1)}</h1>
           <p>This workspace is part of the Writer OS shell and will be implemented in a later phase.</p>
           <button

@@ -1,5 +1,5 @@
 <!--
-  FeedbackDialog.svelte - Send feedback to the LithoMark team
+  FeedbackDialog.svelte - Send feedback to the Catalyst team
 
   A small form letting the user submit a bug report, feature request, or star
   rating. Apart from the updater's release check, submission is the only network
@@ -142,7 +142,7 @@
       <div class="ka-dialog-body feedback-success" data-testid="feedback-success" role="status">
         <CheckCircle2 class="w-7 h-7" aria-hidden="true" />
         <h3>Thanks for your feedback!</h3>
-        <p>Your message was sent to the LithoMark team.</p>
+        <p>Your message was sent to the Catalyst team.</p>
       </div>
       <footer class="ka-dialog-footer">
         <button type="button" onclick={onClose} class="ka-button" use:focusOnMount>Done</button>
@@ -168,7 +168,7 @@
 
         {#if feedbackType === "rating"}
           <fieldset class="feedback-rating">
-            <legend>How would you rate LithoMark?</legend>
+            <legend>How would you rate Catalyst?</legend>
             <div class="ka-row">
               {#each [1, 2, 3, 4, 5] as n (n)}
                 <button
@@ -228,7 +228,7 @@
         {/if}
 
         <p class="ka-help" data-testid="feedback-disclosure">
-          Sending includes what you enter here plus your LithoMark version, operating system and
+          Sending includes what you enter here plus your Catalyst version, operating system and
           language. Nothing from your manuscript is attached.
         </p>
 

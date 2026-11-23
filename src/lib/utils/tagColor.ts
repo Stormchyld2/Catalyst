@@ -1,4 +1,4 @@
-import lithomarkTokens from "../../styles/lithomark/tokens.json";
+import catalystTokens from "../../styles/catalyst/tokens.json";
 
 /** The Press tag palette, in the order the tag editor offers it. */
 export const TAG_COLOR_NAMES = [
@@ -16,7 +16,7 @@ export const TAG_COLOR_NAMES = [
 
 const BY_STORED_VALUE = new Map(
   TAG_COLOR_NAMES.map((name) => [
-    lithomarkTokens.light[`--tag-${name}` as keyof typeof lithomarkTokens.light].toLowerCase(),
+    catalystTokens.light[`--tag-${name}` as keyof typeof catalystTokens.light].toLowerCase(),
     name,
   ])
 );

@@ -43,7 +43,7 @@ const button = (name: string | RegExp) => screen.getByRole("button", { name });
 describe("Onboarding", () => {
   it("welcomes with a labelled dialog, progress and the sample as the primary", () => {
     render(Onboarding);
-    expect(screen.getByRole("dialog", { name: "Welcome to LithoMark" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Welcome to Catalyst" })).toBeTruthy();
     expect(screen.getByText("Step 1 of 5")).toBeTruthy();
     expect(screen.getByRole("progressbar", { name: "Getting started, step 1 of 5" })).toBeTruthy();
     expect(document.activeElement).toBe(button("Try sample project"));

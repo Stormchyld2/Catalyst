@@ -419,7 +419,7 @@ fn apply_migrations(conn: &Connection) -> Result<()> {
         )?;
     }
 
-    // Migration: Add an explicit LithoMark-owned filesystem root. This is not
+    // Migration: Add an explicit Catalyst-owned filesystem root. This is not
     // inferred from source_path because imported source files are not project roots.
     let columns: Vec<String> = conn
         .prepare("PRAGMA table_info(projects)")?

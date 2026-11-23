@@ -5,14 +5,14 @@
 <div class="settings-pane plugin-settings">
   {#if mode === "installed"}
     <p class="settings-lede">
-      Extend LithoMark without making plugins part of the authoritative project format.
+      Extend Catalyst without making plugins part of the authoritative project format.
       Projects remain ordinary local files even when plugins are disabled.
     </p>
     <section class="plugin-card">
       <div>
         <span class="status-dot"></span>
         <div>
-          <strong>LithoMark Plugin API</strong>
+          <strong>Catalyst Plugin API</strong>
           <p>Core plugin contracts are active. API version 1.</p>
         </div>
       </div>
@@ -33,7 +33,7 @@
     </p>
   {:else}
     <p class="settings-lede">
-      Plugin development targets the stable LithoMark Core boundary rather than project internals.
+      Plugin development targets the stable Catalyst Core boundary rather than project internals.
     </p>
     <div class="dev-grid">
       <article>

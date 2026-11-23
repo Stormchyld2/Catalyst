@@ -39,7 +39,7 @@ pub fn create_menu(app: &AppHandle<Wry>, bindings: &BTreeMap<String, String>) ->
         .separator()
         .item(&command("settings", "Settings...")?)
         .separator()
-        .item(&command("quit", "Quit LithoMark")?)
+        .item(&command("quit", "Quit Catalyst")?)
         .build()?;
     let edit_submenu = SubmenuBuilder::new(app, "Edit")
         .undo()
@@ -68,7 +68,7 @@ pub fn create_menu(app: &AppHandle<Wry>, bindings: &BTreeMap<String, String>) ->
         .item(&command("sync", "Sync from Source")?)
         .build()?;
     let help_submenu = SubmenuBuilder::new(app, "Help")
-        .item(&command("about", "About LithoMark…")?)
+        .item(&command("about", "About Catalyst…")?)
         .item(&command("send_feedback", "Send Feedback...")?)
         .separator()
         .item(&command("command_palette", "Command Palette...")?)

@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::canon_contract::{CanonFact, CanonRelationship};
-use crate::document::service::{read_document, save_document, DocumentIdentity, LithoMarkDocument};
+use crate::document::service::{read_document, save_document, DocumentIdentity, CatalystDocument};
 
 const FACT_DIR: &str = "Story Development/Canon/Facts";
 const REL_DIR: &str = "Story Development/Canon/Relationships";
@@ -86,7 +86,7 @@ fn save<T: Serialize>(
     }
     let mut metadata = std::collections::BTreeMap::new();
     metadata.insert("record".to_string(), serde_yaml::to_value(record).map_err(|e| e.to_string())?);
-    let doc = LithoMarkDocument {
+    let doc = CatalystDocument {
         identity: DocumentIdentity { document_type: kind.into(), id: id.into() },
         title: None, metadata, body: String::new(), relative_path: relative,
         source_hash: String::new(),

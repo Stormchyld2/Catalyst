@@ -30,7 +30,7 @@ const second = {
   project_type: "screenplay" as const,
   target_page_count: 120,
   genre: "Mystery",
-  project_root: "C:/Temp/LithoMark/Second manuscript",
+  project_root: "C:/Temp/Catalyst/Second manuscript",
 };
 let projects = [mockProject, second];
 
@@ -244,7 +244,7 @@ it("protects custom field drafts when their reference type is disabled", async (
 it("groups navigation by scope and keeps the project selector in the sidebar across areas", async () => {
   render(SettingsDialog, { onClose: vi.fn() });
   const nav = screen.getByRole("navigation", { name: "Settings areas" });
-  const shared = within(nav).getByRole("region", { name: "LithoMark" });
+  const shared = within(nav).getByRole("region", { name: "Catalyst" });
   const projectGroup = within(nav).getByRole("region", { name: "Projects" });
   expect(within(shared).getByRole("heading", { name: "Preferences" })).toBeTruthy();
   expect(within(shared).getByRole("heading", { name: "Plugins" })).toBeTruthy();
@@ -252,7 +252,7 @@ it("groups navigation by scope and keeps the project selector in the sidebar acr
   expect(within(projectGroup).getByRole("heading", { name: "Reference Library" })).toBeTruthy();
   const selector = await within(projectGroup).findByRole("combobox", { name: "Project" });
   expect(screen.getAllByRole("combobox", { name: "Project" })).toHaveLength(1);
-  expect(screen.getByTestId("settings-location").textContent).toContain("LithoMark / Preferences");
+  expect(screen.getByTestId("settings-location").textContent).toContain("Catalyst / Preferences");
   await fireEvent.change(selector, { target: { value: second.id } });
   expect(screen.getByRole("button", { name: "Project Details" }).getAttribute("aria-current")).toBe(
     "page"
@@ -269,7 +269,7 @@ it("groups navigation by scope and keeps the project selector in the sidebar acr
 it("exposes plugin settings separately from project settings", async () => {
   render(SettingsDialog, { onClose: vi.fn() });
   await fireEvent.click(screen.getByRole("button", { name: "Installed Plugins" }));
-  expect(screen.getByText("LithoMark Plugin API")).toBeTruthy();
+  expect(screen.getByText("Catalyst Plugin API")).toBeTruthy();
   expect(screen.getByText("0 installed")).toBeTruthy();
   await fireEvent.click(screen.getByRole("button", { name: "Plugin Development" }));
   expect(screen.getByText("Manifest version")).toBeTruthy();

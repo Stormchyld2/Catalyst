@@ -88,7 +88,7 @@ impl ReviewManifest {
 
         if self.format_version != REVIEW_FORMAT_VERSION {
             return Err(format!(
-                "Unsupported LithoMark review format version {}.",
+                "Unsupported Catalyst review format version {}.",
                 self.format_version
             ));
         }

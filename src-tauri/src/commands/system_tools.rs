@@ -1,6 +1,6 @@
 //! Local project tools for Git and the integrated terminal.
 //!
-//! These commands operate only against the active LithoMark project folder.
+//! These commands operate only against the active Catalyst project folder.
 //! They do not make project content cloud-authoritative; Git remains optional
 //! version control over the normal local files.
 

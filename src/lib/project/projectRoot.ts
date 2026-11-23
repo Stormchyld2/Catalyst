@@ -1,5 +1,5 @@
 /**
- * Frontend adapter for the authoritative LithoMark project filesystem root.
+ * Frontend adapter for the authoritative Catalyst project filesystem root.
  *
  * UI code should use this module instead of constructing project paths itself.
  */

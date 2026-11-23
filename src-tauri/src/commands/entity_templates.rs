@@ -17,7 +17,7 @@ fn templates_dir(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     let data_dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Could not resolve LithoMark app data directory: {e}"))?;
+        .map_err(|e| format!("Could not resolve Catalyst app data directory: {e}"))?;
     Ok(data_dir.join("Templates"))
 }
 
@@ -113,7 +113,7 @@ pub async fn create_story_document_from_template(
     }
     }
     let document_type = template.map(|t| t.manifest.document_type.as_str()).unwrap_or("note");
-    let document = crate::document::service::LithoMarkDocument {
+    let document = crate::document::service::CatalystDocument {
         identity: crate::document::service::DocumentIdentity {
             document_type: document_type.to_string(),
             id: crate::document::service::generate_stable_id(document_type)?,
