@@ -411,7 +411,7 @@ fn replace_staged_document(staged: &Path, destination: &Path) -> Result<(), Stri
 fn replace_staged_document(staged: &Path, destination: &Path) -> Result<(), String> {
     use std::os::windows::ffi::OsStrExt;
 
-    #[link(name = "Kernel32")]
+    #[link(name = "kernel32")]
     unsafe extern "system" {
         fn ReplaceFileW(
             replaced_file_name: *const u16,
