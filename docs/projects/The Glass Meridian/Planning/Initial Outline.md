@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-600d2ec3-5de2-4d67-98ce-09e9c57ac6ce
 title: Initial Outline

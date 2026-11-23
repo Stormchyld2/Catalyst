@@ -48,14 +48,14 @@
                    "fileAssociations":  [
                                             {
                                                 "ext":  [
-                                                            "lithomark-review"
+                                                            "catalyst-review"
                                                         ],
                                                 "name":  "Catalyst Review",
                                                 "description":  "Catalyst editorial review package",
                                                 "role":  "Editor",
-                                                "mimeType":  "application/x-lithomark-review",
+                                                "mimeType":  "application/x-catalyst-review",
                                                 "exportedType":  {
-                                                                     "identifier":  "com.catalyst.writer.lithomark-review",
+                                                                     "identifier":  "com.catalyst.writer.catalyst-review",
                                                                      "conformsTo":  [
                                                                                         "public.json"
                                                                                     ]
@@ -63,14 +63,14 @@
                                             },
                                             {
                                                 "ext":  [
-                                                            "lithomark-feedback"
+                                                            "catalyst-feedback"
                                                         ],
                                                 "name":  "Catalyst Feedback",
                                                 "description":  "Catalyst editorial feedback",
                                                 "role":  "Editor",
-                                                "mimeType":  "application/x-lithomark-feedback",
+                                                "mimeType":  "application/x-catalyst-feedback",
                                                 "exportedType":  {
-                                                                     "identifier":  "com.catalyst.writer.lithomark-feedback",
+                                                                     "identifier":  "com.catalyst.writer.catalyst-feedback",
                                                                      "conformsTo":  [
                                                                                         "public.json"
                                                                                     ]

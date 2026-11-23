@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: character
   id: chr-cba50e73-bbf5-4da4-8cd1-bff7e350c0f8
 title: Nia Corren

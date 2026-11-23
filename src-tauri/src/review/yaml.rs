@@ -87,10 +87,10 @@ mod tests {
     }
 
     #[test]
-    fn serialized_yaml_uses_lithomark_format() {
+    fn serialized_yaml_uses_catalyst_format() {
         let yaml = to_yaml(&manifest()).unwrap();
 
-        assert!(yaml.contains("format: lithomark-review"));
+        assert!(yaml.contains("format: catalyst-review"));
         assert!(!yaml.contains("kindling-editorial"));
     }
 
@@ -103,7 +103,7 @@ mod tests {
     fn rejects_unsupported_format_after_deserialization() {
         let yaml = to_yaml(&manifest())
             .unwrap()
-            .replace("format: lithomark-review", "format: kindling-editorial");
+            .replace("format: catalyst-review", "format: kindling-editorial");
 
         assert!(from_yaml(&yaml).is_err());
     }

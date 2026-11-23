@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: location
   id: loc-362a26e5-6097-4d8e-82d7-04567de21406
 title: East Reach

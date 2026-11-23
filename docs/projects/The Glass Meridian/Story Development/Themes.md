@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-f1c7be6d-c99f-459e-9e80-f113abc59585
 title: Themes & Core Ideas

@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: chapter
   id: ch-19e0f4a6-3f68-41c6-bb25-a7d8c8c63d34
 title: Chapter 2 — The Old Meridian
