@@ -64,15 +64,69 @@ pub struct WorldCategoryDef {
 }
 
 pub const WORLD_CATEGORIES: &[WorldCategoryDef] = &[
-    WorldCategoryDef { id: "factions", label: "Factions & Governments", folder: "Governments & Factions", entry_type: "organization", entry_template: "faction-secret-society" },
-    WorldCategoryDef { id: "organizations", label: "Organizations & Guilds", folder: "Organizations", entry_type: "organization", entry_template: "organization-profile" },
-    WorldCategoryDef { id: "cultures", label: "Cultures & Peoples", folder: "Cultures & Societies", entry_type: "note", entry_template: "worldbuilding-profile" },
-    WorldCategoryDef { id: "religions", label: "Religions & Pantheons", folder: "Religions & Pantheons", entry_type: "note", entry_template: "worldbuilding-profile" },
-    WorldCategoryDef { id: "history", label: "History & Lore", folder: "History & Lore", entry_type: "event", entry_template: "event-profile" },
-    WorldCategoryDef { id: "magic", label: "Magic & Technology", folder: "Magic & Technology", entry_type: "note", entry_template: "worldbuilding-profile" },
-    WorldCategoryDef { id: "bestiary", label: "Bestiary & Creatures", folder: "Bestiary & Creatures", entry_type: "note", entry_template: "species-ancestry" },
-    WorldCategoryDef { id: "items", label: "Items & Artifacts", folder: "Objects & Artifacts", entry_type: "object", entry_template: "object-item-profile" },
-    WorldCategoryDef { id: "languages", label: "Languages", folder: "Languages", entry_type: "note", entry_template: "language-profile" },
+    WorldCategoryDef {
+        id: "factions",
+        label: "Factions & Governments",
+        folder: "Governments & Factions",
+        entry_type: "organization",
+        entry_template: "faction-secret-society",
+    },
+    WorldCategoryDef {
+        id: "organizations",
+        label: "Organizations & Guilds",
+        folder: "Organizations",
+        entry_type: "organization",
+        entry_template: "organization-profile",
+    },
+    WorldCategoryDef {
+        id: "cultures",
+        label: "Cultures & Peoples",
+        folder: "Cultures & Societies",
+        entry_type: "note",
+        entry_template: "worldbuilding-profile",
+    },
+    WorldCategoryDef {
+        id: "religions",
+        label: "Religions & Pantheons",
+        folder: "Religions & Pantheons",
+        entry_type: "note",
+        entry_template: "worldbuilding-profile",
+    },
+    WorldCategoryDef {
+        id: "history",
+        label: "History & Lore",
+        folder: "History & Lore",
+        entry_type: "event",
+        entry_template: "event-profile",
+    },
+    WorldCategoryDef {
+        id: "magic",
+        label: "Magic & Technology",
+        folder: "Magic & Technology",
+        entry_type: "note",
+        entry_template: "worldbuilding-profile",
+    },
+    WorldCategoryDef {
+        id: "bestiary",
+        label: "Bestiary & Creatures",
+        folder: "Bestiary & Creatures",
+        entry_type: "note",
+        entry_template: "species-ancestry",
+    },
+    WorldCategoryDef {
+        id: "items",
+        label: "Items & Artifacts",
+        folder: "Objects & Artifacts",
+        entry_type: "object",
+        entry_template: "object-item-profile",
+    },
+    WorldCategoryDef {
+        id: "languages",
+        label: "Languages",
+        folder: "Languages",
+        entry_type: "note",
+        entry_template: "language-profile",
+    },
 ];
 
 fn world_category(id: &str) -> Option<&'static WorldCategoryDef> {
@@ -425,7 +479,11 @@ fn seed_campaign(
         "## Expectations\n\n## Scheduling\n\n## Safety Notes\n",
     )?;
     insert_string(&mut table.metadata, "campaign_kind", "table");
-    insert_strings(&mut table.metadata, "safety_tools", &input.table.safety_tools);
+    insert_strings(
+        &mut table.metadata,
+        "safety_tools",
+        &input.table.safety_tools,
+    );
     insert_strings(&mut table.metadata, "lines", &input.table.lines);
     insert_strings(&mut table.metadata, "veils", &input.table.veils);
     save_document(root, &table, Some(&table.source_hash))?;
@@ -464,7 +522,11 @@ fn seed_campaign(
     insert_string(&mut world.metadata, "setting", &input.world.setting);
     insert_string(&mut world.metadata, "era", &input.world.era);
     insert_string(&mut world.metadata, "magic_level", &input.world.magic_level);
-    insert_string(&mut world.metadata, "technology_level", &input.world.technology_level);
+    insert_string(
+        &mut world.metadata,
+        "technology_level",
+        &input.world.technology_level,
+    );
     save_document(root, &world, Some(&world.source_hash))?;
 
     seed_world_categories(root, &input.world_categories)?;
@@ -492,17 +554,30 @@ fn seed_world_categories(root: &Path, categories: &[CampaignWorldCategory]) -> R
             &Path::new(&folder).join(format!("{} Overview.md", safe_filename(def.label))),
             "note",
             Some(def.label),
-            if notes.is_empty() { "## Overview\n\n## Details\n" } else { notes },
+            if notes.is_empty() {
+                "## Overview\n\n## Details\n"
+            } else {
+                notes
+            },
         )?;
         insert_string(&mut overview.metadata, "campaign_kind", "world-category");
         insert_string(&mut overview.metadata, "category", def.id);
-        insert_string(&mut overview.metadata, "template_id", "worldbuilding-profile");
+        insert_string(
+            &mut overview.metadata,
+            "template_id",
+            "worldbuilding-profile",
+        );
         save_document(root, &overview, Some(&overview.source_hash))?;
 
         let mut used = BTreeMap::new();
         // The overview occupies its filename; reserve it so entries never collide.
         used.insert(format!("{} Overview", safe_filename(def.label)), 1);
-        for entry in category.entries.iter().map(|e| e.trim()).filter(|e| !e.is_empty()) {
+        for entry in category
+            .entries
+            .iter()
+            .map(|e| e.trim())
+            .filter(|e| !e.is_empty())
+        {
             let relative = unique_entity_path(&folder, entry, &mut used);
             let mut document = create_document(root, &relative, def.entry_type, Some(entry), "")?;
             insert_string(&mut document.metadata, "template_id", def.entry_template);
@@ -521,9 +596,19 @@ fn seed_locations(root: &Path, locations: &[CampaignLocation]) -> Result<(), Str
             &location.name,
             &mut used,
         );
-        let mut document = create_document(root, &relative, "location", Some(location.name.trim()), &location.description)?;
+        let mut document = create_document(
+            root,
+            &relative,
+            "location",
+            Some(location.name.trim()),
+            &location.description,
+        )?;
         insert_string(&mut document.metadata, "template_id", "location-profile");
-        insert_string(&mut document.metadata, "location_type", &location.location_type);
+        insert_string(
+            &mut document.metadata,
+            "location_type",
+            &location.location_type,
+        );
         save_document(root, &document, Some(&document.source_hash))?;
     }
     Ok(())
@@ -538,9 +623,19 @@ fn seed_npcs(root: &Path, npcs: &[CampaignNpc]) -> Result<(), String> {
             "Story Development/Characters/NPCs"
         };
         let relative = unique_entity_path(folder, &npc.name, &mut used);
-        let mut document = create_document(root, &relative, "character", Some(npc.name.trim()), &npc.description)?;
+        let mut document = create_document(
+            root,
+            &relative,
+            "character",
+            Some(npc.name.trim()),
+            &npc.description,
+        )?;
         insert_string(&mut document.metadata, "template_id", "character-profile");
-        insert_string(&mut document.metadata, "character_kind", if npc.antagonist { "antagonist" } else { "npc" });
+        insert_string(
+            &mut document.metadata,
+            "character_kind",
+            if npc.antagonist { "antagonist" } else { "npc" },
+        );
         insert_string(&mut document.metadata, "role", &npc.role);
         insert_string(&mut document.metadata, "affiliation", &npc.affiliation);
         save_document(root, &document, Some(&document.source_hash))?;
@@ -564,7 +659,8 @@ fn seed_player_characters_placeholder(root: &Path) -> Result<(), String> {
 
 fn seed_story(root: &Path, starter: &StarterDef, story: &CampaignStory) -> Result<(), String> {
     for (title, body) in starter.arcs {
-        let relative = Path::new("Story Development/Adventures/Arcs").join(format!("{}.md", safe_filename(title)));
+        let relative = Path::new("Story Development/Adventures/Arcs")
+            .join(format!("{}.md", safe_filename(title)));
         let mut arc = create_document(root, &relative, "plot-thread", Some(title), body)?;
         insert_string(&mut arc.metadata, "campaign_kind", "arc");
         insert_string(&mut arc.metadata, "status", "planned");
@@ -572,9 +668,18 @@ fn seed_story(root: &Path, starter: &StarterDef, story: &CampaignStory) -> Resul
     }
 
     let mut used = BTreeMap::new();
-    for hook in story.hooks.iter().map(|h| h.trim()).filter(|h| !h.is_empty()) {
+    for hook in story
+        .hooks
+        .iter()
+        .map(|h| h.trim())
+        .filter(|h| !h.is_empty())
+    {
         let title = truncate_title(hook);
-        let relative = unique_entity_path("Story Development/Adventures/Quests & Hooks", &title, &mut used);
+        let relative = unique_entity_path(
+            "Story Development/Adventures/Quests & Hooks",
+            &title,
+            &mut used,
+        );
         let mut doc = create_document(root, &relative, "plot-thread", Some(&title), hook)?;
         insert_string(&mut doc.metadata, "campaign_kind", "hook");
         insert_string(&mut doc.metadata, "status", "available");
@@ -597,7 +702,8 @@ fn seed_sessions(root: &Path, first: &CampaignFirstSession) -> Result<(), String
         zero_body,
     )?;
     insert_string(&mut zero.metadata, "campaign_kind", "session-prep");
-    zero.metadata.insert("session_number".into(), Value::Number(0.into()));
+    zero.metadata
+        .insert("session_number".into(), Value::Number(0.into()));
     insert_string(&mut zero.metadata, "status", "planned");
     save_document(root, &zero, Some(&zero.source_hash))?;
 
@@ -619,7 +725,8 @@ fn seed_sessions(root: &Path, first: &CampaignFirstSession) -> Result<(), String
         &body,
     )?;
     insert_string(&mut one.metadata, "campaign_kind", "session-prep");
-    one.metadata.insert("session_number".into(), Value::Number(1.into()));
+    one.metadata
+        .insert("session_number".into(), Value::Number(1.into()));
     insert_string(&mut one.metadata, "status", "planned");
     save_document(root, &one, Some(&one.source_hash))?;
     Ok(())
@@ -634,7 +741,8 @@ fn seed_gm_templates(root: &Path, ids: Option<&[String]>) -> Result<(), String> 
             .collect(),
     };
     for def in selected {
-        let relative = Path::new("Story Development/Game Master/Templates").join(format!("{}.md", safe_filename(def.title)));
+        let relative = Path::new("Story Development/Game Master/Templates")
+            .join(format!("{}.md", safe_filename(def.title)));
         let mut doc = create_document(root, &relative, "template", Some(def.title), def.body)?;
         insert_string(&mut doc.metadata, "campaign_kind", "gm-template");
         insert_string(&mut doc.metadata, "gm_template_id", def.id);
@@ -668,7 +776,11 @@ fn unique_entity_path(directory: &str, name: &str, used: &mut BTreeMap<String, u
     let stem = safe_filename(name);
     let count = used.entry(stem.to_lowercase()).or_insert(0);
     *count += 1;
-    let filename = if *count == 1 { format!("{stem}.md") } else { format!("{stem} {}.md", *count) };
+    let filename = if *count == 1 {
+        format!("{stem}.md")
+    } else {
+        format!("{stem} {}.md", *count)
+    };
     Path::new(directory).join(filename)
 }
 
@@ -773,7 +885,10 @@ mod tests {
         let manifest = read_project_manifest(&root).unwrap();
         assert_eq!(manifest, created.manifest);
         assert_eq!(manifest.project_type, "campaign");
-        assert_eq!(manifest.description.as_deref(), Some("A border kingdom burns."));
+        assert_eq!(
+            manifest.description.as_deref(),
+            Some("A border kingdom burns.")
+        );
         for dir in CAMPAIGN_DIRECTORIES {
             assert!(root.join(dir).is_dir(), "missing campaign folder {dir}");
         }
@@ -781,22 +896,44 @@ mod tests {
         assert!(root.join("Manuscript").is_dir());
         assert!(root.join("Story Development/Characters/Main Cast").is_dir());
 
-        assert_eq!(created.overview_path, "Story Development/Campaign/Campaign Overview.md");
+        assert_eq!(
+            created.overview_path,
+            "Story Development/Campaign/Campaign Overview.md"
+        );
         let overview = read_document(&root, Path::new(&created.overview_path)).unwrap();
         assert_eq!(overview.identity.id, created.overview_id);
         assert!(overview.identity.id.starts_with("note-"));
         assert_eq!(overview.title.as_deref(), Some("Ashes of Varn"));
-        assert_eq!(overview.metadata.get("campaign_id"), Some(&Value::String(manifest.project_id.clone())));
-        assert_eq!(overview.metadata.get("setup_mode"), Some(&Value::String("quick-start".into())));
-        assert_eq!(overview.metadata.get("game_system"), Some(&Value::String("Fifth Edition Fantasy".into())));
+        assert_eq!(
+            overview.metadata.get("campaign_id"),
+            Some(&Value::String(manifest.project_id.clone()))
+        );
+        assert_eq!(
+            overview.metadata.get("setup_mode"),
+            Some(&Value::String("quick-start".into()))
+        );
+        assert_eq!(
+            overview.metadata.get("game_system"),
+            Some(&Value::String("Fifth Edition Fantasy".into()))
+        );
 
-        assert!(root.join("Story Development/Adventures/Arcs/Arc 1 — The Call.md").is_file());
-        assert!(root.join("Story Development/Sessions/Session Prep/Session 00 — Session Zero.md").is_file());
-        assert!(root.join("Story Development/Sessions/Session Prep/Session 01.md").is_file());
+        assert!(root
+            .join("Story Development/Adventures/Arcs/Arc 1 — The Call.md")
+            .is_file());
+        assert!(root
+            .join("Story Development/Sessions/Session Prep/Session 00 — Session Zero.md")
+            .is_file());
+        assert!(root
+            .join("Story Development/Sessions/Session Prep/Session 01.md")
+            .is_file());
         // Quick Start installs every GM starter template.
-        let templates = fs::read_dir(root.join("Story Development/Game Master/Templates")).unwrap().count();
+        let templates = fs::read_dir(root.join("Story Development/Game Master/Templates"))
+            .unwrap()
+            .count();
         assert_eq!(templates, GM_TEMPLATES.len());
-        assert!(root.join("Story Development/Characters/Player Characters/README.md").is_file());
+        assert!(root
+            .join("Story Development/Characters/Player Characters/README.md")
+            .is_file());
 
         let index = build_index(&root).unwrap();
         assert!(index.issues.is_empty(), "index issues: {:?}", index.issues);
@@ -808,48 +945,123 @@ mod tests {
         let root = parent.path().join("Drowned Crown");
         create_campaign(&guided(&root)).unwrap();
 
-        let overview = read_document(&root, Path::new("Story Development/Campaign/Campaign Overview.md")).unwrap();
-        assert_eq!(overview.metadata.get("player_count"), Some(&Value::Number(4.into())));
-        assert_eq!(overview.metadata.get("starter"), Some(&Value::String("sandbox".into())));
-        let table = read_document(&root, Path::new("Story Development/Campaign/Table & Safety.md")).unwrap();
+        let overview = read_document(
+            &root,
+            Path::new("Story Development/Campaign/Campaign Overview.md"),
+        )
+        .unwrap();
+        assert_eq!(
+            overview.metadata.get("player_count"),
+            Some(&Value::Number(4.into()))
+        );
+        assert_eq!(
+            overview.metadata.get("starter"),
+            Some(&Value::String("sandbox".into()))
+        );
+        let table = read_document(
+            &root,
+            Path::new("Story Development/Campaign/Table & Safety.md"),
+        )
+        .unwrap();
         assert_eq!(
             table.metadata.get("safety_tools"),
-            Some(&Value::Sequence(vec![Value::String("Lines & Veils".into()), Value::String("X-Card".into())]))
+            Some(&Value::Sequence(vec![
+                Value::String("Lines & Veils".into()),
+                Value::String("X-Card".into())
+            ]))
         );
-        let rules = read_document(&root, Path::new("Story Development/Campaign/House Rules.md")).unwrap();
+        let rules = read_document(
+            &root,
+            Path::new("Story Development/Campaign/House Rules.md"),
+        )
+        .unwrap();
         assert_eq!(rules.body, "Flanking grants advantage.\n");
 
         let wb = "Story Development/Worldbuilding & Settings";
-        assert!(root.join(format!("{wb}/Governments & Factions/Factions & Governments Overview.md")).is_file());
-        let court = read_document(&root, Path::new(&format!("{wb}/Governments & Factions/The Tide Court.md"))).unwrap();
+        assert!(root
+            .join(format!(
+                "{wb}/Governments & Factions/Factions & Governments Overview.md"
+            ))
+            .is_file());
+        let court = read_document(
+            &root,
+            Path::new(&format!("{wb}/Governments & Factions/The Tide Court.md")),
+        )
+        .unwrap();
         assert!(court.identity.id.starts_with("org-"));
-        assert_eq!(court.metadata.get("template_id"), Some(&Value::String("faction-secret-society".into())));
-        assert!(root.join(format!("{wb}/Governments & Factions/The Tide Court 2.md")).is_file());
-        assert!(root.join(format!("{wb}/Religions & Pantheons/Religions & Pantheons Overview.md")).is_file());
-        let crown = read_document(&root, Path::new(&format!("{wb}/Objects & Artifacts/Crown of Depths.md"))).unwrap();
+        assert_eq!(
+            court.metadata.get("template_id"),
+            Some(&Value::String("faction-secret-society".into()))
+        );
+        assert!(root
+            .join(format!("{wb}/Governments & Factions/The Tide Court 2.md"))
+            .is_file());
+        assert!(root
+            .join(format!(
+                "{wb}/Religions & Pantheons/Religions & Pantheons Overview.md"
+            ))
+            .is_file());
+        let crown = read_document(
+            &root,
+            Path::new(&format!("{wb}/Objects & Artifacts/Crown of Depths.md")),
+        )
+        .unwrap();
         assert!(crown.identity.id.starts_with("obj-"));
         // Unselected categories are not seeded with files.
-        assert_eq!(fs::read_dir(root.join(format!("{wb}/Bestiary & Creatures"))).unwrap().count(), 0);
+        assert_eq!(
+            fs::read_dir(root.join(format!("{wb}/Bestiary & Creatures")))
+                .unwrap()
+                .count(),
+            0
+        );
 
-        let port = read_document(&root, Path::new(&format!("{wb}/Locations/Port- Saltmere-.md"))).unwrap();
+        let port = read_document(
+            &root,
+            Path::new(&format!("{wb}/Locations/Port- Saltmere-.md")),
+        )
+        .unwrap();
         assert_eq!(port.title.as_deref(), Some("Port: Saltmere?"));
         assert!(port.identity.id.starts_with("loc-"));
 
-        let mara = read_document(&root, Path::new("Story Development/Characters/NPCs/Captain Mara.md")).unwrap();
+        let mara = read_document(
+            &root,
+            Path::new("Story Development/Characters/NPCs/Captain Mara.md"),
+        )
+        .unwrap();
         assert!(mara.identity.id.starts_with("chr-"));
-        assert_eq!(mara.metadata.get("affiliation"), Some(&Value::String("Iron Navy".into())));
-        assert!(root.join("Story Development/Characters/Villains & Antagonists/The Drowned King.md").is_file());
+        assert_eq!(
+            mara.metadata.get("affiliation"),
+            Some(&Value::String("Iron Navy".into()))
+        );
+        assert!(root
+            .join("Story Development/Characters/Villains & Antagonists/The Drowned King.md")
+            .is_file());
 
-        assert!(root.join("Story Development/Adventures/Arcs/Region Overview.md").is_file());
-        assert!(root.join("Story Development/Adventures/Quests & Hooks/A map washes ashore.md").is_file());
-        let one = read_document(&root, Path::new("Story Development/Sessions/Session Prep/Session 01.md")).unwrap();
+        assert!(root
+            .join("Story Development/Adventures/Arcs/Region Overview.md")
+            .is_file());
+        assert!(root
+            .join("Story Development/Adventures/Quests & Hooks/A map washes ashore.md")
+            .is_file());
+        let one = read_document(
+            &root,
+            Path::new("Story Development/Sessions/Session Prep/Session 01.md"),
+        )
+        .unwrap();
         assert!(one.body.contains("A storm at sea."));
 
-        let templates: HashSet<_> = fs::read_dir(root.join("Story Development/Game Master/Templates"))
-            .unwrap()
-            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
-            .collect();
-        assert_eq!(templates, HashSet::from(["Session Prep.md".to_string(), "NPC Quick Card.md".to_string()]));
+        let templates: HashSet<_> =
+            fs::read_dir(root.join("Story Development/Game Master/Templates"))
+                .unwrap()
+                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                .collect();
+        assert_eq!(
+            templates,
+            HashSet::from([
+                "Session Prep.md".to_string(),
+                "NPC Quick Card.md".to_string()
+            ])
+        );
     }
 
     #[test]
@@ -921,7 +1133,10 @@ mod tests {
         assert!(create_campaign(&input).is_err());
 
         let mut input = quick_start(&root);
-        input.world_categories.push(CampaignWorldCategory { id: "nope".into(), ..Default::default() });
+        input.world_categories.push(CampaignWorldCategory {
+            id: "nope".into(),
+            ..Default::default()
+        });
         assert!(create_campaign(&input).is_err());
 
         let mut input = quick_start(&root);
@@ -933,7 +1148,11 @@ mod tests {
         assert!(create_campaign(&input).is_err());
 
         assert!(!root.exists());
-        assert!(create_campaign(&quick_start(Path::new("relative/campaign"))).unwrap_err().contains("absolute"));
+        assert!(
+            create_campaign(&quick_start(Path::new("relative/campaign")))
+                .unwrap_err()
+                .contains("absolute")
+        );
     }
 
     #[test]

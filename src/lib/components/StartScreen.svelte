@@ -274,7 +274,7 @@
               class="ka-button start-action"
             >
               <Plus class="w-5 h-5" aria-hidden="true" />
-              <span>New Novel <small>Build the book foundation, then open Story Development</small></span>
+              <span>New Campaign <small>Quick Start or Guided Setup, then open your campaign wiki</small></span>
             </button>
 
             {#if ui.showSampleProject}

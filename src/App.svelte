@@ -36,7 +36,7 @@
   import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
   import TerminalWorkspace from "./lib/components/TerminalWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
-  import NewBookFoundationDialog from "./lib/components/NewBookFoundationDialog.svelte";
+  import CampaignWizardDialog from "./lib/components/CampaignWizardDialog.svelte";
   import { shortcuts } from "./lib/stores/shortcuts.svelte";
   import { COMMAND_DEFS } from "./lib/commands";
   import { currentProject } from "./lib/stores/project.svelte";
@@ -916,9 +916,9 @@
     />
   {/if}
 
-  <!-- File-authoritative New Book Foundation (triggered by File menu or StartScreen) -->
+  <!-- File-authoritative New Campaign Wizard (triggered by File menu or StartScreen) -->
   {#if showNewProjectDialog}
-    <NewBookFoundationDialog
+    <CampaignWizardDialog
       onClose={() => (showNewProjectDialog = false)}
       onComplete={() => {
         showNewProjectDialog = false;
