@@ -358,6 +358,13 @@ it("never names a missing draft when nothing is left to compare", async () => {
   pruneOnSave(0);
   renderPanel();
   await screen.findByRole("region", { name: "Saved draft" });
+  // The draft appears before the revision overview finishes loading; status
+  // stays disabled until the whole panel has loaded.
+  await waitFor(() =>
+    expect(screen.getByLabelText<HTMLSelectElement>("Revision status").matches(":disabled")).toBe(
+      false
+    )
+  );
   await fireEvent.change(screen.getByLabelText("Revision status"), {
     target: { value: "editor_review" },
   });
