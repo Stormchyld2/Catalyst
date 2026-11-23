@@ -1,12 +1,11 @@
 /**
  * Roll history for the running Catalyst session.
  *
- * Phase 1 keeps history in memory: it survives closing and reopening the tray
- * and switching workspaces, and ends when Catalyst quits. Catalyst has no
- * campaign session model yet, and the spec says temporary rolls outside an
- * active campaign need no storage. When campaign sessions land (Phase 3), a
- * RollHistorySink writes each record to the campaign's project files through
- * the project services; see docs/architecture/DICE-RESULT-PROTOCOL.md.
+ * History is kept in memory for the running app: it survives closing and
+ * reopening the tray and switching workspaces. Temporary rolls outside a
+ * campaign session are not stored. While a campaign session is active, a
+ * RollHistorySink (CampaignSessionSink) also appends each record to the
+ * session's file in the project; see docs/architecture/022-DICE-RESULT-PROTOCOL.md.
  */
 import type { DieType, RollRecord } from "../types/dice";
 
@@ -17,7 +16,9 @@ export interface RollHistorySink {
 export interface RollHistoryFilter {
   sessionId?: string | null;
   dieType?: DieType;
+  playerId?: string;
   characterId?: string;
+  npcId?: string;
   purpose?: string;
 }
 
@@ -51,6 +52,11 @@ export class RollHistory {
     this.records = [];
   }
 
+  /** Replace the in-memory history, e.g. with a reopened session's saved rolls (newest first). */
+  replace(records: RollRecord[]): void {
+    this.records = records.slice(0, MAX_SESSION_ROLLS);
+  }
+
   filter(filter: RollHistoryFilter): RollRecord[] {
     return this.records.filter(
       (record) =>
@@ -58,7 +64,9 @@ export class RollHistory {
           record.sessionId === filter.sessionId) &&
         (!filter.dieType ||
           record.dice.some((die) => die.type === filter.dieType)) &&
+        (!filter.playerId || record.playerId === filter.playerId) &&
         (!filter.characterId || record.characterId === filter.characterId) &&
+        (!filter.npcId || record.npcId === filter.npcId) &&
         (!filter.purpose || record.purpose === filter.purpose),
     );
   }

@@ -1,18 +1,15 @@
 /**
  * The shared dice engine. Every Catalyst surface that rolls dice (the floating
- * tray today; GM Console, encounters and characters later) goes through here,
- * so parsing, validation, resolution and record building have one owner.
+ * tray, and the GM Console, encounters and characters through the integration
+ * API) goes through here, so parsing, validation, resolution and record
+ * building have one owner.
  */
-import type {
-  DiceExpression,
-  DieResult,
-  RollRecord,
-  RollRequest,
-} from "../types/dice";
+import type { DiceExpression, DieResult, RollMode, RollRecord, RollRequest } from "../types/dice";
 import {
+  applyRollMode,
   assertSupported,
+  FULL_CAPABILITIES,
   parseDiceNotation,
-  PHASE_1_CAPABILITIES,
   sidesOf,
   type DiceCapabilities,
 } from "./diceNotation";
@@ -37,12 +34,12 @@ export class DiceEngine {
     this.random = options.random ?? cryptoSource;
     this.now = options.now ?? (() => new Date());
     this.newId = options.newId ?? (() => `roll-${crypto.randomUUID()}`);
-    this.capabilities = options.capabilities ?? PHASE_1_CAPABILITIES;
+    this.capabilities = options.capabilities ?? FULL_CAPABILITIES;
   }
 
-  /** Parse and check an expression against what this build can roll. */
-  parse(notation: string): DiceExpression {
-    const expression = parseDiceNotation(notation);
+  /** Parse, apply advantage/disadvantage, and check what this build can roll. */
+  parse(notation: string, mode: RollMode = "normal"): DiceExpression {
+    const expression = applyRollMode(parseDiceNotation(notation), mode);
     assertSupported(expression, this.capabilities);
     return expression;
   }
@@ -53,7 +50,7 @@ export class DiceEngine {
       Array.from({ length: term.count }, () => ({
         type: term.type,
         value: randomDieValue(sidesOf(term.type), this.random),
-      })),
+      }))
     );
   }
 
@@ -63,14 +60,9 @@ export class DiceEngine {
    * expression is invalid, the roll is abandoned, or the renderer reports
    * values that do not match the request.
    */
-  async roll(
-    request: RollRequest,
-    renderer: DiceRenderer | null = null,
-  ): Promise<RollRecord> {
-    const expression = this.parse(request.expression);
-    const dice = renderer
-      ? await renderer.roll(expression)
-      : this.resolveRandom(expression);
+  async roll(request: RollRequest, renderer: DiceRenderer | null = null): Promise<RollRecord> {
+    const expression = this.parse(request.expression, request.mode);
+    const dice = renderer ? await renderer.roll(expression) : this.resolveRandom(expression);
     return buildRollRecord(request, expression, dice, {
       id: this.newId(),
       timestamp: this.now().toISOString(),

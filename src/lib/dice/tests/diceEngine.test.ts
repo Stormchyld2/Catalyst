@@ -65,10 +65,48 @@ describe("DiceEngine", () => {
     await expect(
       engine().roll({ expression: "2d7" }, renderer),
     ).rejects.toThrow();
-    await expect(
-      engine().roll({ expression: "4d6" }, renderer),
-    ).rejects.toThrow(/not available/);
+    const narrow = new DiceEngine({ capabilities: { dice: ["d20"], modifiers: false, keep: false } });
+    await expect(narrow.roll({ expression: "4d6" }, renderer)).rejects.toThrow(/not available/);
     expect(renderer.roll).not.toHaveBeenCalled();
+  });
+
+  it("rolls every die type and mixed expressions from the random source", async () => {
+    const e = new DiceEngine({ random: () => 0 });
+    const record = await e.roll({ expression: "1d4+1d6+1d8+1d10+1d12+1d20+1d100+3" });
+    expect(record.dice.map((die) => die.type)).toEqual(["d4", "d6", "d8", "d10", "d12", "d20", "d100"]);
+    expect(record.dice.every((die) => die.value === 1)).toBe(true);
+    expect(record.total).toBe(10);
+  });
+
+  it("applies advantage and disadvantage and keeps them apart from a sum", async () => {
+    const dice = (a: number, b: number): DieResult[] => [
+      { type: "d20", value: a },
+      { type: "d20", value: b },
+    ];
+    const adv = await engine().roll({ expression: "1d20+5", mode: "advantage" }, fakeRenderer(dice(4, 17)));
+    expect(adv).toMatchObject({ expression: "2d20kh1+5", kind: "advantage", natural: 17, total: 22 });
+    expect(adv.dice[0]).toEqual({ type: "d20", value: 4, dropped: true });
+    const dis = await engine().roll({ expression: "1d20", mode: "disadvantage" }, fakeRenderer(dice(4, 17)));
+    expect(dis).toMatchObject({ kind: "disadvantage", total: 4 });
+    const sum = await engine().roll({ expression: "2d20" }, fakeRenderer(dice(4, 17)));
+    expect(sum).toMatchObject({ kind: "sum", total: 21 });
+  });
+
+  it("matches Dice Box's per-type results to the written terms", async () => {
+    // Dice Box reports d6 before d20; the record still reads 2d20 then 1d6.
+    const renderer = fakeRenderer([
+      { type: "d6", value: 3 },
+      { type: "d20", value: 20 },
+      { type: "d20", value: 2 },
+    ]);
+    const record = await engine().roll({ expression: "2d20kh1+1d6+2" }, renderer);
+    expect(record.dice.map((die) => [die.type, die.value, !!die.dropped])).toEqual([
+      ["d20", 20, false],
+      ["d20", 2, true],
+      ["d6", 3, false],
+    ]);
+    expect(record.total).toBe(25);
+    expect(record.critical).toBe("success");
   });
 
   it("supports repeated rolls", async () => {

@@ -1,6 +1,6 @@
 # 022 — Dice Result Protocol
 
-**Status:** Record shape implemented (Phase 1); persistence and network transport planned
+**Status:** Record shape, roll kinds, criticals and campaign session files implemented; network transport planned
 **Date:** 2026-11-23
 **Parent:** 020-DICE-ROLLER-ARCHITECTURE.md
 
@@ -12,18 +12,23 @@ Defined in `src/lib/dice/types/dice.ts` as `RollRecord`. A record is created onl
 {
   "id": "roll-3b9b6d2e-6f1c-4a7e-9c55-0f3d1f2a7b10",
   "sessionId": null,
-  "expression": "2d20",
+  "expression": "2d20kh1+5",
+  "kind": "advantage",
   "dice": [
-    { "type": "d20", "value": 14 },
-    { "type": "d20", "value": 7 }
+    { "type": "d20", "value": 20 },
+    { "type": "d20", "value": 7, "dropped": true }
   ],
-  "modifier": 0,
-  "natural": 21,
-  "total": 21,
+  "modifier": 5,
+  "natural": 20,
+  "total": 25,
+  "critical": "success",
   "visibility": "public",
-  "source": "dice-tray",
+  "source": "character",
   "resolution": "physics",
-  "timestamp": "2026-11-23T13:41:42.000Z"
+  "timestamp": "2026-11-23T13:41:42.000Z",
+  "characterId": "character-…",
+  "purpose": "attack",
+  "label": "Mira — Longsword attack"
 }
 ```
 
@@ -31,18 +36,20 @@ Defined in `src/lib/dice/types/dice.ts` as `RollRecord`. A record is created onl
 | --- | --- |
 | `id` | `roll-` plus a UUID v4. Roll IDs are event IDs, not project entity IDs, so they don't use the stable-ID prefixes from doc 003. |
 | `sessionId` | The active campaign session, or `null` for a temporary roll |
-| `expression` | Canonical notation (`2d20`, `1d4+2d6+3`) |
-| `dice` | Each die in throw order; every `value` is an integer from 1 to the die's sides |
+| `expression` | Canonical notation, in written order (`2d20+1d6+3`, `4d6kh3`, `2d20kh1+5`) |
+| `kind` | `sum`, `advantage` (`2d20kh1`) or `disadvantage` (`2d20kl1`) |
+| `dice` | Each die in term order; every `value` is an integer from 1 to the die's sides. `dropped: true` marks dice that a keep rule discarded. d100 is one value from 1 to 100; a d10 reports 10 for its 0 face. |
 | `modifier` | Flat modifier, kept separate from the dice |
-| `natural` | Sum of the dice before the modifier |
+| `natural` | Sum of the kept dice before the modifier |
 | `total` | `natural + modifier` |
 | `visibility` | `public`, `gm-private` or `player-private` |
 | `source` | `dice-tray`, `gm-console`, `encounter`, `character`, `campaign` |
 | `resolution` | `physics` (settled 3D dice) or `random` (crypto source, no animation) |
 | `timestamp` | ISO-8601 time of resolution |
-| `characterId`, `encounterId`, `purpose` | Optional context, e.g. `purpose: "initiative"` |
+| `critical` | `success` (natural 20) or `failure` (natural 1), only when exactly one d20 is counted |
+| `playerId`, `characterId`, `npcId`, `encounterId`, `purpose`, `label` | Optional context, e.g. `purpose: "initiative"` |
 
-A plain `2d20` is a **sum**. Advantage and disadvantage are separate roll kinds (keep highest or lowest) and will carry their own field. They must never be confused with the sum.
+A plain `2d20` is a **sum**. Advantage and disadvantage are separate roll kinds with their own `kind` value and a dropped die; they are never confused with the sum. Dice Box reports settled dice grouped by type, so the engine assigns them to the written terms type by type before applying keep rules.
 
 ## Rules
 
@@ -51,17 +58,24 @@ A plain `2d20` is a **sum**. Advantage and disadvantage are separate roll kinds 
 3. **Validate before recording.** `validateDice` checks the count of each die type and every value's range.
 4. **Unbiased randomness** for non-physics rolls: `crypto.getRandomValues` with rejection sampling.
 
-## Session history persistence (Phase 3)
+## Campaign session files
 
-Phase 1 keeps history in memory (`RollHistory`, newest first, 500 entries) for the running app session. When campaign sessions exist, a `RollHistorySink` appends each record through the project services to an ordinary file inside the campaign project, for example:
+History is kept in memory (`RollHistory`, newest first, 500 entries) for the running app session. While a campaign session is active (`diceTray.startCampaignSession(projectRoot, title)` or `resumeCampaignSession`), `CampaignSessionSink` also appends each of that session's records to ordinary files in the project, through Rust commands in `src-tauri/src/dice_sessions.rs`:
 
 ```text
-<campaign project>/sessions/<session-id>/rolls.jsonl
+<project>/Notes/Campaign Sessions/<session-id>/session.json   { id, title, startedAt }
+<project>/Notes/Campaign Sessions/<session-id>/rolls.jsonl    one RollRecord per line
 ```
 
-One JSON record per line, append-only, readable without Catalyst. This follows the storage rules in `AGENTS.md`: the files are authoritative, any index of them is rebuildable, and there is no new database. Rolls with no active session are not stored.
+- **File-authoritative, no database** (`AGENTS.md`): append-only JSON Lines, readable without Catalyst; reopening a session reads the file back into history.
+- **Safe paths:** session IDs must be `session-` plus a UUID v4, so no path can escape the folder. `session.json` is written to a temporary file and renamed; each appended line is synced to disk.
+- **Validated on write:** the Rust side rejects a record whose ID, session, die faces, totals, enum values or timestamp are invalid. Damaged lines are skipped on read and counted (`skippedLines`), never fatal.
+- **Location needs sign-off:** `Notes/` is one of the canonical roots; a dedicated `Campaign Sessions/` root may suit the Campaign Studio better once it exists. Moving it is a constant in `dice_sessions.rs`.
+- Rolls with no active session are not stored. A failed write leaves the roll in memory and shows "Roll not saved to the session file".
 
-History filters (session, player, character, die type, purpose) work over the records. `RollHistory.filter` already supports session, die type, character and purpose; player arrives with player identity in Phase 4.
+Tauri commands: `start_dice_session`, `append_dice_roll`, `get_dice_session_history`, `list_dice_sessions`.
+
+`RollHistory.filter` supports session, die type, player, character, NPC and purpose. The tray's history popover filters by die type.
 
 ## Multiplayer authority (Phase 4)
 
@@ -82,4 +96,4 @@ Message shapes: `roll.request` → `{ requestId, request: RollRequest }`; `roll.
 | `gm-private` | GM only |
 | `player-private` | The rolling player and the GM, where the game rules allow |
 
-Visibility is enforced by **not sending** the record (or any animation of it) to unauthorized clients. Hiding UI elements is not enough. A private roll never reaches the public display.
+Visibility is enforced by **not sending** the record (or any animation of it) to unauthorized clients. Hiding UI elements is not enough. A private roll never reaches the public display. `integration/visibility.ts` implements these rules (`canView(record, viewer)`, `visibleTo(records, viewer)`) for any future sender; `diceTray.onRecorded` is the hook a player display would subscribe to.

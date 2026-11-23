@@ -11,7 +11,36 @@ import { flushSync } from "svelte";
 import DiceTray from "../components/DiceTray.svelte";
 import { diceTray } from "../stores/diceTray.svelte";
 import type { DiceRenderer } from "../engine/diceRenderer";
-import type { DieResult } from "../types/dice";
+import { DIE_SIDES, type DiceExpression, type DieResult } from "../types/dice";
+
+/** A renderer that settles every die on its highest face. */
+function maxRenderer() {
+  const created: DiceRenderer[] = [];
+  const factory = () => {
+    const renderer: DiceRenderer = {
+      kind: "physics",
+      init: vi.fn(async () => {}),
+      roll: vi.fn(async (expression: DiceExpression) =>
+        expression.terms.flatMap((term) =>
+          Array.from({ length: term.count }, (): DieResult => ({ type: term.type, value: DIE_SIDES[term.type] }))
+        )
+      ),
+      clear: vi.fn(),
+      resize: vi.fn(),
+      dispose: vi.fn(),
+    };
+    created.push(renderer);
+    return renderer;
+  };
+  return { factory, created };
+}
+
+async function renderReady(factory: () => DiceRenderer) {
+  diceTray.open("expanded");
+  const view = render(DiceTray, { props: { createRenderer: factory } });
+  await waitFor(() => expect(screen.getByTestId("dice-stage").dataset.state).toBe("ready"));
+  return view;
+}
 
 function fakeRenderer(values: number[][]) {
   const created: DiceRenderer[] = [];
@@ -41,6 +70,9 @@ beforeEach(() => {
   diceTray.close();
   diceTray.history.clear();
   diceTray.clearTray();
+  diceTray.endCampaignSession();
+  diceTray.resetSelection();
+  diceTray.visibility = "public";
   diceTray.counts = { d20: 2 };
   diceTray.selectedType = "d20";
   diceTray.updateSettings({ animate: true, lowPerformance: false });
@@ -75,7 +107,9 @@ describe("DiceTray", () => {
       expect(screen.getByTestId("dice-total").textContent).toContain("21"),
     );
     expect(
-      screen.getAllByTestId("dice-value").map((node) => node.textContent),
+      screen
+        .getAllByTestId("dice-value")
+        .map((node) => node.querySelector(".dice-chip__value")?.textContent),
     ).toEqual(["14", "7"]);
     expect(created[0].roll).toHaveBeenCalledTimes(1);
     expect(diceTray.history.latest?.resolution).toBe("physics");
@@ -181,5 +215,90 @@ describe("DiceTray", () => {
     expect(
       JSON.parse(localStorage.getItem("catalyst:diceTray")!).compact.x,
     ).toBe(116);
+  });
+
+  it("builds mixed rolls from the die buttons and + and −, and shows each die", async () => {
+    const { factory } = maxRenderer();
+    await renderReady(factory);
+    await fireEvent.click(screen.getByTestId("dice-type-d6"));
+    await fireEvent.click(screen.getByTestId("dice-add"));
+    await fireEvent.click(screen.getByTestId("dice-count-modifier"));
+    await fireEvent.click(screen.getByTestId("dice-add"));
+    await fireEvent.click(screen.getByTestId("dice-add"));
+    expect(diceTray.selection).toBe("2d20+2d6+2");
+    await fireEvent.click(screen.getByTestId("dice-roll"));
+    await waitFor(() => expect(screen.getByTestId("dice-total").textContent).toContain("54"));
+    expect(screen.getByTestId("dice-expression").textContent).toBe("2d20+2d6+2");
+    expect(screen.getAllByTestId("dice-value")).toHaveLength(4);
+    expect(screen.getByTestId("dice-modifier").textContent).toContain("+2");
+  });
+
+  it("rolls advantage, marks the dropped die and shows a natural 20", async () => {
+    const { factory } = maxRenderer();
+    await renderReady(factory);
+    diceTray.counts = { d20: 1 };
+    await fireEvent.click(screen.getByTestId("dice-adv"));
+    expect(screen.getByTestId("dice-adv").getAttribute("aria-pressed")).toBe("true");
+    await fireEvent.click(screen.getByTestId("dice-roll"));
+    await waitFor(() => screen.getByTestId("dice-total"));
+    expect(screen.getByTestId("dice-kind").textContent).toMatch(/adv/i);
+    expect(screen.getByTestId("dice-critical").textContent).toBe("Critical success");
+    const dropped = screen.getAllByTestId("dice-value").filter((node) => node.dataset.dropped === "true");
+    expect(dropped).toHaveLength(1);
+    expect(screen.getByTestId("dice-total").textContent).toContain("20");
+  });
+
+  it("rolls a typed expression and rejects an invalid one without rolling", async () => {
+    const { factory, created } = maxRenderer();
+    await renderReady(factory);
+    await fireEvent.click(screen.getByTestId("dice-expression-toggle"));
+    const input = screen.getByTestId("dice-expression-input") as HTMLInputElement;
+    await fireEvent.input(input, { target: { value: "2d7" } });
+    await fireEvent.click(screen.getByTestId("dice-expression-roll"));
+    expect(screen.getByRole("alert").textContent).toMatch(/Unsupported die/);
+    expect(created[0].roll).not.toHaveBeenCalled();
+
+    await fireEvent.input(input, { target: { value: "3d8+4" } });
+    await fireEvent.click(screen.getByTestId("dice-expression-roll"));
+    await waitFor(() => expect(screen.getByTestId("dice-total").textContent).toContain("28"));
+    expect(screen.getByTestId("dice-expression").textContent).toBe("3d8+4");
+  });
+
+  it("restarts the 3D table with new appearance settings and keeps history", async () => {
+    const { factory, created } = maxRenderer();
+    await renderReady(factory);
+    await fireEvent.click(screen.getByTestId("dice-roll"));
+    await waitFor(() => screen.getByTestId("dice-total"));
+    await fireEvent.click(screen.getByTestId("dice-settings-toggle"));
+    await fireEvent.click(screen.getByTestId("dice-color-sapphire"));
+    await waitFor(() => expect(created).toHaveLength(2));
+    expect(created[0].dispose).toHaveBeenCalled();
+    expect(diceTray.settings.diceColor).toBe("sapphire");
+    expect(diceTray.history.all).toHaveLength(1);
+    diceTray.updateSettings({ diceColor: "amber" });
+  });
+
+  it("prints the Catalyst logo into the mat as decoration only", async () => {
+    const { factory } = maxRenderer();
+    await renderReady(factory);
+    const logo = document.querySelector(".dice-tray__mat-logo") as HTMLImageElement;
+    expect(logo).not.toBeNull();
+    expect(logo.getAttribute("alt")).toBe("");
+    expect(logo.getAttribute("aria-hidden")).toBe("true");
+    // Behind the dice canvas: it comes before the stage in the table.
+    expect(logo.compareDocumentPosition(screen.getByTestId("dice-stage")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps the result and history when the app re-renders around the tray", async () => {
+    diceTray.open("compact");
+    const first = render(DiceTray);
+    await fireEvent.click(screen.getByTestId("dice-roll"));
+    await waitFor(() => screen.getByTestId("dice-total"));
+    const total = screen.getByTestId("dice-total").textContent;
+    // Moving between workspace views remounts the tray while it stays open.
+    first.unmount();
+    render(DiceTray);
+    expect(screen.getByTestId("dice-total").textContent).toBe(total);
+    expect(diceTray.history.all).toHaveLength(1);
   });
 });

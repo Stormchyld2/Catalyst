@@ -65,7 +65,7 @@ Dice Box's `postinstall` also copies its assets to `public/assets/`; that folder
 
 ## Sound
 
-Dice Box 1.1.4 ships no sounds. Rolling sounds are Phase 2 and must be bundled, legally redistributable files.
+Dice Box 1.1.4 ships no sounds. Catalyst synthesizes its rolling sounds with the Web Audio API at runtime (`src/lib/dice/engine/diceSound.ts`), so no audio files are bundled and no third-party sound licence applies.
 
 ## Third-party notices
 

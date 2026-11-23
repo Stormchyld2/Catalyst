@@ -3,21 +3,28 @@
    * The 3D dice surface. Creates one renderer when mounted (lazily, only in
    * expanded mode with animation on) and disposes it on unmount, so closing
    * the tray or switching to compact mode releases GPU and physics resources.
+   * The tray re-creates it (keyed) when appearance options change.
    */
   import { onMount } from "svelte";
   import {
     DiceBoxRenderer,
     RendererDisposedError,
+    type DiceBoxRendererOptions,
     type DiceRenderer,
   } from "../engine/diceRenderer";
   import { diceTray } from "../stores/diceTray.svelte";
 
+  type StageOptions = Pick<
+    DiceBoxRendererOptions,
+    "lowPerformance" | "themeColor" | "scale" | "gravity" | "onDieSettled"
+  >;
+
   let {
-    lowPerformance,
-    createRenderer = (options: { lowPerformance: boolean }) => new DiceBoxRenderer(options),
+    options,
+    createRenderer = (options: StageOptions) => new DiceBoxRenderer(options),
   }: {
-    lowPerformance: boolean;
-    createRenderer?: (options: { lowPerformance: boolean }) => DiceRenderer;
+    options: StageOptions;
+    createRenderer?: (options: StageOptions) => DiceRenderer;
   } = $props();
 
   let surface: HTMLDivElement;
@@ -25,11 +32,15 @@
   let reason = $state("");
 
   onMount(() => {
-    const renderer = createRenderer({ lowPerformance });
+    const renderer = createRenderer({
+      ...options,
+      onDieSettled: () => diceTray.sound.playSettle(),
+    });
     let alive = true;
     const observer =
       typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => renderer.resize());
     observer?.observe(surface);
+    diceTray.rendererLoading();
 
     renderer
       .init(surface)
@@ -43,6 +54,7 @@
         console.warn("3D dice unavailable, using instant rolls:", error);
         reason = error instanceof Error ? error.message : String(error);
         stageState = "unavailable";
+        diceTray.rendererUnavailable();
       });
 
     return () => {
@@ -65,11 +77,9 @@
 </div>
 
 <style>
-  /* Leave room for the result pills above and the dice strip below, so
-     settled dice are never hidden behind the overlays. */
   .dice-stage {
     position: absolute;
-    inset: 58px 0 72px;
+    inset: 0;
     overflow: hidden;
   }
   .dice-stage :global(.dice-renderer-host),

@@ -93,8 +93,14 @@ export interface DiceBoxRendererOptions {
   assetPath?: string;
   /** Disable shadows and lower the render load. */
   lowPerformance?: boolean;
-  /** Body tint for the default theme. */
+  /** Body tint for the default theme. Numbers switch light/dark automatically. */
   themeColor?: string;
+  /** Dice size (Dice Box `scale`). */
+  scale?: number;
+  /** Higher gravity settles dice faster. */
+  gravity?: number;
+  /** Called as each die comes to rest, e.g. for a settle sound. */
+  onDieSettled?: () => void;
   /** Abandon a roll that has not settled after this long. */
   timeoutMs?: number;
   webgl?: () => boolean;
@@ -132,6 +138,9 @@ export class DiceBoxRenderer implements DiceRenderer {
       assetPath: DICE_ASSET_PATH,
       lowPerformance: false,
       themeColor: "#a8732e",
+      scale: 8,
+      gravity: 1,
+      onDieSettled: () => {},
       timeoutMs: 20_000,
       ...options,
     };
@@ -161,12 +170,14 @@ export class DiceBoxRenderer implements DiceRenderer {
       origin: window.location.origin,
       theme: "default",
       themeColor: this.options.themeColor,
-      scale: 8,
+      scale: this.options.scale,
+      gravity: this.options.gravity,
       enableShadows: !this.options.lowPerformance,
       shadowTransparency: 0.7,
       lightIntensity: 1,
       offscreen: true,
       delay: 10,
+      onDieComplete: () => this.options.onDieSettled(),
     });
     this.hookResize(box);
 

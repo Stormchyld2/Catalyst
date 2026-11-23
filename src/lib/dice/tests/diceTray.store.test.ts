@@ -118,9 +118,9 @@ describe("DiceTrayStore", () => {
   it("shows an error and records nothing for an invalid request", async () => {
     const tray = new DiceTrayStore(deterministicEngine());
     tray.open("compact");
-    await expect(tray.roll({ expression: "4d6" })).resolves.toBeNull();
+    await expect(tray.roll({ expression: "2d7" })).resolves.toBeNull();
     expect(tray.status).toBe("error");
-    expect(tray.error).toMatch(/not available/);
+    expect(tray.error).toMatch(/Unsupported die/);
     expect(tray.history.all).toHaveLength(0);
   });
 
@@ -140,16 +140,105 @@ describe("DiceTrayStore", () => {
     });
   });
 
-  it("limits dice selection to what this phase supports", () => {
+  it("builds selections from die buttons, + and −, largest die first", () => {
     const tray = new DiceTrayStore(deterministicEngine());
-    tray.selectType("d6");
-    expect(tray.selectedType).toBe("d20");
-    tray.adjustCount(5);
-    expect(tray.selection).toBe("7d20");
-    tray.adjustCount(-10);
-    expect(tray.selection).toBe("");
+    tray.pickDie("d6");
+    expect(tray.selectedType).toBe("d6");
+    expect(tray.selection).toBe("2d20+1d6");
+    tray.pickDie("d6");
+    tray.pickDie("d6");
+    expect(tray.selection).toBe("2d20+3d6");
+    tray.adjustCount(-1);
+    expect(tray.selection).toBe("2d20+2d6");
+    tray.adjustCount(-5, "d20");
     tray.adjustCount(50);
-    expect(tray.selection).toBe("20d20");
+    expect(tray.selection).toBe("20d6");
+    tray.pickDie("d100");
+    tray.pickDie("d8");
+    expect(tray.selection).toBe("1d8+20d6+1d100");
+  });
+
+  it("adjusts the modifier when MOD is the + and − target", () => {
+    const tray = new DiceTrayStore(deterministicEngine());
+    tray.selectModifier();
+    tray.adjustCount(1);
+    tray.adjustCount(1);
+    tray.adjustCount(1);
+    expect(tray.selection).toBe("2d20+3");
+    tray.adjustModifier(-10);
+    expect(tray.selection).toBe("2d20-7");
+    tray.adjustModifier(500);
+    expect(tray.modifier).toBe(99);
+    tray.pickDie("d8");
+    tray.adjustCount(1);
+    expect(tray.modifier).toBe(99);
+    expect(tray.selection).toBe("2d20+2d8+99");
+    tray.resetSelection();
+    expect(tray.selection).toBe("1d20");
+  });
+
+  it("rolls advantage and disadvantage as kept d20s, never a sum", async () => {
+    const tray = new DiceTrayStore(deterministicEngine());
+    tray.open("compact");
+    tray.pickDie("d4");
+    tray.setRollMode("advantage");
+    expect(tray.selection).toBe("2d20kh1+1d4");
+    const adv = await tray.rollSelection();
+    expect(adv?.kind).toBe("advantage");
+    expect(adv?.dice.filter((die) => die.dropped)).toHaveLength(1);
+    tray.setRollMode("disadvantage");
+    expect(tray.selection).toBe("2d20kl1+1d4");
+    tray.setRollMode("disadvantage");
+    expect(tray.rollMode).toBe("normal");
+    expect(tray.selection).toBe("2d20+1d4");
+  });
+
+  it("tells listeners about each recorded roll and uses the tray visibility", async () => {
+    const tray = new DiceTrayStore(deterministicEngine());
+    tray.open("compact");
+    const seen: string[] = [];
+    const stop = tray.onRecorded((record) => seen.push(record.visibility));
+    tray.visibility = "gm-private";
+    await tray.rollSelection();
+    stop();
+    await tray.rollSelection();
+    expect(seen).toEqual(["gm-private"]);
+  });
+
+  it("rolls silently where Web Audio is unavailable", async () => {
+    const tray = new DiceTrayStore(deterministicEngine());
+    tray.updateSettings({ sound: true, volume: 1 });
+    tray.open("compact");
+    await expect(tray.rollSelection()).resolves.not.toBeNull();
+  });
+
+  it("saves rolls to the campaign session file and reloads them", async () => {
+    const saved: unknown[] = [];
+    const session = { id: "session-1", title: "Night one", startedAt: "2026-11-23T12:00:00Z" };
+    const files = {
+      start: vi.fn(async () => session),
+      append: vi.fn(async (_root: string, _id: string, record: unknown) => {
+        saved.push(record);
+      }),
+      read: vi.fn(async () => ({ session, rolls: saved as never[], skippedLines: 0 })),
+      list: vi.fn(async () => [session]),
+    };
+    const tray = new DiceTrayStore(deterministicEngine(), files);
+    tray.open("compact");
+    await tray.startCampaignSession("/campaign", "Night one");
+    const first = await tray.rollSelection();
+    const second = await tray.rollSelection();
+    await vi.waitFor(() => expect(files.append).toHaveBeenCalledTimes(2));
+    expect(first?.sessionId).toBe("session-1");
+    expect(files.append).toHaveBeenCalledWith("/campaign", "session-1", first);
+    tray.endCampaignSession();
+    await tray.rollSelection();
+    expect(files.append).toHaveBeenCalledTimes(2);
+
+    const reopened = new DiceTrayStore(deterministicEngine(), files);
+    await reopened.resumeCampaignSession("/campaign", "session-1");
+    expect(reopened.campaign?.session.title).toBe("Night one");
+    expect(reopened.history.all.map((record) => record.id)).toEqual([second?.id, first?.id]);
   });
 
   it("remembers mode, position, size and settings", () => {
@@ -189,6 +278,21 @@ describe("DiceTrayStore", () => {
     expect(tray.geometry.expanded.width).toBeGreaterThan(0);
     expect(typeof tray.settings.animate).toBe("boolean");
   });
+
+  it("keeps valid appearance settings and drops invalid ones field by field", () => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ diceColor: "sapphire", diceSize: "huge", surface: "walnut", volume: 3, speed: "quick" })
+    );
+    const tray = new DiceTrayStore(deterministicEngine());
+    expect(tray.settings).toMatchObject({
+      diceColor: "sapphire",
+      diceSize: "medium",
+      surface: "walnut",
+      volume: 0.5,
+      speed: "quick",
+    });
+  });
 });
 
 describe("clampGeometry", () => {
@@ -207,6 +311,11 @@ describe("clampGeometry", () => {
       width: 600,
       height: 420,
     });
+  });
+
+  it("keeps the measured compact tray fully on screen", () => {
+    expect(clampGeometry({ x: 0, y: 650, width: 360, height: 0 }, "compact", view, 400).y).toBe(292);
+    expect(clampGeometry({ x: 0, y: 650, width: 360, height: 0 }, "compact", view).y).toBe(452);
   });
 
   it("enforces minimum and maximum sizes", () => {
