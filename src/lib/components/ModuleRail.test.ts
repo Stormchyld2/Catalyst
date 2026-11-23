@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import ModuleRail from "./ModuleRail.svelte";
 import { workspace } from "../stores/workspace.svelte";
+import { diceTray } from "../dice";
 
 afterEach(() => {
   document.body.innerHTML = "";
@@ -14,6 +15,21 @@ beforeEach(() => {
 });
 
 describe("ModuleRail", () => {
+  it("toggles the global dice tray without changing workspace", async () => {
+    diceTray.close();
+    workspace.enterProject();
+    render(ModuleRail, { props: { hasActiveProject: true } });
+    const before = workspace.active;
+    const button = screen.getByTestId("utility-dice");
+    await fireEvent.click(button);
+    expect(diceTray.isOpen).toBe(true);
+    expect(button.getAttribute("aria-pressed")).toBe("true");
+    expect(workspace.active).toBe(before);
+    await fireEvent.click(button);
+    expect(diceTray.isOpen).toBe(false);
+  });
+
+
   it("disables project workspaces when no project is active", () => {
     render(ModuleRail, { props: { hasActiveProject: false } });
     expect((screen.getByTestId("module-home") as HTMLButtonElement).disabled).toBe(false);

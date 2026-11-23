@@ -37,6 +37,8 @@
   import TerminalWorkspace from "./lib/components/TerminalWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
   import NewBookFoundationDialog from "./lib/components/NewBookFoundationDialog.svelte";
+  import DiceTray from "./lib/dice/components/DiceTray.svelte";
+  import { diceTray } from "./lib/dice";
   import { shortcuts } from "./lib/stores/shortcuts.svelte";
   import { COMMAND_DEFS } from "./lib/commands";
   import { currentProject } from "./lib/stores/project.svelte";
@@ -504,7 +506,7 @@
     if (interactionBlocked || (showSettings && id !== "quit")) return;
     if (
       editorial?.isOpen() &&
-      !["settings", "quit", "editorial_open", "editorial_project"].includes(id)
+      !["settings", "quit", "editorial_open", "editorial_project", "dice_roller"].includes(id)
     ) {
       if (id === "close_project") void editorial.closeWorkspace();
       if (["find", "find_project", "find_replace"].includes(id)) editorial.focusSearch();
@@ -581,6 +583,9 @@
         break;
       case "about":
         showAboutDialog = true;
+        break;
+      case "dice_roller":
+        diceTray.toggle();
         break;
       case "quit":
         void quit();
@@ -881,6 +886,13 @@
 
 {#if !discardQuitDrafts}
   {@render errorToast()}
+{/if}
+
+<!-- Global floating dice tray: nonblocking, stays available in every workspace. -->
+{#if diceTray.isOpen}
+  <div inert={interactionBlocked} hidden={interactionBlocked}>
+    <DiceTray />
+  </div>
 {/if}
 
 <div

@@ -168,6 +168,14 @@
     "binding": ""
   },
   {
+    "id": "dice_roller",
+    "label": "Dice roller",
+    "category": "View",
+    "requiresProject": false,
+    "keywords": ["dice", "roll", "d20", "tray", "rpg"],
+    "binding": "Mod+Shift+D"
+  },
+  {
     "id": "about",
     "label": "About Catalyst",
     "category": "Help",
