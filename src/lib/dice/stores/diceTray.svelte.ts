@@ -49,11 +49,17 @@ export interface TrayGeometry {
 /** Dice body colours. Dice Box picks light or dark numbers to suit each one. */
 export const DICE_COLORS = {
   amber: { label: "Amber", value: "#a8732e" },
-  ivory: { label: "Ivory", value: "#e8e1d0" },
-  crimson: { label: "Crimson", value: "#8e2430" },
+  ivory: { label: "Bone", value: "#e8e1d0" },
+  cobalt: { label: "Blue", value: "#2f63c4" },
   sapphire: { label: "Sapphire", value: "#2a4f8f" },
+  scarlet: { label: "Red", value: "#b8262e" },
+  crimson: { label: "Crimson", value: "#8e2430" },
+  obsidian: { label: "Black", value: "#26262b" },
   emerald: { label: "Emerald", value: "#22694a" },
-  obsidian: { label: "Obsidian", value: "#26262b" },
+  amethyst: { label: "Amethyst", value: "#6a3fa0" },
+  frost: { label: "Frost", value: "#6ea9cf" },
+  copper: { label: "Copper", value: "#9c5b34" },
+  steel: { label: "Steel", value: "#7a8290" },
 } as const;
 export type DiceColor = keyof typeof DICE_COLORS;
 

@@ -1,6 +1,6 @@
 /**
- * Roll requests for RPG modules: GM Console, Character Studio, Encounter
- * Manager. Each helper builds a RollRequest with the right purpose, label and
+ * Roll requests for RPG modules: GM Console, Character Studio and Adventure
+ * Studio (encounters). Each helper builds a RollRequest with the right purpose, label and
  * context; modifiers come from Catalyst's rules engine, not from the dice
  * roller. Roll them with the shared tray:
  *

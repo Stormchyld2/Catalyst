@@ -16,8 +16,8 @@ The installed package source (`node_modules/@3d-dice/dice-box/dist`), its `packa
 | --- | --- | --- | --- | --- |
 | `@3d-dice/dice-box` | 1.1.4 (gitHead `79e926eb6e66dd6bc9faafcce420992d7756e148`) | MIT | 2024-08-24 | **Adopted** |
 | `@3d-dice/dice-ui` | 0.5.2 | MIT | 2024-07-08 | Not adopted. Pulls in `dat.gui`; Catalyst builds its own tray to match the approved mockup and design system |
-| `@3d-dice/dice-roller-parser` | 0.2.6 | MIT | 2022-05-26 | Deferred to Phase 2. Catalyst's own parser covers `NdX±N`; revisit for advanced notation (keep/drop, exploding) |
-| `@3d-dice/dice-parser-interface` | 0.2.1 | MIT | 2023-02-08 | Deferred with the parser |
+| `@3d-dice/dice-roller-parser` | 0.2.6 | MIT | 2022-05-26 | Not adopted. Catalyst's own parser covers every die, mixed terms, modifiers and keep-highest/lowest (`4d6kh3`, `2d20kh1`), fully tested; revisit only for exploding or rerolling dice |
+| `@3d-dice/dice-parser-interface` | 0.2.1 | MIT | 2023-02-08 | Not adopted, with the parser |
 | `@3d-dice/dice-box-threejs` | 0.0.12 | MIT | 2022-10-26 | Not adopted. A candidate to investigate for predetermined (host-authoritative) results in Phase 4 |
 
 **Maintenance:** Dice Box has had no release since August 2024. It works with the current toolchain (Vite 7, Svelte 5, WebView2/Chromium), and Catalyst depends on a small surface of it (below), behind one adapter. Replacing it would touch only `engine/diceRenderer.ts`.

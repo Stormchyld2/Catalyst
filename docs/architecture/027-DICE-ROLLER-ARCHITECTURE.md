@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Catalyst has one dice roller, shared by every surface that needs dice: the global tray today, and the Campaign Studio, Character Studio, Encounter Manager and Game Master Console as they land. Players and GMs watch physical-looking dice tumble and settle, and the settled faces are the result.
+Catalyst has one dice roller, shared by every surface that needs dice: the global tray today, and the World Builder, Character Studio, Adventure Studio (including encounters) and GM Console as they land. Players and GMs watch physical-looking dice tumble and settle, and the settled faces are the result.
 
 It is a global utility, not a workspace. It is not a separate application.
 

@@ -1,6 +1,6 @@
 # 030 — Dice GM Console Integration
 
-**Status:** Integration API implemented. The GM Console, Character Studio and Encounter Manager do not exist in Catalyst yet; they call this API when they land.
+**Status:** Integration API implemented. The GM Console, Character Studio and Adventure Studio (which owns encounters) do not exist in Catalyst yet; they call this API when they land.
 **Date:** 2026-11-23
 **Parent:** 027-DICE-ROLLER-ARCHITECTURE.md
 

@@ -9,7 +9,7 @@ import {
 } from "@testing-library/svelte";
 import { flushSync } from "svelte";
 import DiceTray from "../components/DiceTray.svelte";
-import { diceTray } from "../stores/diceTray.svelte";
+import { DICE_COLORS, diceTray, SETTINGS_STORAGE_KEY } from "../stores/diceTray.svelte";
 import type { DiceRenderer } from "../engine/diceRenderer";
 import { DIE_SIDES, type DiceExpression, type DieResult } from "../types/dice";
 
@@ -300,5 +300,19 @@ describe("DiceTray", () => {
     render(DiceTray);
     expect(screen.getByTestId("dice-total").textContent).toBe(total);
     expect(diceTray.history.all).toHaveLength(1);
+  });
+
+  it("offers every dice colour preset in the tray settings and remembers the choice", async () => {
+    await renderReady(maxRenderer().factory);
+    await fireEvent.click(screen.getByTestId("dice-settings-toggle"));
+    for (const [key, color] of Object.entries(DICE_COLORS)) {
+      await fireEvent.click(screen.getByTestId(`dice-color-${key}`));
+      expect(screen.getByTestId("dice-color-name").textContent).toBe(color.label);
+      expect(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY)!).diceColor).toBe(key);
+    }
+    expect(Object.values(DICE_COLORS).map((color) => color.label)).toEqual(
+      expect.arrayContaining(["Amber", "Blue", "Red", "Black"])
+    );
+    diceTray.updateSettings({ diceColor: "amber" });
   });
 });

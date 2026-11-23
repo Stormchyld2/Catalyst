@@ -27,7 +27,11 @@
 
 <section class="dice-popover dice-settings" aria-label="Dice settings" data-testid="dice-settings">
   <h3>Dice appearance</h3>
-  <div class="row" role="radiogroup" aria-label="Dice colour">
+  <div class="field">
+    <span>Dice colour</span>
+    <span class="colour-name" data-testid="dice-color-name">{DICE_COLORS[settings.diceColor].label}</span>
+  </div>
+  <div class="row swatches" role="radiogroup" aria-label="Dice colour">
     {#each colorEntries as [key, color] (key)}
       <button
         type="button"
@@ -157,6 +161,13 @@
     display: flex;
     gap: 8px;
     margin-bottom: 8px;
+  }
+  .swatches {
+    flex-wrap: wrap;
+  }
+  .colour-name {
+    color: var(--dice-text);
+    font-size: 12px;
   }
   .swatch {
     width: 24px;
