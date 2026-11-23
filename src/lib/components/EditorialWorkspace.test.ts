@@ -780,6 +780,12 @@ describe("editorial workspace", () => {
     await fireEvent.click(view.getByRole("menuitem", { name: "Draft history" }));
     const dialog = await view.findByRole("dialog");
     await view.findByLabelText("Draft name");
+    // Draft history ignores Escape until its own initial load has finished.
+    await waitFor(() =>
+      expect(dialog.querySelector<HTMLSelectElement>("#revision-status")?.matches(":disabled")).toBe(
+        false
+      )
+    );
     fail = true;
     await fireEvent(dialog, new Event("cancel", { cancelable: true }));
     await waitFor(() => expect(view.queryByRole("dialog")).toBeNull());
@@ -1223,8 +1229,10 @@ describe("editorial workspace", () => {
     editor().commands.setTextSelection({ from: 20, to: 26 });
     await fireEvent.click(view.getByRole("button", { name: "Accept" }));
     await waitFor(() => expect(editor().state.doc.textContent).toContain("At dusk"));
-    expect(editor().state.selection.from).toBe(29);
-    expect(editor().state.selection.to).toBe(35);
+    // The accepted manuscript mounts first; the writer's selection is remapped right after.
+    await waitFor(() =>
+      expect([editor().state.selection.from, editor().state.selection.to]).toEqual([29, 35])
+    );
   });
   it("requires an intentional selection before applying a conflicting suggestion", async () => {
     const base = manuscript([source]);
@@ -1314,16 +1322,26 @@ describe("editorial workspace", () => {
           if (cmd === "get_editorial_feedback") throw new Error("Cannot open this round");
           return original(cmd, args);
         });
-        await fireEvent.click(view.getByRole("button", { name: "First review" }));
+        // Package setup is still finishing opening; act once its controls are enabled.
+        const first = view.getByRole("button", { name: "First review" }) as HTMLButtonElement;
+        await waitFor(() => expect(first.disabled).toBe(false));
+        await fireEvent.click(first);
         await waitFor(() =>
           expect(view.getByRole("alert").textContent).toContain("Cannot open this round")
         );
       } else {
         vi.mocked(save).mockResolvedValue("/round.lithomark-review");
-        await fireEvent.click(view.getByRole("button", { name: "Export review package" }));
+        const exportButton = view.getByRole("button", {
+          name: "Export review package",
+        }) as HTMLButtonElement;
+        await waitFor(() => expect(exportButton.disabled).toBe(false));
+        await fireEvent.click(exportButton);
         await waitFor(() => expect(view.getByText(/Review package saved to/)).toBeTruthy());
       }
-      await fireEvent.click(view.getByRole("button", { name: "Return to revisions" }));
+      // The notice can appear before the action releases the workspace.
+      const back = view.getByRole("button", { name: "Return to revisions" }) as HTMLButtonElement;
+      await waitFor(() => expect(back.disabled).toBe(false));
+      await fireEvent.click(back);
       await waitFor(() => expect(view.getByLabelText("Editor mode")).toBeTruthy());
       expect(view.queryByRole("alert")).toBeNull();
       expect(view.queryByText(/Review package saved to/)).toBeNull();
@@ -1388,7 +1406,10 @@ describe("editorial workspace", () => {
         expect.objectContaining({ projectId: "project", chapterIds: ["c"] })
       )
     );
-    await fireEvent.click(view.getAllByText("First review")[0]);
+    // The export action is still finishing; open the round once it has.
+    const roundLink = view.getAllByRole("button", { name: "First review" })[0] as HTMLButtonElement;
+    await waitFor(() => expect(roundLink.disabled).toBe(false));
+    await fireEvent.click(roundLink);
     await waitFor(() => expect(view.getByRole("tab", { name: /Review/ })).toBeTruthy());
   });
 });
