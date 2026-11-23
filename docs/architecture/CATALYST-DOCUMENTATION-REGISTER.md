@@ -18,8 +18,9 @@
 - **Character Studio:** `021-CHARACTER-STUDIO-ARCHITECTURE.md` — approved guided/manual builder, rules packs, sheets and donor evaluation; not yet proof of implementation.
 - **Shared RPG Sourcebook Library:** `022-RPG-SOURCEBOOK-LIBRARY-ARCHITECTURE.md` — approved local PDF reader, offline indexing, annotations, licensed and homebrew references, reviewed rules extraction and reusable engine contracts; not yet implemented.
 - **Shared and Module Engines:** `023-CATALYST-SHARED-AND-MODULE-ENGINES.md` — proposed shared service registry, module-owned engines, stable interfaces, dependency order, standalone Character Studio handoff and tests; individual statuses must be verified in actual code.
-- **Engine Implementation Ownership:** `024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` — full 29 shared + 18 module + 12 character-specific engine list, specific ownership, tasks, handoff, audit and build order.
+- **Engine Implementation Ownership:** `024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` — initial 29 shared + 18 module + 12 character-specific list, extended by M19–M21 in 026 (62 total), specific ownership, tasks, handoff, audit and build order.
 - **Official Design System:** `025-CATALYST-DESIGN-SYSTEM.md` — approved Obsidian + Frost Blue semantic tokens, accessibility, components and migration; supersedes global amber/gold accent in earlier drafts.
+- **LAN GM Remote, Player Sharing & Android:** `026-LAN-REMOTE-PLAYER-SHARING-ANDROID.md` — approved mobile GM browser, logically isolated player sharing, host authority, secure pairing, offline sync and later Android Character Companion.
 - **Core storage/stable-ID contracts:** `001-PROJECT-FILE-FORMAT.md`, `002-DOCUMENT-MODEL.md`, `003-STABLE-ID-SYSTEM.md`; read with the RPG exceptions in 020.
 - **Canon/continuity:** `004-CANON-MODEL.md`; useful core mechanism, later adapt domain language to campaigns and worlds.
 - **Plugins / agents:** `005-PLUGIN-ARCHITECTURE.md` and `006-AGENT-API.md`; inspect implementations before designing RPG extensions.
@@ -56,6 +57,8 @@
 | `023-CATALYST-SHARED-AND-MODULE-ENGINES.md` | **Approved engine target inventory** | Audit before building; distinguish shared engines from module-owned engines and reuse existing services |
 | `024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` | **Approved ownership and work matrix** | Main app vs standalone Character Studio ownership for all 59 listed engines; code statuses unverified until audited |
 | `025-CATALYST-DESIGN-SYSTEM.md` | **Approved cross-app branding** | Obsidian, charcoal, silver and Frost Blue; stage migration of inherited LithoMark UI tokens |
+| `026-LAN-REMOTE-PLAYER-SHARING-ANDROID.md` | **Approved future LAN/mobile architecture** | GM browser remote, player-scoped sharing service, offline Android companion; coordinate S25/S10/S09 with main code |
+
 
 ## Missing dedicated Catalyst architecture documents
 
