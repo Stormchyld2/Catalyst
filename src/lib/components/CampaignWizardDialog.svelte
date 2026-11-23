@@ -9,17 +9,16 @@
   import DialogHeader from "./DialogHeader.svelte";
   import { modalFocus } from "../utils/modalFocus";
   import {
-    CAMPAIGN_STARTERS,
-    GAME_SYSTEMS,
-    GM_TEMPLATES,
     GUIDED_STEPS,
-    SAFETY_TOOLS,
+    RULES_PACKS,
     WORLD_CATEGORIES,
     buildCampaignInput,
     emptyDraft,
     firstInvalidStep,
-    validateBasics,
+    plannedFiles,
+    validateEssentials,
     validateGuidedStep,
+    type EntryDraft,
     type SetupMode,
   } from "../campaignWizard";
 
@@ -38,7 +37,7 @@
     onComplete?: (project: Project) => void;
   } = $props();
 
-  // Setup state is temporary until Create Campaign (see 016-NEW-BOOK-FOUNDATION).
+  // Wizard state is temporary until Create (020 §2). Cancel writes nothing.
   let draft = $state(emptyDraft());
   let mode = $state<SetupMode | null>(null);
   let step = $state(0);
@@ -46,7 +45,12 @@
   let error = $state<string | null>(null);
 
   const isLast = $derived(step === GUIDED_STEPS.length - 1);
-  const enabledCategories = $derived(WORLD_CATEGORIES.filter((category) => draft.categories[category.id].enabled));
+  const planned = $derived(plannedFiles(draft));
+  const rulesName = $derived(
+    draft.rulesPackId === "custom-homebrew"
+      ? draft.customSystemName.trim() || "Custom / Homebrew"
+      : "System-Neutral"
+  );
 
   function choose(next: SetupMode) {
     mode = next;
@@ -57,7 +61,7 @@
 
   async function chooseProjectRoot() {
     error = null;
-    const selected = await open({ directory: true, multiple: false, title: "Choose an empty folder for this campaign" });
+    const selected = await open({ directory: true, multiple: false, title: "Choose a new or empty folder for this campaign" });
     if (typeof selected === "string") draft.projectRoot = selected;
   }
 
@@ -72,9 +76,7 @@
     else mode = null;
   }
 
-  function toggle(list: string[], value: string): string[] {
-    return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
-  }
+  const blankEntry = (): EntryDraft => ({ name: "", kind: "", description: "" });
 
   function toProject(created: NewCampaignProject): Project {
     return {
@@ -87,7 +89,7 @@
       modified_at: created.manifest.created_at,
       author_pen_name: null,
       genre: draft.genre.trim() || null,
-      description: draft.pitch.trim() || null,
+      description: null,
       word_target: null,
       reference_types: [],
       project_type: "campaign",
@@ -98,7 +100,7 @@
   async function createCampaign() {
     if (saving) return;
     if (mode === "quick-start") {
-      error = validateBasics(draft);
+      error = validateEssentials(draft);
     } else {
       const invalid = firstInvalidStep(draft);
       if (invalid) step = invalid.step;
@@ -116,6 +118,7 @@
       currentProject.setProject(null);
       currentProject.setProject(project);
       ui.setView("editor");
+      // No Campaign Dashboard exists yet; the campaign opens in the wiki.
       workspace.enterProject("story-development");
       onComplete?.(project);
       onClose();
@@ -135,40 +138,47 @@
   }
 </script>
 
-{#snippet basics(showDetails: boolean)}
-  <section class="form-grid">
-    <label>Campaign name<input aria-label="Campaign name" bind:value={draft.name} placeholder="Untitled campaign" /></label>
-    <label>
-      Game system
-      <input aria-label="Game system" list="campaign-game-systems" bind:value={draft.gameSystem} placeholder="Choose or type a system" />
-      <datalist id="campaign-game-systems">{#each GAME_SYSTEMS as system}<option value={system}></option>{/each}</datalist>
-    </label>
-    <label class="wide">
-      Campaign folder
-      <div class="folder-picker">
-        <input aria-label="Campaign folder" bind:value={draft.projectRoot} placeholder="Choose an empty local folder…" />
-        <button type="button" onclick={chooseProjectRoot}><FolderOpen size={15} aria-hidden="true" />Browse</button>
-      </div>
-      <small>Campaign files become authoritative here when you press Create Campaign.</small>
-    </label>
-    {#if showDetails}
-      <label>Edition / version<input aria-label="Edition" bind:value={draft.edition} /></label>
-      <label>Genre<input aria-label="Genre" bind:value={draft.genre} placeholder="Dark fantasy, space opera…" /></label>
-      <label class="wide">Tone<input aria-label="Tone" bind:value={draft.tone} placeholder="Heroic, grim, comedic…" /></label>
-    {/if}
-    <label class="wide">Campaign pitch<textarea aria-label="Campaign pitch" bind:value={draft.pitch} rows="3" placeholder="One or two sentences you'd tell your players."></textarea></label>
-  </section>
+{#snippet folderPicker()}
+  <label class="wide">
+    Campaign folder
+    <div class="folder-picker">
+      <input aria-label="Campaign folder" bind:value={draft.projectRoot} placeholder="Choose a new or empty local folder…" />
+      <button type="button" onclick={chooseProjectRoot}><FolderOpen size={15} aria-hidden="true" />Browse</button>
+    </div>
+    <small>Nothing is written until you press Create Campaign.</small>
+  </label>
 {/snippet}
 
-{#snippet starterPicker()}
-  <div class="structure-options" role="radiogroup" aria-label="Campaign starter">
-    {#each CAMPAIGN_STARTERS as starter (starter.id)}
-      <label class="structure-option" class:selected={draft.starterId === starter.id}>
-        <input type="radio" name="campaign-starter" value={starter.id} bind:group={draft.starterId} />
-        <span><strong>{starter.name}</strong><small>{starter.description}</small></span>
+{#snippet rulesPicker()}
+  <div class="structure-options wide" role="radiogroup" aria-label="Rules system">
+    {#each RULES_PACKS as pack (pack.id)}
+      <label class="structure-option" class:selected={draft.rulesPackId === pack.id}>
+        <input type="radio" name="rules-pack" value={pack.id} bind:group={draft.rulesPackId} />
+        <span><strong>{pack.name}</strong><small>{pack.description}</small></span>
       </label>
     {/each}
   </div>
+  {#if draft.rulesPackId === "custom-homebrew"}
+    <label class="wide">System name<input aria-label="System name" bind:value={draft.customSystemName} placeholder="The game you're running" /></label>
+  {/if}
+{/snippet}
+
+{#snippet entryList(rows: EntryDraft[], noun: string, kindLabel: string, onChange: (rows: EntryDraft[]) => void)}
+  <div class="step-intro">
+    <h3 class="sub-heading">{noun}s</h3>
+    <button class="secondary" type="button" onclick={() => onChange([...rows, blankEntry()])}><Plus size={14} aria-hidden="true" />Add {noun.toLowerCase()}</button>
+  </div>
+  {#if rows.length === 0}<div class="empty-card">No {noun.toLowerCase()}s added.</div>{/if}
+  {#each rows as row, index}
+    <article class="entity-card">
+      <header><strong>{noun} {index + 1}</strong><button type="button" aria-label={`Remove ${noun.toLowerCase()} ${index + 1}`} onclick={() => onChange(rows.filter((_, i) => i !== index))}><Trash2 size={14} /></button></header>
+      <div class="form-grid">
+        <label>Name<input aria-label={`${noun} ${index + 1} name`} bind:value={row.name} /></label>
+        <label>{kindLabel}<input aria-label={`${noun} ${index + 1} ${kindLabel.toLowerCase()}`} bind:value={row.kind} /></label>
+        <label class="wide">Description<textarea aria-label={`${noun} ${index + 1} description`} bind:value={row.description} rows="2"></textarea></label>
+      </div>
+    </article>
+  {/each}
 {/snippet}
 
 <div
@@ -184,27 +194,29 @@
 
     {#if mode === null}
       <main class="mode-picker">
-        <p>How would you like to start? Both create the same campaign folder, and everything stays editable afterward.</p>
+        <p>Both paths create the same campaign folders and files. Everything stays editable afterward.</p>
         <div class="mode-cards">
           <button type="button" class="mode-card" onclick={() => choose("quick-start")}>
             <Zap size={22} aria-hidden="true" />
             <strong>Quick Start</strong>
-            <small>Name, system and a starter. Ready to prep in under a minute.</small>
+            <small>Name, folder and rules system. A blank, ready-to-use campaign in seconds.</small>
           </button>
           <button type="button" class="mode-card" onclick={() => choose("guided")}>
             <Compass size={22} aria-hidden="true" />
             <strong>Guided Setup</strong>
-            <small>Ten steps covering your table, world, NPCs, hooks and first session.</small>
+            <small>Ten optional steps: rules, world, party, NPCs, story, locations and your first session.</small>
           </button>
         </div>
       </main>
     {:else if mode === "quick-start"}
       <main class="step-content single">
         <header class="step-header"><p>Quick Start</p><h2>Create a campaign</h2></header>
-        {@render basics(false)}
-        <h3 class="sub-heading">Starter</h3>
-        {@render starterPicker()}
-        <p class="review-note">Quick Start also adds the Game Master toolkit templates, a Session Zero page and a Session 1 prep page.</p>
+        <section class="form-grid">
+          <label class="wide">Campaign name<input aria-label="Campaign name" bind:value={draft.name} placeholder="Untitled campaign" /></label>
+          {@render folderPicker()}
+          {@render rulesPicker()}
+          <label class="wide">Premise<textarea aria-label="Premise" bind:value={draft.premise} rows="3" placeholder="Optional. One or two sentences you'd tell your players."></textarea></label>
+        </section>
         {#if error}<p class="foundation-error" role="alert">{error}</p>{/if}
       </main>
     {:else}
@@ -231,41 +243,56 @@
           </header>
 
           {#if step === 0}
-            {@render basics(true)}
+            <section class="form-grid">
+              <label>Campaign name<input aria-label="Campaign name" bind:value={draft.name} placeholder="Untitled campaign" /></label>
+              <label>Subtitle<input aria-label="Subtitle" bind:value={draft.subtitle} /></label>
+              {@render folderPicker()}
+              <label class="wide">Premise<textarea aria-label="Premise" bind:value={draft.premise} rows="3"></textarea></label>
+              <label>Genre<input aria-label="Genre" bind:value={draft.genre} placeholder="Dark fantasy, space opera…" /></label>
+              <label>Theme / tone<input aria-label="Tone" bind:value={draft.tone} placeholder="Heroic, grim, comedic…" /></label>
+              <label>GM display name<input aria-label="GM display name" bind:value={draft.gmName} /></label>
+              <label>Campaign start date<input aria-label="Campaign start date" bind:value={draft.startDate} placeholder="In-world or real date" /></label>
+              <p class="wide hint">Campaign artwork can be added to the Campaign Overview's image after creation.</p>
+            </section>
           {:else if step === 1}
             <section class="form-grid">
-              <label>Number of players<input aria-label="Number of players" inputmode="numeric" bind:value={draft.playerCount} placeholder="4" /></label>
-              <label>Starting level / tier<input aria-label="Starting level" bind:value={draft.startingLevel} placeholder="1" /></label>
-              <label>Session length<input aria-label="Session length" bind:value={draft.sessionLength} placeholder="3 hours" /></label>
-              <label>Cadence<input aria-label="Cadence" bind:value={draft.cadence} placeholder="Weekly" /></label>
-              <label class="wide">Play mode<input aria-label="Play mode" bind:value={draft.playMode} placeholder="In person, online, hybrid" /></label>
-              <fieldset class="wide checks">
-                <legend>Safety tools</legend>
-                {#each SAFETY_TOOLS as tool}
-                  <label class="check"><input type="checkbox" checked={draft.safetyTools.includes(tool)} onchange={() => (draft.safetyTools = toggle(draft.safetyTools, tool))} />{tool}</label>
-                {/each}
-              </fieldset>
-              <label class="wide">Lines (hard limits)<input aria-label="Lines" bind:value={draft.lines} placeholder="Comma separated" /></label>
-              <label class="wide">Veils (fade to black)<input aria-label="Veils" bind:value={draft.veils} placeholder="Comma separated" /></label>
+              {@render rulesPicker()}
+              <p class="wide hint">Verified rules packs will appear here once installed. Nothing assumes a particular game.</p>
+              <label>Advancement<input aria-label="Advancement" bind:value={draft.advancement} placeholder="Milestone, experience…" /></label>
+              <label>Starting level / tier<input aria-label="Starting level" bind:value={draft.startingLevel} /></label>
+              <label class="wide">Difficulty<input aria-label="Difficulty" bind:value={draft.difficulty} /></label>
+              <label class="wide">House rules<textarea aria-label="House rules" bind:value={draft.houseRules} rows="5"></textarea></label>
             </section>
           {:else if step === 2}
             <section class="form-grid">
-              <p class="wide hint">Add at least one detail to establish your world. You can expand it later in the wiki.</p>
-              <label>Setting<input aria-label="Setting" bind:value={draft.setting} placeholder="The Shattered Isles" /></label>
-              <label>Era<input aria-label="Era" bind:value={draft.era} /></label>
-              <label>Magic level<input aria-label="Magic level" bind:value={draft.magicLevel} placeholder="None, low, high…" /></label>
-              <label>Technology level<input aria-label="Technology level" bind:value={draft.technologyLevel} /></label>
-              <label class="wide">World notes<textarea aria-label="World notes" bind:value={draft.worldNotes} rows="8"></textarea></label>
+              <div class="structure-options wide" role="radiogroup" aria-label="World">
+                <label class="structure-option" class:selected={draft.worldMode === "new"}>
+                  <input type="radio" name="world-mode" value="new" bind:group={draft.worldMode} />
+                  <span><strong>New world</strong><small>Build a world inside this campaign.</small></span>
+                </label>
+                <label class="structure-option" class:selected={draft.worldMode === "blank"}>
+                  <input type="radio" name="world-mode" value="blank" bind:group={draft.worldMode} />
+                  <span><strong>Decide later</strong><small>Start with an empty Worldbuilding folder.</small></span>
+                </label>
+              </div>
+              <p class="wide hint">Linking a shared world or importing one is planned but not available yet.</p>
+              {#if draft.worldMode === "new"}
+                <label>World name<input aria-label="World name" bind:value={draft.worldName} /></label>
+                <label>Era<input aria-label="Era" bind:value={draft.era} /></label>
+                <label>Calendar<input aria-label="Calendar" bind:value={draft.calendar} /></label>
+                <label>Broad geography<input aria-label="Broad geography" bind:value={draft.geography} /></label>
+                <label class="wide">Setting notes<textarea aria-label="Setting notes" bind:value={draft.worldNotes} rows="6"></textarea></label>
+              {/if}
             </section>
           {:else if step === 3}
             <section class="entity-step">
-              <p class="hint">Pick the categories you want seeded. Each one gets an overview page; names you list become their own pages.</p>
+              <p class="hint">Turn on any area you already know something about. Each name becomes its own page; nothing is created for areas you leave off.</p>
               {#each WORLD_CATEGORIES as category (category.id)}
                 <article class="entity-card" class:selected={draft.categories[category.id].enabled}>
                   <label class="check strong"><input type="checkbox" aria-label={category.label} bind:checked={draft.categories[category.id].enabled} />{category.label}</label>
                   {#if draft.categories[category.id].enabled}
                     <div class="form-grid nested">
-                      <label class="wide">Names<input aria-label={`${category.label} names`} bind:value={draft.categories[category.id].entries} placeholder="Comma separated (optional)" /></label>
+                      <label class="wide">Names<input aria-label={`${category.label} names`} bind:value={draft.categories[category.id].names} placeholder="Comma separated (optional)" /></label>
                       <label class="wide">Notes<textarea aria-label={`${category.label} notes`} bind:value={draft.categories[category.id].notes} rows="3"></textarea></label>
                     </div>
                   {/if}
@@ -274,18 +301,22 @@
             </section>
           {:else if step === 4}
             <section class="entity-step">
-              <div class="step-intro">
-                <p>Add the places your players are likely to visit first. You can skip this.</p>
-                <button class="secondary" type="button" onclick={() => (draft.locations = [...draft.locations, { name: "", location_type: "", description: "" }])}><Plus size={14} aria-hidden="true" />Add location</button>
+              <div class="form-grid">
+                <label>Party name<input aria-label="Party name" bind:value={draft.partyName} /></label>
+                <label>Starting progression<input aria-label="Starting progression" bind:value={draft.startingProgression} /></label>
               </div>
-              {#if draft.locations.length === 0}<div class="empty-card">No locations added.</div>{/if}
-              {#each draft.locations as location, index}
+              <p class="hint">Character Studio isn't available yet. A character name here creates a placeholder record, not a character sheet.</p>
+              <div class="step-intro">
+                <h3 class="sub-heading">Players</h3>
+                <button class="secondary" type="button" onclick={() => (draft.players = [...draft.players, { player_name: "", character_name: "" }])}><Plus size={14} aria-hidden="true" />Add player</button>
+              </div>
+              {#if draft.players.length === 0}<div class="empty-card">No players added.</div>{/if}
+              {#each draft.players as player, index}
                 <article class="entity-card">
-                  <header><strong>Location {index + 1}</strong><button type="button" aria-label={`Remove location ${index + 1}`} onclick={() => (draft.locations = draft.locations.filter((_, i) => i !== index))}><Trash2 size={14} /></button></header>
+                  <header><strong>Player {index + 1}</strong><button type="button" aria-label={`Remove player ${index + 1}`} onclick={() => (draft.players = draft.players.filter((_, i) => i !== index))}><Trash2 size={14} /></button></header>
                   <div class="form-grid">
-                    <label>Name<input aria-label={`Location ${index + 1} name`} bind:value={location.name} /></label>
-                    <label>Type<input bind:value={location.location_type} placeholder="City, dungeon, tavern…" /></label>
-                    <label class="wide">Description<textarea bind:value={location.description} rows="3"></textarea></label>
+                    <label>Player name<input aria-label={`Player ${index + 1} name`} bind:value={player.player_name} /></label>
+                    <label>Character name<input aria-label={`Player ${index + 1} character`} bind:value={player.character_name} placeholder="Optional" /></label>
                   </div>
                 </article>
               {/each}
@@ -293,8 +324,8 @@
           {:else if step === 5}
             <section class="entity-step">
               <div class="step-intro">
-                <p>Add key NPCs and villains. Player characters will come from Character Studio, which isn't available yet; a Player Characters folder is created for them.</p>
-                <button class="secondary" type="button" onclick={() => (draft.npcs = [...draft.npcs, { name: "", role: "", affiliation: "", description: "", antagonist: false }])}><Plus size={14} aria-hidden="true" />Add NPC</button>
+                <h3 class="sub-heading">NPCs</h3>
+                <button class="secondary" type="button" onclick={() => (draft.npcs = [...draft.npcs, { name: "", disposition: "neutral", role: "", motivation: "", description: "" }])}><Plus size={14} aria-hidden="true" />Add NPC</button>
               </div>
               {#if draft.npcs.length === 0}<div class="empty-card">No NPCs added.</div>{/if}
               {#each draft.npcs as npc, index}
@@ -302,57 +333,82 @@
                   <header><strong>NPC {index + 1}</strong><button type="button" aria-label={`Remove NPC ${index + 1}`} onclick={() => (draft.npcs = draft.npcs.filter((_, i) => i !== index))}><Trash2 size={14} /></button></header>
                   <div class="form-grid">
                     <label>Name<input aria-label={`NPC ${index + 1} name`} bind:value={npc.name} /></label>
-                    <label>Role<input bind:value={npc.role} placeholder="Patron, rival, shopkeeper…" /></label>
-                    <label>Affiliation<input bind:value={npc.affiliation} /></label>
-                    <label class="check"><input type="checkbox" aria-label={`NPC ${index + 1} is a villain`} bind:checked={npc.antagonist} />Villain / antagonist</label>
-                    <label class="wide">Description<textarea bind:value={npc.description} rows="3"></textarea></label>
+                    <label>Disposition
+                      <select aria-label={`NPC ${index + 1} disposition`} bind:value={npc.disposition}>
+                        <option value="ally">Ally</option><option value="neutral">Neutral</option><option value="villain">Villain</option>
+                      </select>
+                    </label>
+                    <label>Role<input aria-label={`NPC ${index + 1} role`} bind:value={npc.role} /></label>
+                    <label>Motivation<input aria-label={`NPC ${index + 1} motivation`} bind:value={npc.motivation} /></label>
+                    <label class="wide">Description<textarea aria-label={`NPC ${index + 1} description`} bind:value={npc.description} rows="2"></textarea></label>
                   </div>
                 </article>
               {/each}
+              {@render entryList(draft.creatures, "Creature", "Creature type", (rows) => (draft.creatures = rows))}
+              {@render entryList(draft.factions, "Faction", "Goal", (rows) => (draft.factions = rows))}
             </section>
           {:else if step === 6}
             <section class="form-grid">
               <label class="wide">Central conflict<textarea aria-label="Central conflict" bind:value={draft.centralConflict} rows="3"></textarea></label>
-              <label>Main threat<input aria-label="Main threat" bind:value={draft.mainThreat} /></label>
-              <label>Themes<input aria-label="Themes" bind:value={draft.themes} placeholder="Comma separated" /></label>
-              <label class="wide">Adventure hooks<textarea aria-label="Adventure hooks" bind:value={draft.hooks} rows="5" placeholder="One hook per line"></textarea></label>
-              <div class="wide"><h3 class="sub-heading">Campaign starter</h3>{@render starterPicker()}</div>
+              <label>Starting adventure<input aria-label="Starting adventure" bind:value={draft.startingAdventure} /></label>
+              <label>Adventure summary<input aria-label="Adventure summary" bind:value={draft.startingAdventureSummary} /></label>
+              <label class="wide">Story arcs<textarea aria-label="Story arcs" bind:value={draft.arcs} rows="4" placeholder="One per line"></textarea></label>
+              <label class="wide">Side quests<textarea aria-label="Side quests" bind:value={draft.sideQuests} rows="4" placeholder="One per line"></textarea></label>
             </section>
           {:else if step === 7}
-            <section class="form-grid">
-              <label class="wide">Session Zero notes<textarea aria-label="Session Zero notes" bind:value={draft.sessionZeroNotes} rows="5"></textarea></label>
-              <label class="wide">Opening scene<textarea aria-label="Opening scene" bind:value={draft.openingScene} rows="4" placeholder="How does Session 1 begin?"></textarea></label>
-              <label class="wide">Session 1 notes<textarea aria-label="Session 1 notes" bind:value={draft.sessionOneNotes} rows="5"></textarea></label>
+            <section class="entity-step">
+              <div class="form-grid">
+                <label class="wide">Starting location<input aria-label="Starting location" bind:value={draft.startingLocation} /></label>
+              </div>
+              {@render entryList(draft.locations, "Location", "Type", (rows) => (draft.locations = rows))}
+              <div class="form-grid">
+                <label class="wide">Existing map files<textarea aria-label="Existing map files" bind:value={draft.mapReferences} rows="3" placeholder="One path or note per line"></textarea></label>
+              </div>
+              <p class="hint">Map Studio isn't available yet, so no maps are generated. The Maps folders are created and ready for your files.</p>
             </section>
           {:else if step === 8}
             <section class="form-grid">
-              <fieldset class="wide checks">
-                <legend>Starter templates for the Game Master folder</legend>
-                {#each GM_TEMPLATES as template (template.id)}
-                  <label class="check"><input type="checkbox" checked={draft.gmTemplateIds.includes(template.id)} onchange={() => (draft.gmTemplateIds = toggle(draft.gmTemplateIds, template.id))} />{template.title}</label>
-                {/each}
-              </fieldset>
-              <label class="wide">House rules<textarea aria-label="House rules" bind:value={draft.houseRules} rows="6"></textarea></label>
-              <p class="wide hint">Map Studio, Character Studio and the encounter tools aren't available yet. Their folders are created now so they can pick up this campaign later.</p>
+              <label>First session title<input aria-label="First session title" bind:value={draft.firstSessionTitle} placeholder="Session 1" /></label>
+              <label>Tabletop style
+                <select aria-label="Tabletop style" bind:value={draft.playMode}>
+                  <option value="physical">Physical</option><option value="hybrid">Hybrid</option><option value="digital">Digital</option>
+                </select>
+              </label>
+              <label class="wide">First session notes<textarea aria-label="First session notes" bind:value={draft.firstSessionNotes} rows="4"></textarea></label>
+              <label class="wide">GM notes<textarea aria-label="GM notes" bind:value={draft.gmNotes} rows="4"></textarea></label>
+              <label>Dice
+                <select aria-label="Dice" bind:value={draft.dice}>
+                  <option value="physical">Physical dice</option><option value="digital">Digital dice</option>
+                </select>
+              </label>
+              <label class="check"><input type="checkbox" aria-label="Use a player display" bind:checked={draft.playerDisplay} />Use a player display</label>
             </section>
           {:else}
             <section class="review">
               <div class="review-hero">
                 <h3>{draft.name || "Untitled campaign"}</h3>
-                <p>{[draft.gameSystem, draft.edition, draft.genre].filter(Boolean).join(" · ") || "System not specified"}</p>
+                <p>{[rulesName, draft.genre, draft.tone].filter(Boolean).join(" · ")}</p>
                 <span>{draft.projectRoot}</span>
               </div>
               <div class="review-grid">
-                <article><strong>Players</strong><span>{draft.playerCount || "Not set"}</span></article>
-                <article><strong>World</strong><span>{draft.setting || draft.era || draft.worldNotes ? "Included" : "Required"}</span></article>
-                <article><strong>World categories</strong><span>{enabledCategories.length}</span></article>
+                <article><strong>Rules</strong><span>{rulesName}</span></article>
+                <article><strong>World</strong><span>{draft.worldMode === "new" ? draft.worldName || "New world" : "Decide later"}</span></article>
+                <article><strong>Worldbuilding areas</strong><span>{WORLD_CATEGORIES.filter((c) => draft.categories[c.id].enabled).length}</span></article>
+                <article><strong>Players</strong><span>{draft.players.length}</span></article>
+                <article><strong>NPCs / creatures / factions</strong><span>{draft.npcs.length} / {draft.creatures.length} / {draft.factions.length}</span></article>
                 <article><strong>Locations</strong><span>{draft.locations.length}</span></article>
-                <article><strong>NPCs</strong><span>{draft.npcs.length}</span></article>
-                <article><strong>Hooks</strong><span>{draft.hooks.split("\n").filter((line) => line.trim()).length}</span></article>
-                <article><strong>Starter</strong><span>{CAMPAIGN_STARTERS.find((starter) => starter.id === draft.starterId)?.name}</span></article>
-                <article><strong>GM templates</strong><span>{draft.gmTemplateIds.length}</span></article>
+                <article><strong>Tabletop style</strong><span>{draft.playMode}, {draft.dice} dice</span></article>
+                <article><strong>First session</strong><span>{draft.firstSessionTitle || draft.firstSessionNotes ? "Planned" : "Not set"}</span></article>
               </div>
-              <p class="review-note">Create Campaign writes ordinary Catalyst Markdown/YAML files with stable IDs, then opens the campaign in Story Development. Setup data does not remain a second source of truth.</p>
+              <div class="planned">
+                <h3 class="sub-heading">Files to be created ({planned.length})</h3>
+                <ul aria-label="Planned files">{#each planned as file}<li>{file}</li>{/each}</ul>
+                <p class="review-note">Plus the full campaign folder tree: Worldbuilding, Characters, Creatures & Monsters, Adventures, Encounters, Maps, Items & Equipment, Rules & Mechanics, Sessions, Game Master, Assets, and Exports & Print.</p>
+              </div>
+              {#if draft.players.some((p) => p.character_name.trim())}
+                <p class="review-note warning">Player characters are placeholders until Character Studio is available.</p>
+              {/if}
+              <p class="review-note">Create Campaign builds everything in a temporary folder, checks it, and only then moves it into place. It never overwrites existing files.</p>
             </section>
           {/if}
 
@@ -408,8 +464,6 @@
   .form-grid input:not([type="checkbox"]):not([type="radio"]),.form-grid textarea { width:100%; box-sizing:border-box; padding:9px 10px; border:1px solid var(--color-border); border-radius:6px; background:var(--color-surface-sunken); color:var(--color-text); font:13px/1.5 var(--font-ui); }
   .form-grid textarea { resize:vertical; }
   .form-grid small { font-weight:400; }
-  .checks { display:flex; flex-wrap:wrap; gap:8px 18px; margin:0; padding:12px; border:1px solid var(--color-border); border-radius:7px; }
-  .checks legend { padding:0 4px; color:var(--color-text-muted); font-size:11px; font-weight:600; }
   label.check { display:flex; align-items:center; gap:7px; color:var(--color-text); font-size:12px; font-weight:400; cursor:pointer; }
   label.check.strong { font-weight:600; font-size:13px; }
   label.check input { accent-color:var(--color-accent-text); }
@@ -421,7 +475,7 @@
   .primary { background:var(--color-accent-text); color:var(--color-bg); }
   .entity-step { display:grid; gap:12px; }
   .step-intro { display:flex; align-items:center; justify-content:space-between; gap:16px; }
-  .step-intro p,.review-note { color:var(--color-text-muted); line-height:1.55; }
+  .review-note { color:var(--color-text-muted); line-height:1.55; }
   .entity-card,.empty-card,.review-hero,.review-grid article { border:1px solid var(--color-border); border-radius:7px; background:var(--color-surface); }
   .entity-card { padding:13px; }
   .entity-card.selected { border-color:var(--color-accent-text); }
@@ -441,6 +495,10 @@
   .review-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
   .review-grid article { display:flex; align-items:center; justify-content:space-between; padding:11px 12px; color:var(--color-text); }
   .review-grid article span { color:var(--color-text-muted); }
+  .form-grid select { width:100%; box-sizing:border-box; padding:9px 10px; border:1px solid var(--color-border); border-radius:6px; background:var(--color-surface-sunken); color:var(--color-text); font:13px/1.5 var(--font-ui); }
+  .step-intro h3 { margin:8px 0 0; }
+  .planned ul { max-height:220px; overflow:auto; margin:0; padding:10px 12px 10px 28px; border:1px solid var(--color-border); border-radius:7px; background:var(--color-surface-sunken); color:var(--color-text-muted); font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; }
+  .review-note.warning { color:var(--color-warning, var(--color-accent-text)); }
   .foundation-error { margin:16px 0 0; padding:9px 10px; border:1px solid var(--color-error); border-radius:6px; color:var(--color-error); }
   .foundation-footer { min-height:58px; display:grid; grid-template-columns:140px 1fr 160px; align-items:center; gap:10px; padding:8px 14px; border-top:1px solid var(--color-border); background:var(--color-surface); }
   .foundation-footer > span { text-align:center; color:var(--color-text-muted); font-size:11px; }
