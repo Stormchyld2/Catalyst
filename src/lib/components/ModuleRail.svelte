@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    Dices,
     Earth,
     FileOutput,
     GitBranch,
@@ -17,6 +18,7 @@
     type WorkspaceId,
   } from "../workspaces";
   import { workspace } from "../stores/workspace.svelte";
+  import { diceTray } from "../dice";
 
   let {
     hasActiveProject,
@@ -141,6 +143,19 @@
 
   <!-- Global utilities and app settings stay pinned to the bottom of the rail. -->
   <div class="module-rail__utilities">
+    <button
+      type="button"
+      class="module-rail__button"
+      class:module-rail__button--active={diceTray.isOpen}
+      aria-label="Dice roller"
+      aria-pressed={diceTray.isOpen}
+      title="Dice roller"
+      data-testid="utility-dice"
+      onclick={() => diceTray.toggle()}
+    >
+      <Dices size={20} aria-hidden="true" />
+      <span>Dice</span>
+    </button>
     {#each appItems as item (item.id)}
       {@render railButton(item)}
     {/each}

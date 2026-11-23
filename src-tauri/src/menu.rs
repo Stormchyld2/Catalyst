@@ -66,6 +66,8 @@ pub fn create_menu(app: &AppHandle<Wry>, bindings: &BTreeMap<String, String>) ->
         .item(&command("toggle_sidebar", "Toggle Sidebar")?)
         .item(&command("toggle_references", "Toggle References Panel")?)
         .item(&command("sync", "Sync from Source")?)
+        .separator()
+        .item(&command("dice_roller", "Dice Roller")?)
         .build()?;
     let help_submenu = SubmenuBuilder::new(app, "Help")
         .item(&command("about", "About Catalyst…")?)

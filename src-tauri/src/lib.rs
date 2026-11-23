@@ -37,6 +37,7 @@ pub mod story_development;
 pub mod write_projection;
 pub mod outline;
 pub mod writing_statistics;
+pub mod dice_sessions;
 pub mod project_root;
 pub mod project_discovery;
 pub mod project_registry;
@@ -268,6 +269,10 @@ pub fn run() {
             commands::save_file_chapter_prose,
             commands::save_file_scene_prose,
             commands::get_file_writing_stats,
+            dice_sessions::start_dice_session,
+            dice_sessions::append_dice_roll,
+            dice_sessions::get_dice_session_history,
+            dice_sessions::list_dice_sessions,
             commands::reset_file_writing_session,
             commands::get_session_state,
             commands::save_session_state,
