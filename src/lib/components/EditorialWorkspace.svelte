@@ -123,7 +123,7 @@
           },
           { label: "", divider: true, action: () => {} },
           {
-            label: "Review packages and rounds...",
+            label: "Review packages and rounds…",
             icon: FileOutput,
             action: () => openProject(projectId),
           },
@@ -140,7 +140,7 @@
           { label: "Export recovery copy", icon: Download, action: () => returnFeedback(true) },
         ]
       : []),
-    { label: "Open review or feedback file...", icon: FolderOpen, action: () => openFile() },
+    { label: "Open review or feedback file…", icon: FolderOpen, action: () => openFile() },
   ]);
   function dismissManuscriptMenu(event: MouseEvent) {
     if (!menuPosition || !(event.target instanceof Element)) return;
@@ -720,7 +720,7 @@
     if (!saves || !session) return;
     try {
       saves.stage($state.snapshot(session));
-      savedState = "Saving...";
+      savedState = "Saving…";
     } catch (e) {
       error = `Recovery journal: ${String(e)}. Keep this window open until saving succeeds.`;
     }
@@ -1455,7 +1455,7 @@
                     class="w-5 h-5 animate-spin"
                     aria-hidden="true"
                   />{:else}<Download class="w-5 h-5" aria-hidden="true" />{/if}{exporting
-                  ? "Exporting package..."
+                  ? "Exporting package…"
                   : "Export review package"}</button
               >
             </div>
@@ -1474,7 +1474,7 @@
                 class="ka-button ka-button--secondary"
                 disabled={busy}
                 onclick={() => openFile()}
-                ><FolderOpen class="w-5 h-5" aria-hidden="true" />Open review or feedback file...</button
+                ><FolderOpen class="w-5 h-5" aria-hidden="true" />Open review or feedback file…</button
               >
             </div>
             <p class="ka-help">

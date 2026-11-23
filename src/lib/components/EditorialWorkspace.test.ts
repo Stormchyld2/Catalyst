@@ -168,8 +168,12 @@ describe("editorial workspace", () => {
       if (entry === "local") {
         const previousEditor = editor();
         await fireEvent.click(view.getByLabelText("Review options"));
-        await fireEvent.click(view.getByRole("button", { name: "Refresh manuscript" }));
+        const refresh = view.getByRole("button", { name: "Refresh manuscript" });
+        await fireEvent.click(refresh);
         await waitFor(() => expect(editor()).not.toBe(previousEditor));
+        // The refresh is still finishing; wait for its controls to re-enable.
+        await waitFor(() => expect((refresh as HTMLButtonElement).disabled).toBe(false));
+        expect(refresh.isConnected).toBe(true);
         expect((view.getByRole("searchbox") as HTMLInputElement).value).toBe("letter");
         expect(view.getByText("1 of 1")).toBeTruthy();
         expect(document.querySelector(".editorial-search-match")?.textContent).toBe("letter");
@@ -589,9 +593,13 @@ describe("editorial workspace", () => {
     await fireEvent.click(view.getByRole("button", { name: "First review" }));
     await waitFor(() => expect(editor().isEditable).toBe(false));
     expect(view.queryByRole("button", { name: "Comment" })).toBeNull();
-    expect(document.querySelector('.scene-link[aria-current="location"]')?.textContent).toBe(
-      "The Letter"
+    // Opening the round finishes by focusing the scene at the reading position.
+    await waitFor(() =>
+      expect(document.querySelector('.scene-link[aria-current="location"]')?.textContent).toBe(
+        "The Letter"
+      )
     );
+    expect(view.queryByRole("button", { name: "Comment" })).toBeNull();
   });
   it("opens local revisions in the editor, suggests with normal gestures and publishes only acknowledged saves", async () => {
     const view = render(EditorialWorkspace, { prepareWriting, onManuscriptChanged });
@@ -601,7 +609,8 @@ describe("editorial workspace", () => {
     expect(editor().state.selection.from).toBe(9);
     await fireEvent.change(view.getByLabelText("Editor mode"), { target: { value: "review" } });
     await waitFor(() => expect(editor().isEditable).toBe(true));
-    expect(editor().state.selection.from).toBe(9);
+    // The new review editor mounts first; the reading position is restored right after.
+    await waitFor(() => expect(editor().state.selection.from).toBe(9));
     editor().commands.insertContent("read");
     await tick();
     expect((view.getByLabelText("Markup view") as HTMLSelectElement).value).toBe("simple");
@@ -672,6 +681,12 @@ describe("editorial workspace", () => {
       "Her guardian sent it."
     );
     fail = false;
+    // The error shows before the failed save releases the workspace; retry once it has.
+    await waitFor(() =>
+      expect((view.getByRole("button", { name: "Reply" }) as HTMLButtonElement).disabled).toBe(
+        false
+      )
+    );
     await fireEvent.click(view.getByRole("button", { name: "Reply" }));
     await waitFor(() =>
       expect((view.getByLabelText("Reply") as HTMLTextAreaElement).value).toBe("")
