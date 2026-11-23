@@ -16,6 +16,7 @@
 
 - **New RPG campaigns:** `020-CAMPAIGN-WIZARD-ARCHITECTURE.md` — approved design, not yet proof of implementation.
 - **Character Studio:** `021-CHARACTER-STUDIO-ARCHITECTURE.md` — approved guided/manual builder, rules packs, sheets and donor evaluation; not yet proof of implementation.
+- **Shared RPG Sourcebook Library:** `022-RPG-SOURCEBOOK-LIBRARY-ARCHITECTURE.md` — approved local PDF reader, offline indexing, annotations, licensed and homebrew references, reviewed rules extraction and reusable engine contracts; not yet implemented.
 - **Core storage/stable-ID contracts:** `001-PROJECT-FILE-FORMAT.md`, `002-DOCUMENT-MODEL.md`, `003-STABLE-ID-SYSTEM.md`; read with the RPG exceptions in 020.
 - **Canon/continuity:** `004-CANON-MODEL.md`; useful core mechanism, later adapt domain language to campaigns and worlds.
 - **Plugins / agents:** `005-PLUGIN-ARCHITECTURE.md` and `006-AGENT-API.md`; inspect implementations before designing RPG extensions.
@@ -48,6 +49,7 @@
 | `multi-window-adaptive-display.md` | Reusable design | Apply to GM/private and player-facing displays after security review |
 | `020-CAMPAIGN-WIZARD-ARCHITECTURE.md` | **Approved new RPG target** | Implement and validate through tests before declaring complete |
 | `021-CHARACTER-STUDIO-ARCHITECTURE.md` | **Approved new RPG target** | Reuse selected licensed donors after audit; implement guided/manual builder and sheet engine |
+| `022-RPG-SOURCEBOOK-LIBRARY-ARCHITECTURE.md` | **Approved shared RPG target** | Implement once for PDF reading/search/reference and use across Character Studio, GM Console, World Builder and other Catalyst modules |
 
 ## Missing dedicated Catalyst architecture documents
 
