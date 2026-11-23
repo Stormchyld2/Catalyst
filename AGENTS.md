@@ -1,3 +1,26 @@
+# Catalyst — Active Agent Instructions
+
+> **Catalyst is an offline-first tabletop RPG Campaign & Adventure Studio.** The following new-project instructions supersede inherited LithoMark writer/book instructions in this file. Inherited writer architecture remains historical/compatibility reference only; do not silently rebrand or mutate existing book projects.
+
+## Active RPG architecture hierarchy
+
+1. **`docs/architecture/020-CAMPAIGN-WIZARD-ARCHITECTURE.md` is authoritative for all NEW Catalyst tabletop campaigns.** It governs Quick Start, the ten-step Guided Setup, approved tabletop folder hierarchy, `campaign.yaml`, worldbuilding templates, GM starter library, creation safety and tests.
+2. **`docs/architecture/021-CHARACTER-STUDIO-ARCHITECTURE.md` is authoritative for the approved Guided/Manual Character Builder, system-independent sheets, advancement, rules packs, open-source donor audit and printing.** Do not implement a D&D-only character record or copy GPL-licensed donor code without explicit licensing approval.
+3. **`docs/architecture/022-RPG-SOURCEBOOK-LIBRARY-ARCHITECTURE.md` governs the shared offline PDF sourcebook library, readable purchased/homebrew books, annotations, search, reviewed rules extraction and cross-module services.** Importing a PDF must not automatically activate its content as rules or authorize redistribution.
+4. **`docs/architecture/023-CATALYST-SHARED-AND-MODULE-ENGINES.md` governs reusable cross-workspace engines, module-specific engines, ownership, contracts, dependency order and integration with standalone Catalyst Character Studio.** Audit existing implementations before starting an engine build; do not duplicate the dice parser, rules evaluator, file service, search or renderer.
+5. **`docs/architecture/024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` is the engine assignment register (initial 59, extended to 62 by 026)** (S01–S29, M01–M18, C01–C12). **Character Studio owns M01–M04, C01–C12 and incubates pure S04–S06; main Catalyst owns the remaining implementation, contract adapters, global dice, PDF and sourcebook services.** Audit source code before declaring an engine implemented or asking Claude to build it.
+6. **`docs/architecture/025-CATALYST-DESIGN-SYSTEM.md` is authoritative for all Catalyst UI branding and colors.** Global accent is **Frost Blue `#6EA9CF`**, not antique gold; use versioned semantic tokens shared with Character Studio and preserve legacy styling only during staged migration.
+7. **`docs/architecture/026-LAN-REMOTE-PLAYER-SHARING-ANDROID.md` governs future GM phone remote, player-only sharing API, pairing/auth, offline sync and Android Character Companion.** M19/M20 belong to main Catalyst; M21 belongs to standalone Character Studio after Windows. S25/S10/S09 are shared, not second independent servers.
+8. **Parallel work reported active:** Claude is building Campaign Soundboard (S24), left-panel redesign, Frost Blue theme migration (025), and completing Campaign Wizard (M05). Do not touch their source files from independent engine tasks until active branches are reviewed. This is user-reported progress, not verified completion.
+9. Existing `016-NEW-BOOK-FOUNDATION.md` and `001-PROJECT-FILE-FORMAT.md` continue to govern **legacy book compatibility** and inherited project service constraints until explicitly migrated. Do not use their novel steps or manuscript folders as defaults for new campaigns.
+10. Preserve stable ID/document service/file-authority principles from `002-DOCUMENT-MODEL.md`, `003-STABLE-ID-SYSTEM.md`, and `004-CANON-MODEL.md`. No new mandatory SQLite authority or cloud dependency.
+11. The approved roadmap separates **Campaign Wizard**, **World Builder**, **Adventure Studio**, **Character Studio**, **Map Studio**, **GM Console**, and **global Dice Roller**. Unfinished modules are not allowed to block valid campaign creation.
+12. For git, use Catalyst's active feature branch and dedicated PR; do not assume the inherited LithoMark `migration/kindling-foundation` branch exists in Catalyst. Do not merge to `main` without user approval. Coordinate with ongoing Claude feature branches and do not edit their code as part of documentation cleanup.
+
+**When inherited statements below conflict with the above for new RPG campaigns, the above controls.** Historical references to LithoMark/Kindling are intentionally retained where they describe disk formats, migration, provenance, or still-working writer-era services.
+
+---
+
 # LithoMark Writer OS — Agent Instructions
 
 These instructions apply to the entire repository. Read them before modifying code.
