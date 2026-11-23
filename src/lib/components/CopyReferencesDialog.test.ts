@@ -194,7 +194,12 @@ describe("independent reference copies", () => {
     await fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
     expect(onClose).not.toHaveBeenCalled();
     resolve({ project: destination, created_reference_ids: [], copied: 2, skipped: 0 });
-    await waitFor(() => expect(screen.getByRole("button", { name: "Done" })).toBeTruthy());
+    // "Done" appears with the result but stays disabled until the panel refresh finishes.
+    await waitFor(() =>
+      expect((screen.getByRole("button", { name: "Done" }) as HTMLButtonElement).disabled).toBe(
+        false
+      )
+    );
     await fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(onClose).toHaveBeenCalledOnce();
     rendered.unmount();
