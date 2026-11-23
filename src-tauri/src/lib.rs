@@ -206,26 +206,28 @@ pub fn run() {
                 .path()
                 .app_data_dir()
                 .expect("Failed to get app data directory");
-            // The rebrand changed the bundle identifier, and with it the app data
-            // folder. Carry the pre-Catalyst folder over once, without touching it.
-            if !qa_background {
-                match legacy_data::adopt_legacy_app_data(&default_dir) {
+            let app_data_dir = resolve_data_dir(
+                cfg!(debug_assertions),
+                std::env::var("CATALYST_DATA_DIR").ok().as_deref(),
+                default_dir.clone(),
+            );
+
+            // The rebrand changed the bundle identifier and so the app data
+            // folder. Import only the pre-Catalyst author settings, once; the
+            // LithoMark database and project list are never adopted.
+            if legacy_data::should_import(qa_background, app_data_dir != default_dir) {
+                match legacy_data::import_legacy_settings(&app_data_dir) {
                     Ok(true) => eprintln!(
-                        "[catalyst] copied app data from the {} folder",
+                        "[catalyst] imported settings from the {} folder",
                         legacy_data::LEGACY_IDENTIFIER
                     ),
                     Ok(false) => {}
                     Err(e) => eprintln!(
-                        "[catalyst] could not copy app data from the {} folder: {e}",
+                        "[catalyst] could not import settings from the {} folder: {e}",
                         legacy_data::LEGACY_IDENTIFIER
                     ),
                 }
             }
-            let app_data_dir = resolve_data_dir(
-                cfg!(debug_assertions),
-                std::env::var("CATALYST_DATA_DIR").ok().as_deref(),
-                default_dir,
-            );
 
             // Initialize application state with database
             let state =

@@ -247,7 +247,6 @@
       directory: true,
       multiple: false,
       title: "Open Catalyst Project Folder",
-      defaultPath: "C:\\Users\\storm\\Documents\\LithoMark Writer OS\\LithoMark\\docs\\projects",
     });
     if (!rootPath) return;
     try {
