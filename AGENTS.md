@@ -1,3 +1,19 @@
+# Catalyst — Active Agent Instructions
+
+> **Catalyst is an offline-first tabletop RPG Campaign & Adventure Studio.** The following new-project instructions supersede inherited LithoMark writer/book instructions in this file. Inherited writer architecture remains historical/compatibility reference only; do not silently rebrand or mutate existing book projects.
+
+## Active RPG architecture hierarchy
+
+1. **`docs/architecture/020-CAMPAIGN-WIZARD-ARCHITECTURE.md` is authoritative for all NEW Catalyst tabletop campaigns.** It governs Quick Start, the ten-step Guided Setup, approved tabletop folder hierarchy, `campaign.yaml`, worldbuilding templates, GM starter library, creation safety and tests.
+2. Existing `016-NEW-BOOK-FOUNDATION.md` and `001-PROJECT-FILE-FORMAT.md` continue to govern **legacy book compatibility** and inherited project service constraints until explicitly migrated. Do not use their novel steps or manuscript folders as defaults for new campaigns.
+3. Preserve stable ID/document service/file-authority principles from `002-DOCUMENT-MODEL.md`, `003-STABLE-ID-SYSTEM.md`, and `004-CANON-MODEL.md`. No new mandatory SQLite authority or cloud dependency.
+4. The approved roadmap separates **Campaign Wizard**, **World Builder**, **Adventure Studio**, **Character Studio**, **Map Studio**, **GM Console**, and **global Dice Roller**. Unfinished modules are not allowed to block valid campaign creation.
+5. For git, use Catalyst's active feature branch and dedicated PR; do not assume the inherited LithoMark `migration/kindling-foundation` branch exists in Catalyst. Do not merge to `main` without user approval. Coordinate with ongoing Claude feature branches and do not edit their code as part of documentation cleanup.
+
+**When inherited statements below conflict with the above for new RPG campaigns, the above controls.** Historical references to LithoMark/Kindling are intentionally retained where they describe disk formats, migration, provenance, or still-working writer-era services.
+
+---
+
 # LithoMark Writer OS — Agent Instructions
 
 These instructions apply to the entire repository. Read them before modifying code.
