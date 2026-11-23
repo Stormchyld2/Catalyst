@@ -2,8 +2,10 @@
  * Campaign session history in project files, through the Rust project service
  * (src-tauri/src/dice_sessions.rs):
  *
- *   <project>/Story Development/Sessions/Roll Logs/<session-id>/session.json
- *   <project>/Story Development/Sessions/Roll Logs/<session-id>/rolls.jsonl
+ *   <campaign>/Sessions/Roll Logs/<session-id>/session.json
+ *   <campaign>/Sessions/Roll Logs/<session-id>/rolls.jsonl
+ *
+ * (Book-layout projects use Story Development/Sessions/Roll Logs/ instead.)
  *
  * The files are authoritative and readable without Catalyst. The service
  * validates every record before writing it. No database is involved.

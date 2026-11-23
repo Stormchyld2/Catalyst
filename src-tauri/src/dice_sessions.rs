@@ -1,11 +1,13 @@
 //! Campaign session dice history, stored as ordinary project files.
 //!
 //! ```text
-//! <project root>/Story Development/Sessions/Roll Logs/<session-id>/session.json   session metadata
-//! <project root>/Story Development/Sessions/Roll Logs/<session-id>/rolls.jsonl    one roll record per line
+//! <campaign root>/Sessions/Roll Logs/<session-id>/session.json   session metadata
+//! <campaign root>/Sessions/Roll Logs/<session-id>/rolls.jsonl    one roll record per line
 //!
-//! One roll log per game session, beside the `Session Prep` and `Session Logs`
-//! folders that the New Campaign Wizard creates.
+//! One roll log per game session, in the campaign's top-level `Sessions`
+//! folder that the New Campaign Wizard creates. Projects with the book layout
+//! (not a campaign, no top-level `Sessions` folder) use
+//! `Story Development/Sessions/Roll Logs/` instead.
 //! ```
 //!
 //! The files are authoritative and readable without Catalyst. There is no
@@ -20,13 +22,29 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-/// The campaign's Sessions folder, as created by the New Campaign Wizard.
-pub const CAMPAIGN_SESSIONS_DIR: &str = "Story Development/Sessions";
+/// The campaign's top-level Sessions folder, as created by the New Campaign Wizard.
+pub const CAMPAIGN_SESSIONS_DIR: &str = "Sessions";
 /// Roll logs live in their own folder inside it, one subfolder per game session.
 pub const ROLL_LOGS_DIR: &str = "Roll Logs";
 
+/// Campaign projects (a top-level `Sessions` folder, a `campaign.yaml`, or
+/// `project_type: campaign`) keep roll logs in `Sessions/Roll Logs`; book-layout projects keep
+/// them in `Story Development/Sessions/Roll Logs`.
 fn sessions_root(root: &Path) -> PathBuf {
-    root.join("Story Development").join("Sessions").join(ROLL_LOGS_DIR)
+    if is_campaign_layout(root) {
+        root.join(CAMPAIGN_SESSIONS_DIR).join(ROLL_LOGS_DIR)
+    } else {
+        root.join("Story Development").join("Sessions").join(ROLL_LOGS_DIR)
+    }
+}
+
+fn is_campaign_layout(root: &Path) -> bool {
+    if root.join(CAMPAIGN_SESSIONS_DIR).is_dir() || root.join("campaign.yaml").is_file() {
+        return true;
+    }
+    crate::project_root::read_project_manifest(root)
+        .map(|manifest| manifest.project_type == "campaign")
+        .unwrap_or(false)
 }
 const SESSION_FILE: &str = "session.json";
 const ROLLS_FILE: &str = "rolls.jsonl";
@@ -302,6 +320,39 @@ mod tests {
     }
 
     #[test]
+    fn campaigns_keep_one_roll_log_per_session_in_their_sessions_folder() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("Sessions").join("Roll Logs")).unwrap();
+        let session = start_session(dir.path(), "Session one", Utc::now()).unwrap();
+        append_roll(dir.path(), &session.id, &record(&session.id, &[14, 7])).unwrap();
+        let log = dir.path().join("Sessions").join("Roll Logs").join(&session.id).join(ROLLS_FILE);
+        assert_eq!(fs::read_to_string(log).unwrap().lines().count(), 1);
+        assert!(!dir.path().join("Story Development").exists());
+        assert_eq!(list_sessions(dir.path()).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn campaign_manifest_selects_the_campaign_layout_before_the_folder_exists() {
+        let dir = tempfile::tempdir().unwrap();
+        let manifest = crate::project_root::ProjectManifest::new("Ashes", "campaign");
+        fs::write(
+            dir.path().join(crate::project_root::PROJECT_MANIFEST_FILENAME),
+            serde_yaml::to_string(&manifest).unwrap(),
+        )
+        .unwrap();
+        let session = start_session(dir.path(), "Session one", Utc::now()).unwrap();
+        assert!(dir.path().join("Sessions").join("Roll Logs").join(&session.id).is_dir());
+    }
+
+    #[test]
+    fn campaign_yaml_selects_the_campaign_layout() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("campaign.yaml"), "title: Ashes\n").unwrap();
+        let session = start_session(dir.path(), "Session one", Utc::now()).unwrap();
+        assert!(dir.path().join("Sessions").join("Roll Logs").join(&session.id).is_dir());
+    }
+
+    #[test]
     fn session_rolls_round_trip_through_plain_files() {
         let dir = tempfile::tempdir().unwrap();
         let session = start_session(dir.path(), "Night one", Utc::now()).unwrap();
@@ -309,12 +360,11 @@ mod tests {
         append_roll(dir.path(), &session.id, &record(&session.id, &[20])).unwrap();
 
         let folder = sessions_root(dir.path()).join(&session.id);
-        // One roll log per game session, in the campaign wizard's Sessions folder.
+        // Without a campaign layout, roll logs use the book layout's Sessions folder.
         assert_eq!(
             folder,
             dir.path().join("Story Development").join("Sessions").join("Roll Logs").join(&session.id)
         );
-        assert!(dir.path().join(CAMPAIGN_SESSIONS_DIR).join(ROLL_LOGS_DIR).is_dir());
         let lines = fs::read_to_string(folder.join(ROLLS_FILE)).unwrap();
         assert_eq!(lines.lines().count(), 2);
         assert!(lines.contains("\"expression\":\"2d20+2\""));
