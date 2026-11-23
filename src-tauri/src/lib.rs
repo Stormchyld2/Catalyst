@@ -29,6 +29,7 @@ pub mod entity_templates;
 pub mod link_resolver;
 pub mod manuscript;
 pub mod new_book_foundation;
+pub mod campaign_wizard;
 pub mod review;
 pub mod story_development;
 pub mod write_projection;
@@ -290,6 +291,7 @@ pub fn run() {
             commands::get_all_projects,
             commands::get_project_dashboard_metrics,
             commands::create_new_book_foundation,
+            commands::create_new_campaign,
             commands::get_git_workspace_status,
             commands::git_initialize,
             commands::git_set_origin,
