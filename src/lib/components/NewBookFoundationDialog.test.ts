@@ -29,7 +29,7 @@ const registry = {
     { id: "worldbuilding-profile", name: "Worldbuilding Profile", category: "worldbuilding", document_type: "note", subtype: "worldbuilding", source: "built-in" },
   ],
   issues: [],
-  user_templates_dir: "C:/Temp/LithoMark/Templates",
+  user_templates_dir: "C:/Temp/Catalyst/Templates",
 };
 
 const manuscriptTemplates = [
@@ -55,7 +55,7 @@ const created = {
     created_at: "2026-09-30T00:00:00Z",
   },
   paths: {
-    root: "C:/Temp/LithoMark/Test Novel",
+    root: "C:/Temp/Catalyst/Test Novel",
   },
 };
 
@@ -83,7 +83,7 @@ async function completeBasics() {
     target: { value: "Test Novel" },
   });
   await fireEvent.input(screen.getByRole("textbox", { name: "Project folder" }), {
-    target: { value: "C:/Temp/LithoMark/Test Novel" },
+    target: { value: "C:/Temp/Catalyst/Test Novel" },
   });
 }
 
@@ -255,7 +255,7 @@ describe("NewBookFoundationDialog", () => {
         "create_new_book_foundation",
         expect.objectContaining({
           input: expect.objectContaining({
-            project_root: "C:/Temp/LithoMark/Test Novel",
+            project_root: "C:/Temp/Catalyst/Test Novel",
             title: "Test Novel",
             project_type: "novel",
           }),

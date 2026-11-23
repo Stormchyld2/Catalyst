@@ -1,4 +1,4 @@
-//! File-authoritative LithoMark document persistence.
+//! File-authoritative Catalyst document persistence.
 //!
 //! Markdown/YAML files are project truth. This service deliberately has no
 //! database dependency: SQLite may index documents later, but deleting an index
@@ -24,7 +24,7 @@ pub struct DocumentIdentity {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct LithoMarkDocument {
+pub struct CatalystDocument {
     pub identity: DocumentIdentity,
     pub title: Option<String>,
     pub metadata: BTreeMap<String, Value>,
@@ -39,7 +39,7 @@ pub struct SaveResult {
     pub bytes_written: usize,
 }
 
-pub fn read_document(project_root: &Path, relative_path: &Path) -> Result<LithoMarkDocument, String> {
+pub fn read_document(project_root: &Path, relative_path: &Path) -> Result<CatalystDocument, String> {
     let path = resolve_project_path(project_root, relative_path)?;
     if !path.is_file() {
         return Err(format!("Document '{}' does not exist.", relative_path.display()));
@@ -60,14 +60,14 @@ pub fn create_document(
     document_type: &str,
     title: Option<&str>,
     body: &str,
-) -> Result<LithoMarkDocument, String> {
+) -> Result<CatalystDocument, String> {
     validate_document_type(document_type)?;
     let path = resolve_project_path(project_root, relative_path)?;
     if path.exists() {
         return Err(format!("Document '{}' already exists.", relative_path.display()));
     }
 
-    let document = LithoMarkDocument {
+    let document = CatalystDocument {
         identity: DocumentIdentity {
             document_type: document_type.trim().to_string(),
             id: generate_stable_id(document_type)?,
@@ -94,7 +94,7 @@ pub fn move_document(
     from_relative_path: &Path,
     to_relative_path: &Path,
     expected_source_hash: &str,
-) -> Result<LithoMarkDocument, String> {
+) -> Result<CatalystDocument, String> {
     if from_relative_path == to_relative_path {
         let current = read_document(project_root, from_relative_path)?;
         if current.source_hash != expected_source_hash {
@@ -257,7 +257,7 @@ pub fn restore_trashed_document(
     project_root: &Path,
     entry_id: &str,
     expected_source_hash: &str,
-) -> Result<LithoMarkDocument, String> {
+) -> Result<CatalystDocument, String> {
     let candidate = list_trashed_documents(project_root)?
         .into_iter().find(|item| item.entry_id == entry_id)
         .ok_or_else(|| "Trash entry is missing or invalid.".to_string())?;
@@ -303,7 +303,7 @@ pub fn restore_trashed_document(
 
 pub fn save_document(
     project_root: &Path,
-    document: &LithoMarkDocument,
+    document: &CatalystDocument,
     expected_source_hash: Option<&str>,
 ) -> Result<SaveResult, String> {
     validate_identity(&document.identity)?;
@@ -411,7 +411,7 @@ fn replace_staged_document(staged: &Path, destination: &Path) -> Result<(), Stri
 fn replace_staged_document(staged: &Path, destination: &Path) -> Result<(), String> {
     use std::os::windows::ffi::OsStrExt;
 
-    #[link(name = "Kernel32")]
+    #[link(name = "kernel32")]
     unsafe extern "system" {
         fn ReplaceFileW(
             replaced_file_name: *const u16,
@@ -680,7 +680,7 @@ pub fn restore_recovery_artifact(
     result.map(|_| safety_copy)
 }
 
-pub fn parse_document(relative_path: &Path, raw: &str) -> Result<LithoMarkDocument, String> {
+pub fn parse_document(relative_path: &Path, raw: &str) -> Result<CatalystDocument, String> {
     let normalized = raw.replace("\r\n", "\n").replace('\r', "\n");
     let (yaml, body) = split_frontmatter(&normalized)?;
     let mut root: BTreeMap<String, Value> =
@@ -699,7 +699,7 @@ pub fn parse_document(relative_path: &Path, raw: &str) -> Result<LithoMarkDocume
         None => None,
     };
 
-    Ok(LithoMarkDocument {
+    Ok(CatalystDocument {
         identity,
         title,
         metadata: root,
@@ -709,7 +709,7 @@ pub fn parse_document(relative_path: &Path, raw: &str) -> Result<LithoMarkDocume
     })
 }
 
-pub fn serialize_document(document: &LithoMarkDocument) -> Result<String, String> {
+pub fn serialize_document(document: &CatalystDocument) -> Result<String, String> {
     validate_identity(&document.identity)?;
 
     let mut root = document.metadata.clone();
@@ -771,15 +771,15 @@ fn validate_identity(identity: &DocumentIdentity) -> Result<(), String> {
     let prefix = stable_id_prefix(&identity.document_type)?;
     let uuid = identity.id.strip_prefix(prefix).ok_or_else(|| {
         format!(
-            "LithoMark document id '{}' must use prefix '{}' for type '{}'.",
+            "Catalyst document id '{}' must use prefix '{}' for type '{}'.",
             identity.id, prefix, identity.document_type
         )
     })?;
     let parsed = Uuid::parse_str(uuid)
-        .map_err(|_| "LithoMark document id must contain a valid UUID.".to_string())?;
+        .map_err(|_| "Catalyst document id must contain a valid UUID.".to_string())?;
     let canonical = format!("{prefix}{}", parsed.hyphenated());
     if identity.id != canonical {
-        return Err("LithoMark document id must use canonical lowercase prefix-UUID form.".into());
+        return Err("Catalyst document id must use canonical lowercase prefix-UUID form.".into());
     }
     Ok(())
 }
@@ -818,13 +818,13 @@ fn stable_id_prefix(document_type: &str) -> Result<&'static str, String> {
         other if other.contains('.') => Err(format!(
             "Plugin-defined document type '{other}' must obtain identity through the Stable ID service; plugin IDs are not assigned by the core Document Service yet."
         )),
-        other => Err(format!("Unsupported core LithoMark document type '{other}'.")),
+        other => Err(format!("Unsupported core Catalyst document type '{other}'.")),
     }
 }
 
 fn validate_document_type(document_type: &str) -> Result<(), String> {
     if document_type.trim().is_empty() {
-        return Err("LithoMark document type must not be empty.".into());
+        return Err("Catalyst document type must not be empty.".into());
     }
     Ok(())
 }
@@ -927,7 +927,7 @@ mod tests {
         )
         .unwrap();
 
-        doc.body = "LithoMark edit.\n".into();
+        doc.body = "Catalyst edit.\n".into();
         let error = save_document(temp.path(), &doc, Some(&doc.source_hash)).unwrap_err();
         assert!(error.contains("conflict"));
         assert!(fs::read_to_string(temp.path().join(path)).unwrap().contains("External."));

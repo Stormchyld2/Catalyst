@@ -1,5 +1,5 @@
 /**
- * Canonical LithoMark Writer OS workspace registry.
+ * Canonical Catalyst workspace registry.
  *
  * This module intentionally contains no Svelte state and no persistence.
  * It defines the stable application-level navigation contract that the
@@ -119,7 +119,7 @@ export const DEFAULT_PROJECT_WORKSPACE: WorkspaceId = "write";
 export function getWorkspace(id: WorkspaceId): WorkspaceDefinition {
   const workspace = WORKSPACE_BY_ID.get(id);
   if (!workspace) {
-    throw new Error(`Unknown LithoMark workspace '${id}'.`);
+    throw new Error(`Unknown Catalyst workspace '${id}'.`);
   }
   return workspace;
 }

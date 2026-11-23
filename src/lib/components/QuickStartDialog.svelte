@@ -51,7 +51,7 @@
       <section class="ka-group">
         <h3 class="ka-group-title">Import your outline</h3>
         <p class="font-press-ui text-press-base text-press-text mb-3 max-w-press-measure">
-          LithoMark works with your existing outline. Import from the Start Screen or File → Import.
+          Catalyst works with your existing outline. Import from the Start Screen or File → Import.
         </p>
         <ul class="space-y-2 text-press-ui text-press-muted">
           <li class="flex items-start gap-2">
@@ -167,7 +167,7 @@
           </li>
           <li class="flex items-start gap-2">
             <Users class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span>Link characters and locations from your outline, or add them in LithoMark</span>
+            <span>Link characters and locations from your outline, or add them in Catalyst</span>
           </li>
         </ul>
       </section>

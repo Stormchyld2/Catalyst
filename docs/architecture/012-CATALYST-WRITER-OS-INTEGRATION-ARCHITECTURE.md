@@ -1,4 +1,4 @@
-# LithoMark Writer OS — Integration and Manuscript Lifecycle Architecture
+# Catalyst — Integration and Manuscript Lifecycle Architecture
 
 **Status:** Locked architecture  
 **Scope:** Product workflow, cross-workspace integration, Story Development, Review lifecycle, and Core Preview boundary  
@@ -6,7 +6,7 @@
 
 ## 1. Purpose
 
-LithoMark Writer OS follows the natural lifecycle of a manuscript rather than presenting a collection of disconnected tools.
+Catalyst follows the natural lifecycle of a manuscript rather than presenting a collection of disconnected tools.
 
 The canonical lifecycle is:
 
@@ -32,7 +32,7 @@ Publish
 
 This is a guiding workflow, not a mandatory wizard. Writers may move backward and forward at any time. A developmental review may return the writer to Story Development; beta feedback may require plot restructuring; revision may alter canon, timeline, characters, or manuscript prose.
 
-All stages operate on one LithoMark project and one authoritative set of project files.
+All stages operate on one Catalyst project and one authoritative set of project files.
 
 ## 2. Core product rule
 
@@ -40,7 +40,7 @@ All stages operate on one LithoMark project and one authoritative set of project
 
 A writer opens a project once. The writer does not import the book separately into Story Development, Review, Audiobook, or Publishing.
 
-Every workspace consumes the same project through LithoMark domain services and stable identities.
+Every workspace consumes the same project through Catalyst domain services and stable identities.
 
 Modules must not create competing authoritative representations of manuscript, character, location, timeline, plot, or publication metadata.
 
@@ -70,7 +70,7 @@ The Module Rail should remain comprehensible. Subsystems that belong to a larger
 
 ## 4. Story Development workspace
 
-**Story Development** is LithoMark's canonical story-bible, worldbuilding, canon/chronology, and linked-knowledge environment.
+**Story Development** is Catalyst's canonical story-bible, worldbuilding, canon/chronology, and linked-knowledge environment.
 
 It is not merely a Wiki. It owns and presents the structured story information used across the project, including characters, locations, organizations, worldbuilding, events, relationships, canon facts, and chronology.
 
@@ -131,7 +131,7 @@ Obsidian-style wikilinks and backlinks may connect manuscript and Story Developm
 
 The cross-module link graph is a shared project projection. Structured relationships use stable IDs; human-readable wikilinks resolve to those identities when possible. Write, Story Development, Review, search, and Context Panel navigation must not maintain separate link authorities. Ambiguous or broken links remain explicit integrity states rather than being silently rebound by filename, path, or nearest-name matching.
 
-Kindling-era SQLite reference tables, scene-reference UUID records, and cross-project reference-copy commands are transitional compatibility code. They are not the target LithoMark wikilink/backlink model and must not be used as the persistence authority for new project linking.
+Kindling-era SQLite reference tables, scene-reference UUID records, and cross-project reference-copy commands are transitional compatibility code. They are not the target Catalyst wikilink/backlink model and must not be used as the persistence authority for new project linking.
 
 ## 5. Write workspace
 
@@ -214,7 +214,7 @@ Revision is a lifecycle stage, not necessarily a separate top-level application.
 
 Revision work normally occurs in Write and Story Development and is driven by issues from Developmental Review, Beta Reading, the author, or other permitted sources.
 
-LithoMark should support durable **Revision Items**.
+Catalyst should support durable **Revision Items**.
 
 A Revision Item may contain:
 
@@ -295,7 +295,7 @@ It should reuse project metadata and manuscript structure rather than maintainin
 
 Publishing may include formatting, validation, metadata, and generation of formats such as EPUB, PDF, DOCX, print-oriented output, and other supported deliverables.
 
-Publish is the natural endpoint of the manuscript lifecycle, but LithoMark must never prevent a writer from publishing earlier or returning to prior stages afterward.
+Publish is the natural endpoint of the manuscript lifecycle, but Catalyst must never prevent a writer from publishing earlier or returning to prior stages afterward.
 
 ## 14. Specialized audio workflows
 
@@ -355,7 +355,7 @@ SQLite, search indexes, caches, relationship indexes, and derived views remain d
 
 ## 18. Core Preview 1 boundary
 
-The first public preview is the **LithoMark Writer OS Core Preview**.
+The first public preview is the **Catalyst Core Preview**.
 
 Its principal authoring scope is:
 
@@ -400,15 +400,15 @@ At minimum, a writer should be able to:
 5. Link manuscript and story knowledge.
 6. Rename/move supported project objects without silently breaking identity.
 7. Save safely.
-8. Close LithoMark.
+8. Close Catalyst.
 9. Reopen the project with content and relationships intact.
 10. Recover safely from supported failure conditions.
 11. Use Git/version control when configured without Git becoming mandatory.
-12. Inspect understandable authoritative project files outside LithoMark.
+12. Inspect understandable authoritative project files outside Catalyst.
 
 The practical question is:
 
-> Can a writer trust LithoMark with a real novel as the primary development and writing environment?
+> Can a writer trust Catalyst with a real novel as the primary development and writing environment?
 
 ## 20. Lifecycle-aware Project Dashboard
 
@@ -448,7 +448,7 @@ If a subsystem cannot answer these questions cleanly, its integration design is 
 
 ## 22. Locked lifecycle summary
 
-The canonical LithoMark manuscript journey is:
+The canonical Catalyst manuscript journey is:
 
 > **Story Development → Write → Developmental Review → Revision → Beta Reading → Revision → ARC → Publish**
 
@@ -465,6 +465,6 @@ The architectural interpretation is:
 
 All stages belong to one Writer OS and one project.
 
-LithoMark's product promise is therefore:
+Catalyst's product promise is therefore:
 
-> **LithoMark Writer OS supports the manuscript from first idea through publication in one local-first project.**
+> **Catalyst supports the manuscript from first idea through publication in one local-first project.**

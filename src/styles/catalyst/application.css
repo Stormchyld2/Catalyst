@@ -1,4 +1,4 @@
-/* kindling Press application layer. Import fonts.css and tokens.css first.
+/* Catalyst Press application layer. Import fonts.css and tokens.css first.
    Standalone component selectors do not depend on the legacy global reset. */
 @layer od-layout {
 .od-stack{display:flex;flex-direction:column;gap:var(--od-gap,8px)}.od-row{display:flex;align-items:center;gap:var(--od-gap,8px)}.od-row-top{display:flex;align-items:flex-start;gap:var(--od-gap,8px)}.od-field,.od-stat{display:grid;gap:var(--od-gap,4px)}.od-field>*,.od-stat>*{display:block}.od-fill{flex:1 1 0;min-width:0}.od-nowrap{white-space:nowrap}:where(.od-stack,.od-row,.od-row-top,.od-field,.od-stat)>*{min-width:0}
@@ -105,7 +105,7 @@
    `.ka-beat`, `.ka-manuscript`, `.ka-panel`, `.ka-segment` — and no layout
    to seat them in, so the shell was composed locally three times: the
    application kit (`.kit-layout`), the reference catalog (`.ac-workspace`)
-   and kindling-splash's home-page specimen.
+   and the splash's home-page specimen.
 
    Structure: `.ka-workspace` > an optional `.ka-workspace-bar`, an optional
    `.ka-workspace-panes`, then `.ka-workspace-grid` > `.ka-workspace-outline`,

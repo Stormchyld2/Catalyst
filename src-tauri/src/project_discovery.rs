@@ -1,4 +1,4 @@
-//! Disposable, database-free discovery of existing LithoMark project folders.
+//! Disposable, database-free discovery of existing Catalyst project folders.
 //! The project.yaml in each folder is authoritative; this module never edits it.
 use std::collections::HashMap;
 use std::path::PathBuf;

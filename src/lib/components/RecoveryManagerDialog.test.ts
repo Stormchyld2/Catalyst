@@ -8,7 +8,7 @@ import { currentProject } from "../stores/project.svelte";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
-const projectRoot = "C:/Temp/LithoMark/Recovery Test";
+const projectRoot = "C:/Temp/Catalyst/Recovery Test";
 const candidate = {
   artifact_path: "Characters/.lithomark-save-recovery.tmp",
   original_path: "Characters/Mara.md",

@@ -8,7 +8,7 @@ status: active
 
 # Master Outline
 
-This outline carries The Glass Meridian beyond the two drafted demo chapters so LithoMark can demonstrate drafted, planned, and next-action manuscript views.
+This outline carries The Glass Meridian beyond the two drafted demo chapters so Catalyst can demonstrate drafted, planned, and next-action manuscript views.
 
 ## Chapter 1 — The Missing Block
 

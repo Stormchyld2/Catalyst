@@ -1,4 +1,4 @@
-# LithoMark Project Workspace Architecture
+# Catalyst Project Workspace Architecture
 
 **Status:** Locked architecture  
 **Scope:** Core Writer OS application shell and cross-module interaction model  
@@ -6,7 +6,7 @@
 
 ## 1. Purpose
 
-LithoMark is a Writer OS, not a collection of separate mini-applications. Writing, planning, project knowledge, reviews, text-to-speech, audiobook production, publishing, Git, files, and terminal tools must operate on the same project and the same authoritative files.
+Catalyst is a Writer OS, not a collection of separate mini-applications. Writing, planning, project knowledge, reviews, text-to-speech, audiobook production, publishing, Git, files, and terminal tools must operate on the same project and the same authoritative files.
 
 Major features must plug into a shared application shell instead of inventing independent navigation, duplicate project data, or isolated workflows.
 
@@ -15,7 +15,7 @@ Major features must plug into a shared application shell instead of inventing in
 The desktop workspace uses four functional regions:
 
 1. **Module Rail — far left**
-   - Answers: **What part of LithoMark am I using?**
+   - Answers: **What part of Catalyst am I using?**
    - Switches major workspaces.
 
 2. **Workspace Navigation — left panel**
@@ -69,7 +69,7 @@ The exact iconography and final grouping may evolve, but the architectural rule 
 New-book creation begins from Home using the guided **New Book Foundation** defined in `016-NEW-BOOK-FOUNDATION.md`. The setup is temporary until Create Book; creation seeds authoritative project files and opens the Story Development Wiki. The author chooses an outline/structure method later rather than during initial project creation.
 
 
-### LithoMark Home
+### Catalyst Home
 
 The application Home screen is project-oriented, not feature-oriented. It should emphasize:
 
@@ -104,7 +104,7 @@ When **Write** is active:
 - Main Work Area is the manuscript editor.
 - Context Panel is limited to the current scene or current chapter.
 
-The file tree reflects real project files and folders. LithoMark may decorate entries with useful derived information such as word counts, status, POV, review indicators, or Git state, but those decorations must not replace the authoritative filesystem structure.
+The file tree reflects real project files and folders. Catalyst may decorate entries with useful derived information such as word counts, status, POV, review indicators, or Git state, but those decorations must not replace the authoritative filesystem structure.
 
 Example:
 
@@ -157,7 +157,7 @@ Whole-project exploration belongs in the Story Development workspace.
 
 ## 7. Wikilinks and contextual drill-in
 
-LithoMark should support Obsidian-style internal links such as:
+Catalyst should support Obsidian-style internal links such as:
 
 ```markdown
 [[Leah]]
@@ -205,7 +205,7 @@ The shared resolver is a project service, not a Write-only or Story-Development-
 - backlinks are derived projections and can be rebuilt from authoritative files;
 - resolving or opening a link does not copy the target into the manuscript or Context Panel;
 - ordinary project resolution is strictly scoped to the active project;
-- legacy Kindling SQLite reference tables and reference-copy commands are migration/compatibility infrastructure and must not become the LithoMark link graph.
+- legacy Kindling SQLite reference tables and reference-copy commands are migration/compatibility infrastructure and must not become the Catalyst link graph.
 
 The Context Panel receives the active scene/chapter stable ID and resolved references from shared project services. It may keep transient navigation history and UI state, but it must not persist a competing copy of entity, canon, timeline, manuscript, or backlink data.
 
@@ -238,7 +238,7 @@ Detected references supplement declared context; they do not create a second aut
 
 ## 9. Story Development workspace
 
-The Story Development workspace is LithoMark's integrated story-development environment. It combines Plottr-style visual plotting and outlining with structured Story Development/Wiki knowledge, timeline, research, relationships, and linked Markdown. Plot/Outline is a first-class area inside Story Development, not a separate top-level module.
+The Story Development workspace is Catalyst's integrated story-development environment. It combines Plottr-style visual plotting and outlining with structured Story Development/Wiki knowledge, timeline, research, relationships, and linked Markdown. Plot/Outline is a first-class area inside Story Development, not a separate top-level module.
 
 It provides whole-project development and knowledge navigation. Depending on the project template it may expose:
 
@@ -314,7 +314,7 @@ The native `lithomark-review` package architecture remains the review portabilit
 
 ## 13. File-authoritative project architecture
 
-This workspace architecture reinforces LithoMark's existing storage rule:
+This workspace architecture reinforces Catalyst's existing storage rule:
 
 - files and folders are authoritative
 - no proprietary project container is required
@@ -347,11 +347,11 @@ Project/
 └── .git/
 ```
 
-A user must be able to retain understandable project content even without LithoMark installed.
+A user must be able to retain understandable project content even without Catalyst installed.
 
 ## 14. Module integration contract
 
-Every new major LithoMark subsystem should answer these questions before implementation:
+Every new major Catalyst subsystem should answer these questions before implementation:
 
 1. Which authoritative project files does it read?
 2. Which authoritative project files does it write?
@@ -361,17 +361,17 @@ Every new major LithoMark subsystem should answer these questions before impleme
 6. What information is appropriate for the Context Panel?
 7. How does it reference stable project entities?
 8. Does it duplicate data already owned elsewhere? If yes, redesign it.
-9. Can its generated data survive and remain understandable outside LithoMark?
+9. Can its generated data survive and remain understandable outside Catalyst?
 10. Does it preserve offline/local-first operation?
 
 
 ## 15. Git workspace operational contract
 
-Git is a project-support tool, not the authority for LithoMark project state. The ordinary project files remain authoritative whether or not a project is under version control.
+Git is a project-support tool, not the authority for Catalyst project state. The ordinary project files remain authoritative whether or not a project is under version control.
 
 The Git workspace should provide writer-friendly operations for status, commit, pull, push, branch awareness, and conflict handling without requiring routine command-line use.
 
-LithoMark must never silently discard or overwrite local work to complete a Git operation. Before an operation that could replace working-tree content, LithoMark must detect relevant local changes and surface the condition to the user.
+Catalyst must never silently discard or overwrite local work to complete a Git operation. Before an operation that could replace working-tree content, Catalyst must detect relevant local changes and surface the condition to the user.
 
 The workspace must distinguish at minimum:
 
@@ -388,9 +388,9 @@ The workspace must distinguish at minimum:
 
 Pull and Push remain separate explicit actions. A combined sync action may be offered later, but it must not obscure which operations are being performed.
 
-Merge conflicts must be treated as an explicit user-resolved state. LithoMark may assist with conflict presentation, but it must not automatically choose manuscript content during a conflict unless the user explicitly selects a resolution.
+Merge conflicts must be treated as an explicit user-resolved state. Catalyst may assist with conflict presentation, but it must not automatically choose manuscript content during a conflict unless the user explicitly selects a resolution.
 
-Files changed outside LithoMark are legitimate project changes. LithoMark must detect/reload or safely reconcile them rather than assuming all edits originate inside the application.
+Files changed outside Catalyst are legitimate project changes. Catalyst must detect/reload or safely reconcile them rather than assuming all edits originate inside the application.
 
 Git credentials and provider authentication are machine/user configuration and must not be stored as authoritative project content.
 
@@ -398,9 +398,9 @@ A project that has no Git repository, remote, or network connection must remain 
 
 ## 16. Optional runtime and component policy
 
-Large or specialized runtimes, models, converters, validators, and provider-specific components should not automatically become mandatory dependencies of the LithoMark core installation.
+Large or specialized runtimes, models, converters, validators, and provider-specific components should not automatically become mandatory dependencies of the Catalyst core installation.
 
-Where practical, LithoMark should use a small core application plus optional locally managed components. Examples include narration runtimes/models, specialized publishing converters, distribution validators, or future computational tools.
+Where practical, Catalyst should use a small core application plus optional locally managed components. Examples include narration runtimes/models, specialized publishing converters, distribution validators, or future computational tools.
 
 Optional components must:
 
@@ -414,7 +414,7 @@ Optional components must:
 
 A subsystem may recommend an optional component, but ordinary writing and access to the project must not depend on it.
 
-Provider-specific model files are implementation resources, not project truth. Project configuration should reference stable LithoMark/provider identities and required capabilities rather than rely on machine-specific absolute model paths.
+Provider-specific model files are implementation resources, not project truth. Project configuration should reference stable Catalyst/provider identities and required capabilities rather than rely on machine-specific absolute model paths.
 
 ## 17. Project isolation and optional Series Workspace
 
@@ -424,9 +424,9 @@ A future Series Workspace may sit above multiple independent books:
 
 ```text
 Series Workspace
-    ├── Book 1 — independent LithoMark project
-    ├── Book 2 — independent LithoMark project
-    └── Book 3 — independent LithoMark project
+    ├── Book 1 — independent Catalyst project
+    ├── Book 2 — independent Catalyst project
+    └── Book 3 — independent Catalyst project
 ```
 
 Its purpose is coordination, not consolidation. It may provide series chronology, recurring-entity references, series canon/continuity, book order, and series metadata while preserving each project's independent file tree and lifecycle.
@@ -443,7 +443,7 @@ Near-term frontend work should provide enough UI to validate native workflows su
 
 ## 19. Manuscript lifecycle integration
 
-The shared shell must support the canonical LithoMark manuscript lifecycle defined in **012-LITHOMARK-WRITER-OS-INTEGRATION-ARCHITECTURE.md**:
+The shared shell must support the canonical Catalyst manuscript lifecycle defined in **012-CATALYST-WRITER-OS-INTEGRATION-ARCHITECTURE.md**:
 
 > **Story Development → Write → Developmental Review → Revision → Beta Reading → Revision → ARC → Publish**
 
@@ -457,7 +457,7 @@ The first public Core Preview centers on **Write + Story Development**, includin
 
 The core UI grammar is:
 
-> **Far left:** What part of LithoMark am I using?  
+> **Far left:** What part of Catalyst am I using?  
 > **Left:** What item am I working with?  
 > **Center:** What am I doing?  
 > **Right:** What do I need to know right now?
@@ -470,4 +470,4 @@ For manuscript writing specifically:
 
 Wikilinks provide temporary contextual drill-in on the right without removing the writer from the manuscript.
 
-This architecture is the baseline for future LithoMark UI and subsystem integration.
+This architecture is the baseline for future Catalyst UI and subsystem integration.

@@ -27,7 +27,7 @@ impl ReviewCopyMetadata {
 
     pub fn validate(&self) -> Result<(), String> {
         if self.format != REVIEW_COPY_FORMAT { return Err(format!("Unsupported review-copy format '{}'. Expected '{}'.", self.format, REVIEW_COPY_FORMAT)); }
-        if self.format_version != REVIEW_COPY_FORMAT_VERSION { return Err(format!("Unsupported LithoMark review-copy format version {}.", self.format_version)); }
+        if self.format_version != REVIEW_COPY_FORMAT_VERSION { return Err(format!("Unsupported Catalyst review-copy format version {}.", self.format_version)); }
         for (field, value) in [
             ("review_id", self.review_id.as_str()), ("round_id", self.round_id.as_str()),
             ("project_id", self.project_id.as_str()), ("source_id", self.source_id.as_str()),
@@ -46,7 +46,7 @@ pub struct AssembledReviewCopy {
     pub integrity: ReviewSourceIntegrity,
 }
 
-/// Builds the exact Markdown review copy written into a portable LithoMark
+/// Builds the exact Markdown review copy written into a portable Catalyst
 /// review package. Integrity hashes include frontmatter and the visible notice.
 pub fn assemble_review_copy(relative_path: &str, metadata: &ReviewCopyMetadata, manuscript_markdown: &str) -> Result<AssembledReviewCopy, String> {
     metadata.validate()?;
@@ -58,7 +58,7 @@ pub fn assemble_review_copy(relative_path: &str, metadata: &ReviewCopyMetadata, 
     markdown.push_str("---\n");
     markdown.push_str(&yaml);
     markdown.push_str("---\n\n");
-    markdown.push_str("> **LithoMark Review Copy**\n");
+    markdown.push_str("> **Catalyst Review Copy**\n");
     markdown.push_str("> Prepared for **");
     markdown.push_str(&escape_notice_text(&metadata.reviewer_name));
     markdown.push_str("**. Review ID: ");
@@ -99,7 +99,7 @@ mod tests {
         let copy = assemble_review_copy("Manuscript/Chapter 01/Scene 01.md", &metadata(), "# Scene One\n\nThe door opened.").unwrap();
         assert!(copy.markdown.starts_with("---\nformat: lithomark-review-copy\n"));
         assert!(copy.markdown.contains("reviewer_name: Jane Smith"));
-        assert!(copy.markdown.contains("> **LithoMark Review Copy**"));
+        assert!(copy.markdown.contains("> **Catalyst Review Copy**"));
         assert!(copy.markdown.contains("Prepared for **Jane Smith**"));
         assert!(copy.markdown.contains("# Scene One\n\nThe door opened."));
         assert!(copy.markdown.ends_with('\n'));

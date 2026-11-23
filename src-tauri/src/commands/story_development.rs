@@ -44,7 +44,7 @@ pub struct StoryDevelopmentDocument {
 
 
 fn document_response(
-    document: crate::document::service::LithoMarkDocument,
+    document: crate::document::service::CatalystDocument,
 ) -> Result<StoryDevelopmentDocument, String> {
     let source = crate::document::service::serialize_document(&document)?;
     let metadata_yaml = serde_yaml::to_string(&document.metadata)
@@ -258,7 +258,7 @@ pub async fn preview_document_recovery_candidate(
         .find(|item| item.relative_path.to_string_lossy().replace('\\', "/") == artifact_path)
         .ok_or_else(|| "Recovery artifact was not found.".to_string())?;
     if !candidate.valid_document {
-        return Err("Recovery artifact is not a valid LithoMark document.".into());
+        return Err("Recovery artifact is not a valid Catalyst document.".into());
     }
     let path = root.join(&candidate.relative_path);
     std::fs::read_to_string(&path)
@@ -285,7 +285,7 @@ pub async fn review_document_recovery_restore(
         .find(|item| item.relative_path.to_string_lossy().replace('\\', "/") == artifact_path)
         .ok_or_else(|| "Recovery artifact was not found.".to_string())?;
     if !candidate.valid_document {
-        return Err("Recovery artifact is not a valid LithoMark document.".into());
+        return Err("Recovery artifact is not a valid Catalyst document.".into());
     }
     let original = candidate.original_relative_path
         .ok_or_else(|| "Recovery file has no known original destination.".to_string())?;

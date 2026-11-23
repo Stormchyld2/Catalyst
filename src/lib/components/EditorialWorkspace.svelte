@@ -799,11 +799,11 @@
       const selected =
         path ??
         (await open({
-          title: "Open a LithoMark review or feedback file",
+          title: "Open a Catalyst review or feedback file",
           multiple: false,
           filters: [
             {
-              name: "LithoMark editorial files",
+              name: "Catalyst editorial files",
               extensions: ["lithomark-review", "lithomark-feedback"],
             },
           ],
@@ -915,7 +915,7 @@
       const path = await save({
         title: "Export for editorial review",
         defaultPath: `${roundName}.lithomark-review`,
-        filters: [{ name: "LithoMark review", extensions: ["lithomark-review"] }],
+        filters: [{ name: "Catalyst review", extensions: ["lithomark-review"] }],
       });
       if (!path) return;
       const created = await invoke<EditorialRound>("export_editorial_review", {
@@ -1067,7 +1067,7 @@
         defaultPath: `${round.title} - ${round.name} - ${session.name || "review"}${recovery ? " - recovery.lithomark-review" : ".lithomark-feedback"}`,
         filters: [
           {
-            name: recovery ? "LithoMark recovery review" : "LithoMark feedback",
+            name: recovery ? "Catalyst recovery review" : "Catalyst feedback",
             extensions: [recovery ? "lithomark-review" : "lithomark-feedback"],
           },
         ],
@@ -1082,7 +1082,7 @@
         path,
       });
       if (recovery) {
-        notice = `Recovery review saved to ${path}. Open it in LithoMark to resume your work, then export feedback normally.`;
+        notice = `Recovery review saved to ${path}. Open it in Catalyst to resume your work, then export feedback normally.`;
         return;
       }
       notice = `Feedback saved to ${path}. Return this file to the writer. You can continue reviewing and export another response later.`;
@@ -1097,7 +1097,7 @@
       const path = await save({
         title: "Send replies and decisions to your editor",
         defaultPath: `${round!.title} - ${round!.name} - reply to ${reviewer.name}.lithomark-review`,
-        filters: [{ name: "LithoMark review response", extensions: ["lithomark-review"] }],
+        filters: [{ name: "Catalyst review response", extensions: ["lithomark-review"] }],
       });
       if (!path) return;
       await invoke("export_editorial_reply", { roundId: feedback.round.id, reviewerId, path });
@@ -1382,7 +1382,7 @@
           <div class="package-intro">
             <h2 id="package-title">Send a manuscript for review</h2>
             <p class="package-description">
-              Create a file your editor can open in LithoMark. They can read, suggest edits, and
+              Create a file your editor can open in Catalyst. They can read, suggest edits, and
               return their feedback without an account.
             </p>
           </div>
@@ -1550,7 +1550,7 @@
             <h3>What happens next</h3>
             <p>
               Read comments, reply to your editor, and accept or reject suggestions. If you've
-              rewritten a passage, LithoMark helps you place its feedback before applying an edit.
+              rewritten a passage, Catalyst helps you place its feedback before applying an edit.
             </p>
             <p>
               You can work through the feedback at your own pace and export your replies and

@@ -1,7 +1,7 @@
 {
-    "name": "lithomark",
+    "name": "catalyst",
     "version": "0.1.0",
-    "description": "LithoMark Writer OS - a local-first writing and story development environment",
+    "description": "Catalyst - a local-first writing and story development environment",
     "type": "module",
     "scripts": {
         "dev": "vite",
@@ -34,7 +34,7 @@
         "changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s",
         "changelog:all": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 0",
         "tauri:qa": "node qa/visual/start.mjs",
-        "tauri:demo": "LITHOMARK_DATA_DIR=$PWD/qa/demo/data npm run tauri dev",
+        "tauri:demo": "CATALYST_DATA_DIR=$PWD/qa/demo/data npm run tauri dev",
         "seed:demo": "node qa/demo/seed.mjs",
         "demo:readme": "node qa/demo/readme/record.mjs",
         "test:startup": "node qa/visual/startup.mjs"

@@ -44,7 +44,7 @@
     }
   }
 
-  // Conflicts may replace a LithoMark edit, so they are only ever chosen one by one.
+  // Conflicts may replace a Catalyst edit, so they are only ever chosen one by one.
   function selectAllChanges() {
     selectedChanges.clear();
     for (const change of syncPreview.changes) {
@@ -77,7 +77,7 @@
 
   const selectedCount = $derived(selectedAdditions.size + selectedChanges.size);
   const conflictCount = $derived(syncPreview.changes.filter((c) => c.conflict).length);
-  // Applying settles unticked conflicts as "keep LithoMark", so that alone is worth applying.
+  // Applying settles unticked conflicts as "keep Catalyst", so that alone is worth applying.
   const keptCount = $derived(
     syncPreview.changes.filter((c) => c.conflict && !selectedChanges.has(c.id)).length
   );
@@ -105,7 +105,7 @@
         projectId,
         acceptedChangeIds: Array.from(selectedChanges),
         acceptedAdditionIds: Array.from(selectedAdditions),
-        // Only conflicts shown here are settled as "keep LithoMark".
+        // Only conflicts shown here are settled as "keep Catalyst".
         keptConflictIds: syncPreview.changes
           .filter((c) => c.conflict && !selectedChanges.has(c.id))
           .map((c) => c.id),
@@ -149,7 +149,7 @@
         </div>
       {:else}
         <p class="sync-intro">
-          LithoMark compared your project with the outline file. New items are selected; changes to
+          Catalyst compared your project with the outline file. New items are selected; changes to
           existing items are opt-in so your own edits are not overwritten.
         </p>
 
@@ -168,8 +168,8 @@
         </div>
         {#if conflictCount > 0}
           <p class="ka-help" data-testid="sync-conflict-note">
-            A conflict changed in LithoMark as well as in the outline file, or LithoMark can't tell
-            which side changed. Leave it unticked to keep the LithoMark version; it won't be offered
+            A conflict changed in Catalyst as well as in the outline file, or Catalyst can't tell
+            which side changed. Leave it unticked to keep the Catalyst version; it won't be offered
             again unless the outline file changes it. All skips conflicts.
           </p>
         {/if}
@@ -277,8 +277,8 @@
                       {#if change.conflict}
                         <span class="ka-help" data-testid="sync-conflict-help">
                           {selectedChanges.has(change.id)
-                            ? "Ticked: the incoming version will replace the LithoMark version."
-                            : "Unticked: the LithoMark version is kept. Tick to use the incoming version instead."}
+                            ? "Ticked: the incoming version will replace the Catalyst version."
+                            : "Unticked: the Catalyst version is kept. Tick to use the incoming version instead."}
                         </span>
                       {/if}
                       {#if change.field === "prose"}
@@ -341,7 +341,7 @@
       {:else}
         <p class="ka-help ka-dialog-footer-start">
           {selectedCount} item{selectedCount !== 1 ? "s" : ""} selected{#if keptCount > 0}, {keptCount}
-            LithoMark version{keptCount !== 1 ? "s" : ""} kept{/if}
+            Catalyst version{keptCount !== 1 ? "s" : ""} kept{/if}
         </p>
         <button
           type="button"
@@ -363,7 +363,7 @@
             <Loader2 class="w-5 h-5 animate-spin" aria-hidden="true" />
             Applying…
           {:else if selectedCount === 0 && keptCount > 0}
-            Keep LithoMark version{keptCount !== 1 ? "s" : ""}
+            Keep Catalyst version{keptCount !== 1 ? "s" : ""}
           {:else if selectedCount === 0}
             Apply changes
           {:else}

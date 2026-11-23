@@ -1,6 +1,6 @@
 {
-  "productName": "Kindling Export Prototype",
-  "identifier": "com.lithomark.writer.export-prototype",
+  "productName": "Catalyst Export Prototype",
+  "identifier": "com.catalyst.writer.export-prototype",
   "bundle": {
     "createUpdaterArtifacts": false
   },
@@ -8,7 +8,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Kindling Export Prototype",
+        "title": "Catalyst Export Prototype",
         "visible": false,
         "width": 1440,
         "height": 960,

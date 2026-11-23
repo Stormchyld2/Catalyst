@@ -1,4 +1,4 @@
-# LithoMark — Multi-Window & Adaptive Display Architecture
+# Catalyst — Multi-Window & Adaptive Display Architecture
 
 **Status:** Approved product direction; implementation pending  
 **Date:** 2026-10-06  
@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-LithoMark supports authors using one or several monitors, including landscape, portrait, and mixed-orientation arrangements. The goal is a coordinated, flexible writing environment—not separate application instances or copies of the book.
+Catalyst supports authors using one or several monitors, including landscape, portrait, and mixed-orientation arrangements. The goal is a coordinated, flexible writing environment—not separate application instances or copies of the book.
 
 This specification records agreed product behavior and proposed implementation boundaries. It does **not** imply these features are already implemented.
 
@@ -127,7 +127,7 @@ The order may be adjusted for dependencies, but multi-window editing must not sh
 - Simulated printed-page editing or pagination in Write.
 - Automatic conversion of chapters into one file.
 - Independent database-backed copies of project content per window.
-- Requiring multiple monitors to use LithoMark.
+- Requiring multiple monitors to use Catalyst.
 - Automatic simultaneous opening of multiple different novels as a requirement for the first release. If added later, strict project isolation is mandatory.
 
 ## 9. Dependencies and open implementation questions

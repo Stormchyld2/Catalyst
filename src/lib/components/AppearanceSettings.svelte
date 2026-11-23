@@ -13,7 +13,7 @@
 
 <div class="settings-pane">
   <p class="settings-lede">
-    Choose how LithoMark looks and how much guidance it shows. Changes apply immediately to all
+    Choose how Catalyst looks and how much guidance it shows. Changes apply immediately to all
     projects.
   </p>
   <div class="ka-group">

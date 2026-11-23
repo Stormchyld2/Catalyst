@@ -15,8 +15,8 @@
   let { onClose }: { onClose: () => void } = $props();
   const groups = [
     {
-      id: "lithomark",
-      label: "LithoMark",
+      id: "catalyst",
+      label: "Catalyst",
       sections: [
         {
           id: "preferences",

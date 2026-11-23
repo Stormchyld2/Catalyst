@@ -1,18 +1,18 @@
-# LithoMark Editorial Review Package
+# Catalyst Editorial Review Package
 
 ## Status
 
 Accepted architecture.
 
-The LithoMark Editorial Review Package is the standard interchange format for manuscript review, beta reading, editorial feedback, ARC distribution, and returned review material.
+The Catalyst Editorial Review Package is the standard interchange format for manuscript review, beta reading, editorial feedback, ARC distribution, and returned review material.
 
-The format is designed so that a reviewer does not need LithoMark to participate in the review process.
+The format is designed so that a reviewer does not need Catalyst to participate in the review process.
 
 ## Core Principle
 
-A LithoMark review package is a portable collection of ordinary Markdown and YAML files. Markdown compatibility is a primary requirement, not an export convenience.
+A Catalyst review package is a portable collection of ordinary Markdown and YAML files. Markdown compatibility is a primary requirement, not an export convenience.
 
-A review package must remain readable and useful in ordinary Markdown-capable applications even when LithoMark is not installed. It must not require a proprietary container, proprietary document body format, TipTap JSON, SQLite database, or LithoMark-specific application state for a reviewer to read the manuscript and provide feedback.
+A review package must remain readable and useful in ordinary Markdown-capable applications even when Catalyst is not installed. It must not require a proprietary container, proprietary document body format, TipTap JSON, SQLite database, or Catalyst-specific application state for a reviewer to read the manuscript and provide feedback.
 
 Review-copy protection is based on identification, integrity, provenance, and traceability. It must not compromise the portability of the manuscript or require proprietary DRM.
 
@@ -89,7 +89,7 @@ Stable IDs, rather than filenames, are authoritative for matching returned revie
 
 ## Review and Recipient Identity
 
-LithoMark distinguishes the editorial round, the distributed review package, and the recipient.
+Catalyst distinguishes the editorial round, the distributed review package, and the recipient.
 
 `round_id` identifies an editorial, beta-reading, or ARC round that may contain one or more recipients.
 
@@ -99,7 +99,7 @@ LithoMark distinguishes the editorial round, the distributed review package, and
 
 If the same manuscript is sent to five reviewers, each recipient receives a separate `review_id` and `reviewer_id`. Those packages may share the same `round_id`.
 
-This allows LithoMark to establish which exact manuscript copy was distributed, to whom it was distributed, and when it was created without relying on filenames.
+This allows Catalyst to establish which exact manuscript copy was distributed, to whom it was distributed, and when it was created without relying on filenames.
 
 ## Manuscript Files
 
@@ -131,9 +131,9 @@ exported_at: 2026-09-27T22:00:00Z
 Leah stepped through the gallery doors...
 ```
 
-The Markdown body must use standard Markdown wherever practical. LithoMark must not require proprietary body syntax for the manuscript to remain readable.
+The Markdown body must use standard Markdown wherever practical. Catalyst must not require proprietary body syntax for the manuscript to remain readable.
 
-YAML frontmatter may contain LithoMark metadata, but another Markdown editor must be able to ignore that metadata without making the manuscript unusable.
+YAML frontmatter may contain Catalyst metadata, but another Markdown editor must be able to ignore that metadata without making the manuscript unusable.
 
 Human-readable filenames are preferred. Stable UUID-based IDs belong in metadata and are not required in filenames.
 
@@ -141,7 +141,7 @@ Recipient-specific review metadata and the visible review-copy notice exist only
 
 ## Feedback Files
 
-Feedback is also stored as ordinary Markdown. Reviewers may provide overall manuscript feedback and scene-specific feedback without using LithoMark.
+Feedback is also stored as ordinary Markdown. Reviewers may provide overall manuscript feedback and scene-specific feedback without using Catalyst.
 
 ```markdown
 ---
@@ -162,7 +162,7 @@ The opening works well, but the character motivation becomes less clear after th
 - The timeline could be clearer here.
 ```
 
-The Markdown body is reviewer-authored content. LithoMark may use the YAML metadata to associate feedback with the appropriate project, chapter, scene, review package, recipient, or review round.
+The Markdown body is reviewer-authored content. Catalyst may use the YAML metadata to associate feedback with the appropriate project, chapter, scene, review package, recipient, or review round.
 
 ## Review-Copy Identification
 
@@ -179,17 +179,17 @@ At minimum, the notice identifies:
 - the unique review ID;
 - that the copy is not intended for unauthorized distribution or publication.
 
-The notice is a provenance and traceability mechanism. It is not DRM and must not make the Markdown file proprietary or unreadable outside LithoMark.
+The notice is a provenance and traceability mechanism. It is not DRM and must not make the Markdown file proprietary or unreadable outside Catalyst.
 
 ## Integrity and Provenance
 
-LithoMark review packages use SHA-256 integrity hashes.
+Catalyst review packages use SHA-256 integrity hashes.
 
 The integrity manifest in `review.yaml` records a SHA-256 hash for each exported manuscript file.
 
 Each per-file hash is calculated from the exact bytes of the completed exported Markdown file after its YAML frontmatter, recipient-specific review metadata, visible review-copy notice, and manuscript Markdown have been assembled.
 
-LithoMark also calculates a deterministic whole-manuscript SHA-256 value from the completed source inventory.
+Catalyst also calculates a deterministic whole-manuscript SHA-256 value from the completed source inventory.
 
 The whole-manuscript hash must not depend on filesystem enumeration order, ZIP metadata, ZIP compression, operating-system behavior, or the order in which files happen to be discovered.
 
@@ -201,17 +201,17 @@ stable source ID
 SHA-256 of exact exported file bytes
 ```
 
-LithoMark hashes the deterministic canonical representation of those records to produce `manuscript_sha256`.
+Catalyst hashes the deterministic canonical representation of those records to produce `manuscript_sha256`.
 
 The ZIP archive itself is not the canonical object for manuscript integrity. Recompressing an unchanged review directory must not cause the manuscript integrity value to change.
 
-The integrity manifest allows LithoMark to determine whether a returned review-copy manuscript file differs from the exact file originally exported.
+The integrity manifest allows Catalyst to determine whether a returned review-copy manuscript file differs from the exact file originally exported.
 
 A cryptographic hash establishes integrity and identifies the exported bytes. It does not, by itself, establish legal authorship or copyright ownership.
 
 ## Distribution Ledger
 
-LithoMark must retain an author-side record of every recipient-specific review, beta-reading, editorial, or ARC package it exports.
+Catalyst must retain an author-side record of every recipient-specific review, beta-reading, editorial, or ARC package it exports.
 
 The distribution record belongs to the authoritative project and must not depend on the reviewer returning the original package unchanged.
 
@@ -231,13 +231,13 @@ At minimum, a distribution record retains:
 - the source inventory;
 - per-file SHA-256 hashes.
 
-The author-side record establishes what LithoMark exported, which source documents were included, which exact exported bytes were distributed, who the package was prepared for, and when it was created.
+The author-side record establishes what Catalyst exported, which source documents were included, which exact exported bytes were distributed, who the package was prepared for, and when it was created.
 
 A returned review package must never be allowed to rewrite, replace, or become authoritative over the original author-side distribution record.
 
-The durable representation of the distribution ledger must follow LithoMark's file-authoritative architecture. It may be indexed by SQLite for convenience or performance, but SQLite must not be its sole authoritative storage.
+The durable representation of the distribution ledger must follow Catalyst's file-authoritative architecture. It may be indexed by SQLite for convenience or performance, but SQLite must not be its sole authoritative storage.
 
-The distribution ledger must survive deletion and rebuilding of LithoMark's disposable index/cache.
+The distribution ledger must survive deletion and rebuilding of Catalyst's disposable index/cache.
 
 ## REVIEW-TERMS.md
 
@@ -252,9 +252,9 @@ The file explains in plain language that:
 - the recipient is not authorized by the review package to commercially exploit the manuscript;
 - the recipient is not authorized by the review package to claim authorship of the manuscript.
 
-`REVIEW-TERMS.md` is ordinary Markdown and must remain readable without LithoMark.
+`REVIEW-TERMS.md` is ordinary Markdown and must remain readable without Catalyst.
 
-The terms file is informational and evidentiary. LithoMark must not represent it as DRM, guaranteed prevention of copying, guaranteed legal protection, or a substitute for legal advice or a separately executed agreement when one is required.
+The terms file is informational and evidentiary. Catalyst must not represent it as DRM, guaranteed prevention of copying, guaranteed legal protection, or a substitute for legal advice or a separately executed agreement when one is required.
 
 ## Manuscript Safety
 
@@ -262,11 +262,11 @@ Importing a review package must never silently overwrite the author's manuscript
 
 A returned review package is never authoritative over the writer's project files.
 
-If a reviewer edits a manuscript copy directly, LithoMark may detect those differences and present them as proposed changes. Applying a reviewer-authored prose change to the authoritative manuscript requires an explicit author decision.
+If a reviewer edits a manuscript copy directly, Catalyst may detect those differences and present them as proposed changes. Applying a reviewer-authored prose change to the authoritative manuscript requires an explicit author decision.
 
 Recipient-specific review metadata and visible review-copy notices must never be imported as authoritative manuscript metadata or manuscript prose.
 
-LithoMark must distinguish among:
+Catalyst must distinguish among:
 
 1. reviewer-authored feedback;
 2. changes made to the review-copy manuscript;
@@ -277,9 +277,9 @@ Those categories must not be silently merged.
 
 ## Structured Editorial Changes
 
-LithoMark may support richer editorial functionality including anchored comments, suggested replacements, discussions, reviewer messages, accept/reject decisions, writer responses, editorial rounds, and revision tracking.
+Catalyst may support richer editorial functionality including anchored comments, suggested replacements, discussions, reviewer messages, accept/reject decisions, writer responses, editorial rounds, and revision tracking.
 
-These capabilities must be layered on top of the portable review format. They must not make ordinary Markdown manuscript and feedback files unreadable without LithoMark.
+These capabilities must be layered on top of the portable review format. They must not make ordinary Markdown manuscript and feedback files unreadable without Catalyst.
 
 Internal editor representations such as TipTap JSON or HTML are not the canonical interchange representation.
 
@@ -290,22 +290,22 @@ During the Kindling migration, manuscript prose may still originate as HTML stor
 ```text
 Current editor/storage representation
         ↓
-LithoMark document conversion
+Catalyst document conversion
         ↓
 Standard Markdown
         ↓
 Portable review package
 ```
 
-A plain HTML tag stripper is not considered sufficient for canonical LithoMark conversion because it may discard meaningful formatting.
+A plain HTML tag stripper is not considered sufficient for canonical Catalyst conversion because it may discard meaningful formatting.
 
-The review system should ultimately use the same Markdown/document conversion layer used by LithoMark project persistence.
+The review system should ultimately use the same Markdown/document conversion layer used by Catalyst project persistence.
 
 The review exporter must create its manuscript Markdown through that shared conversion boundary rather than through a separate lossy conversion implementation.
 
 ## Import Review
 
-LithoMark provides an Import Review workflow.
+Catalyst provides an Import Review workflow.
 
 Import must:
 
@@ -326,11 +326,11 @@ A modified manuscript review copy is evidence of a proposed change, not authoriz
 
 ## Export for Review
 
-Export for Review is initiated from an open LithoMark project.
+Export for Review is initiated from an open Catalyst project.
 
 The writer may select the manuscript scope to include and identifies the intended recipient.
 
-LithoMark then:
+Catalyst then:
 
 1. creates the review and recipient identities;
 2. records the review round;
@@ -344,15 +344,15 @@ LithoMark then:
 10. records the author-side distribution ledger entry;
 11. publishes the completed review directory or transport ZIP only after package creation succeeds.
 
-The resulting package must be usable by a reviewer who does not own or install LithoMark.
+The resulting package must be usable by a reviewer who does not own or install Catalyst.
 
 A partially written package must not be published as a completed review package. Package creation should occur in a temporary sibling location and be published only after all required files and integrity information have been successfully written.
 
 ## Protection Boundary
 
-LithoMark review protection is based on identification, integrity, provenance, and traceability rather than DRM.
+Catalyst review protection is based on identification, integrity, provenance, and traceability rather than DRM.
 
-A reviewer who can read a manuscript can technically copy its text. LithoMark must not claim otherwise.
+A reviewer who can read a manuscript can technically copy its text. Catalyst must not claim otherwise.
 
 The protection model is:
 
@@ -372,15 +372,15 @@ Author-side distribution ledger
 Traceable portable review copy
 ```
 
-The protection layer must not encrypt the manuscript into a proprietary format, require LithoMark to read it, or prevent the package from being opened in ordinary Markdown software.
+The protection layer must not encrypt the manuscript into a proprietary format, require Catalyst to read it, or prevent the package from being opened in ordinary Markdown software.
 
-This design intentionally favors durable evidence and traceability over restrictions that would undermine LithoMark's portability requirements.
+This design intentionally favors durable evidence and traceability over restrictions that would undermine Catalyst's portability requirements.
 
-## LithoMark Reviewer Companion
+## Catalyst Reviewer Companion
 
-LithoMark must provide a free reviewer-facing companion application, provisionally named **LithoMark Reviewer**, for beta readers, critique partners, ARC readers, and professional editors who do not own LithoMark Writer OS.
+Catalyst must provide a free reviewer-facing companion application, provisionally named **Catalyst Reviewer**, for beta readers, critique partners, ARC readers, and professional editors who do not own Catalyst.
 
-The companion is a review client, not a restricted trial of Writer OS. A reviewer must not be required to purchase, license, or install LithoMark Writer OS in order to complete a review.
+The companion is a review client, not a restricted trial of Writer OS. A reviewer must not be required to purchase, license, or install Catalyst in order to complete a review.
 
 The first implementation should be a lightweight desktop application that consumes and returns the same native `lithomark-review` package defined by this specification. It must not introduce a second review-package format.
 
@@ -391,7 +391,7 @@ A normal reviewer workflow is:
 ```text
 Receive review package
         ↓
-Open with LithoMark Reviewer
+Open with Catalyst Reviewer
         ↓
 Read manuscript
         ↓
@@ -405,16 +405,16 @@ Export completed review package
         ↓
 Return package to author
         ↓
-Author imports into LithoMark Review Studio
+Author imports into Catalyst Review Studio
 ```
 
-Opening a package should take the reviewer directly to the review assignment rather than require creation of a LithoMark project, repository, vault, or workspace.
+Opening a package should take the reviewer directly to the review assignment rather than require creation of a Catalyst project, repository, vault, or workspace.
 
 The companion should expose only capabilities necessary to perform and return a review. It does not need manuscript-authoring, project-planning, Git, terminal, audiobook-production, publishing, plugin-management, or other Writer OS workspaces.
 
 ### Review package remains authoritative for interchange
 
-LithoMark Reviewer is a convenience client over the portable review-package contract. It must not become necessary to interpret the manuscript or basic feedback.
+Catalyst Reviewer is a convenience client over the portable review-package contract. It must not become necessary to interpret the manuscript or basic feedback.
 
 A valid review package must remain readable and reviewable using ordinary Markdown-capable tools as required elsewhere in this specification. This preserves the no-lock-in guarantee even if the companion application is unavailable.
 
@@ -426,7 +426,7 @@ The review copy is read-only by default from the reviewer's perspective. Comment
 
 Where an editorial assignment permits a suggested replacement, the companion records the proposed change without silently rewriting the review manuscript as though it were authoritative source text.
 
-The author remains the only party who can apply returned suggestions to the authoritative LithoMark project.
+The author remains the only party who can apply returned suggestions to the authoritative Catalyst project.
 
 ### Assignment-driven interface
 
@@ -440,19 +440,19 @@ These are interface affordances over the same review interchange model, not sepa
 
 ### Author questions and completion
 
-A review package may include author-supplied questions at manuscript, chapter, scene, or other supported scope. LithoMark Reviewer should present those questions in context and preserve the reviewer's answers as structured returned feedback.
+A review package may include author-supplied questions at manuscript, chapter, scene, or other supported scope. Catalyst Reviewer should present those questions in context and preserve the reviewer's answers as structured returned feedback.
 
 Before completion, the companion should summarize review progress, including relevant measures such as chapters visited, unanswered required questions, findings/comments created, and overall feedback status. Progress indicators assist the reviewer but must not prevent return of a partial review unless the package explicitly marks a response as required.
 
 ### Identity and privacy
 
-Reviewer identity comes from the recipient-specific package and may be confirmed or supplemented by the reviewer. A LithoMark cloud account must not be required for the baseline desktop review workflow.
+Reviewer identity comes from the recipient-specific package and may be confirmed or supplemented by the reviewer. A Catalyst cloud account must not be required for the baseline desktop review workflow.
 
-The companion should operate locally and offline for ordinary review work. Returning the completed package may use any transport chosen by the participants, such as email, cloud storage, file transfer, or Discord; LithoMark does not need to operate a manuscript-hosting service for this workflow.
+The companion should operate locally and offline for ordinary review work. Returning the completed package may use any transport chosen by the participants, such as email, cloud storage, file transfer, or Discord; Catalyst does not need to operate a manuscript-hosting service for this workflow.
 
 ### Integrity behavior
 
-LithoMark Reviewer must preserve the package's review, round, project, reviewer, stable source IDs, and original integrity/provenance information.
+Catalyst Reviewer must preserve the package's review, round, project, reviewer, stable source IDs, and original integrity/provenance information.
 
 It may add returned-review metadata and reviewer-authored feedback, but it must not rewrite the original provenance to imply that reviewer changes were part of the author's original export.
 
@@ -460,7 +460,7 @@ The author's retained distribution ledger remains authoritative for what was ori
 
 ### Shared implementation boundary
 
-Where practical, Writer OS and LithoMark Reviewer should share the native review domain model, package parser/writer, integrity validation, anchoring logic, and compatible rendering components rather than implementing two divergent review engines.
+Where practical, Writer OS and Catalyst Reviewer should share the native review domain model, package parser/writer, integrity validation, anchoring logic, and compatible rendering components rather than implementing two divergent review engines.
 
 The companion should remain independently packageable so that it can be distributed free of charge without exposing unrelated Writer OS functionality.
 
@@ -472,22 +472,22 @@ Any future web client must consume the same review contract and must not invalid
 
 ### Governing reviewer-access rule
 
-**Review participation must never require purchase or ownership of LithoMark Writer OS. LithoMark Reviewer provides the preferred free review experience, while the portable Markdown package remains the durable fallback.**
+**Review participation must never require purchase or ownership of Catalyst. Catalyst Reviewer provides the preferred free review experience, while the portable Markdown package remains the durable fallback.**
 
 ## Legacy Kindling Compatibility
 
-The existing `kindling-editorial` version 1 package format is a legacy compatibility format. LithoMark may retain a reader/import path for existing legacy packages during migration.
+The existing `kindling-editorial` version 1 package format is a legacy compatibility format. Catalyst may retain a reader/import path for existing legacy packages during migration.
 
-New native LithoMark review packages must not use `kindling-editorial` as their format identifier. Legacy compatibility must not define the architecture of the native LithoMark review system.
+New native Catalyst review packages must not use `kindling-editorial` as their format identifier. Legacy compatibility must not define the architecture of the native Catalyst review system.
 
-Legacy compatibility is a migration concern and must not become the storage or interchange model for new LithoMark reviews.
+Legacy compatibility is a migration concern and must not become the storage or interchange model for new Catalyst reviews.
 
 ## Relationship to Project Persistence
 
-The review-package architecture intentionally follows the same principles as LithoMark project persistence:
+The review-package architecture intentionally follows the same principles as Catalyst project persistence:
 
 ```text
-LithoMark Project                 Review Package
+Catalyst Project                 Review Package
 ----------------                 --------------
 Markdown documents        ->      Markdown documents
 YAML metadata             ->      YAML metadata
@@ -502,18 +502,18 @@ Review data that must outlive the application, including the author-side distrib
 
 ## Portability Requirement
 
-A valid LithoMark review package must pass the following test:
+A valid Catalyst review package must pass the following test:
 
 1. Export a recipient-specific review package.
 2. Verify that the author-side distribution record exists independently of the exported copy.
-3. Copy the package to a computer without LithoMark.
+3. Copy the package to a computer without Catalyst.
 4. Open the manuscript in an ordinary Markdown editor.
 5. Read the complete review manuscript and its visible review-copy identification.
-6. Read `README.md` and `REVIEW-TERMS.md` without LithoMark.
+6. Read `README.md` and `REVIEW-TERMS.md` without Catalyst.
 7. Write feedback using ordinary Markdown.
 8. Optionally edit a manuscript review copy to propose a prose change.
 9. Return the package.
-10. Import the returned package into LithoMark.
+10. Import the returned package into Catalyst.
 11. Associate feedback with the correct project, review round, recipient, and source documents using stable IDs.
 12. Verify unchanged files against their SHA-256 hashes.
 13. Detect changed manuscript review copies.
@@ -523,7 +523,7 @@ A valid LithoMark review package must pass the following test:
 17. Require explicit author action before applying a reviewer-authored manuscript change.
 18. Delete and rebuild any disposable SQLite review index without losing the authoritative distribution record.
 
-If those requirements cannot be satisfied, the implementation does not meet the LithoMark review-package architecture.
+If those requirements cannot be satisfied, the implementation does not meet the Catalyst review-package architecture.
 
 ## Browser-Based Reader Package
 
@@ -532,13 +532,13 @@ The primary recipient experience for Beta and ARC distribution is a self-contain
 A generated package should contain the manuscript, review metadata, reader UI assets, and feedback schema together in one transportable bundle. The expected delivery form is a ZIP archive that the recipient extracts and opens locally in a normal web browser.
 
 The reader must not require:
-- LithoMark installation;
+- Catalyst installation;
 - a reader account;
 - an internet connection for normal reading or feedback;
 - a local server;
 - proprietary manuscript storage.
 
-The browser reader must be designed around browser security constraints. Manuscript data needed by the reader should be bundled into the package rather than depending on unrestricted filesystem access. Returned feedback must be explicitly exported by the reader into a portable feedback file/package that LithoMark can import.
+The browser reader must be designed around browser security constraints. Manuscript data needed by the reader should be bundled into the package rather than depending on unrestricted filesystem access. Returned feedback must be explicitly exported by the reader into a portable feedback file/package that Catalyst can import.
 
 Beta and ARC packages use the same reader technology but expose different workflows:
 
@@ -553,6 +553,6 @@ A future hosted-link reader may be added as an optional delivery method, but the
 
 Inline comments, highlights, questionnaires, and reviewer notes belong to the review package / Review workflow, not to the core Write editor.
 
-The author's manuscript remains unchanged while feedback is collected. LithoMark's Review workspace is responsible for importing, grouping, displaying, resolving, accepting, dismissing, or otherwise acting on returned feedback.
+The author's manuscript remains unchanged while feedback is collected. Catalyst's Review workspace is responsible for importing, grouping, displaying, resolving, accepting, dismissing, or otherwise acting on returned feedback.
 
-The system should preserve a reviewer-independent path: recipients must still be able to read and return useful feedback without purchasing or installing LithoMark.
+The system should preserve a reviewer-independent path: recipients must still be able to read and return useful feedback without purchasing or installing Catalyst.

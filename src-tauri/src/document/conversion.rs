@@ -2,7 +2,7 @@ use html_to_markdown_rs::{convert, options::ConversionOptions};
 
 /// Converts editor HTML into portable Markdown.
 ///
-/// Markdown is LithoMark's durable prose representation. HTML belongs to the
+/// Markdown is Catalyst's durable prose representation. HTML belongs to the
 /// editor layer and must cross this boundary before being written to a
 /// portable manuscript or review package.
 pub fn html_to_markdown(html: &str) -> Result<String, String> {

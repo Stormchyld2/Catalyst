@@ -2,7 +2,7 @@
 
 **Status:** Approved design baseline (2026-11-23)  
 **Scope:** New Campaign Wizard; campaign folder and metadata schema; worldbuilding starter templates; offline Game Master reference library; compatibility and future integrations.  
-**Authority:** Supersedes `016-NEW-BOOK-FOUNDATION.md` **for new Catalyst campaigns only**. Do not rewrite existing LithoMark project structures.  
+**Authority:** Supersedes `016-NEW-BOOK-FOUNDATION.md` **for new Catalyst campaigns only**. Do not rewrite existing book project structures.  
 **Related:** `001-PROJECT-FILE-FORMAT.md`, `002-DOCUMENT-MODEL.md`, `003-STABLE-ID-SYSTEM.md`, `004-CANON-MODEL.md`, `005-PLUGIN-ARCHITECTURE.md`.
 
 ## 1. Product and storage rules
@@ -254,7 +254,7 @@ Automated Rust/TS/UI tests plus manual Windows smoke checks must cover:
 - Rules-pack references validate; System-Neutral creates a playable blank campaign.
 - Campaign opens, closes and reopens with all data intact and links resolving; IDs survive rename/move.
 - Two campaigns cannot mutate each other's files or a shared-world base.
-- Existing LithoMark book projects still open without silent mutation/migration.
+- Existing book projects still open without silent mutation/migration.
 - Invalid paths, existing destinations, permission failures, corrupt manifests and interrupted staging report cleanly without data loss.
 - GM privacy metadata is stored correctly; no claim of secure LAN filtering until implemented.
 - Reference library and all dependency assets function without internet.

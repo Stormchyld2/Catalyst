@@ -3,7 +3,7 @@
 **Status:** APPROVED — visual direction locked 2026-11-23  
 **Applies to:** Catalyst desktop, standalone Catalyst Character Studio, future player-facing and Android UIs.  
 **Supersedes:** Earlier draft **amber/gold as the global UI accent** in architecture documents 020–024 and Character Studio proposals. Gold is permissible as an *optional fantasy sheet/dice skin*, not in the application chrome.  
-**Implementation status:** Design specification only. Existing inherited LithoMark CSS is NOT yet migrated.
+**Implementation status:** Design specification only. Existing inherited CSS is NOT yet migrated.
 
 ## 1. Identity and color philosophy
 
@@ -100,9 +100,9 @@ Both repos must use precisely the same token names and values. Publish this as a
 
 ## 6. Migration and compatibility rules
 
-Catalyst currently contains inherited LithoMark styling under `src/styles/lithomark/` and a stylesheet importing those files. **Do not rename or delete those files without auditing all imports, themes and components**. First introduce the `--cat-*` layer, map legacy semantic aliases through one compatibility stylesheet, migrate component-by-component, run visual and accessibility regressions, then retire unused legacy tokens. Preserve existing project/document data regardless of theme change.
+Catalyst currently contains inherited styling under `src/styles/lithomark/` and a stylesheet importing those files. **Do not rename or delete those files without auditing all imports, themes and components**. First introduce the `--cat-*` layer, map legacy semantic aliases through one compatibility stylesheet, migrate component-by-component, run visual and accessibility regressions, then retire unused legacy tokens. Preserve existing project/document data regardless of theme change.
 
-Character Studio can start with the new tokens immediately; no need to copy old LithoMark theme code into the standalone repository.
+Character Studio can start with the new tokens immediately; no need to copy the old inherited theme code into the standalone repository.
 
 The design documentation in `020-CAMPAIGN-WIZARD-ARCHITECTURE.md`, `021-CHARACTER-STUDIO-ARCHITECTURE.md` and Character Studio engine plans that mention gold are **superseded for app-wide styling by this document**, but their functional requirements remain valid.
 

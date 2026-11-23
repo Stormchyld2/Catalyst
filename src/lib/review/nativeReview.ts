@@ -1,5 +1,5 @@
 /**
- * Native LithoMark review-package frontend adapter.
+ * Native Catalyst review-package frontend adapter.
  *
  * Keep UI components insulated from raw Tauri command names and Rust transport
  * details. Legacy kindling-editorial commands are intentionally not exposed here.
@@ -89,7 +89,7 @@ export interface DistributionRecord {
 }
 
 /**
- * Creates a complete native LithoMark review package and records the
+ * Creates a complete native Catalyst review package and records the
  * distribution in the author's durable ledger.
  */
 export function createNativeReviewPackage(
@@ -101,7 +101,7 @@ export function createNativeReviewPackage(
 }
 
 /**
- * Reads the author's native LithoMark review distribution ledger.
+ * Reads the author's native Catalyst review distribution ledger.
  */
 export function readNativeReviewDistributions(
   ledgerDir: string,

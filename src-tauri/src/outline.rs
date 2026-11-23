@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::document::service::{read_document, save_document, DocumentIdentity, LithoMarkDocument};
+use crate::document::service::{read_document, save_document, DocumentIdentity, CatalystDocument};
 
 const OUTLINE_PATH: &str = "Planning/Outline.md";
 
@@ -256,7 +256,7 @@ pub fn save(project_root: &Path, outline: &Outline, expected_hash: Option<&str>)
     let mut document = if existing.is_some() {
         read_document(project_root, Path::new(OUTLINE_PATH))?
     } else {
-        LithoMarkDocument {
+        CatalystDocument {
             identity: DocumentIdentity { document_type: "outline".into(), id: format!("out-{}", Uuid::new_v4()) },
             title: Some("Master Outline".into()),
             metadata: Default::default(),

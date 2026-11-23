@@ -1,5 +1,5 @@
-@import "./styles/lithomark/fonts.css";
-@import "./styles/lithomark/tokens.css";
+@import "./styles/catalyst/fonts.css";
+@import "./styles/catalyst/tokens.css";
 
 /* This stylesheet is linked by index.html, independently of the JS bundle. */
 
@@ -23,7 +23,9 @@ body {
   gap: var(--space-s);
   padding-top: clamp(180px, 28vh, 320px);
   box-sizing: border-box;
-  background: url("./assets/lithomark-start-screen.png") center / cover no-repeat;
+  background:
+    url("./assets/catalyst-logo.png") center calc(50% - 90px) / min(560px, 72vw) auto no-repeat,
+    radial-gradient(ellipse at center, #1c1712 0%, #08080a 70%);
   color: #f1e8d8;
   font-family: var(--font-ui);
   font-size: var(--text-small);

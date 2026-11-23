@@ -1,6 +1,6 @@
-//! Native LithoMark project-root initialization.
+//! Native Catalyst project-root initialization.
 //!
-//! A project root is the authoritative filesystem boundary for a LithoMark
+//! A project root is the authoritative filesystem boundary for a Catalyst
 //! project. Project identity lives in project.yaml; runtime project services
 //! must be able to reconstruct the project from the local folder alone.
 
@@ -256,7 +256,7 @@ pub fn initialize_project_root_from_manifest(
         validate_existing_manifest_for_manifest(&manifest_path, manifest)?;
     } else if root.exists() && directory_has_entries(root)? {
         return Err(
-            "Selected project root is not empty and has no LithoMark project.yaml.".into(),
+            "Selected project root is not empty and has no Catalyst project.yaml.".into(),
         );
     }
 
@@ -266,7 +266,7 @@ pub fn initialize_project_root_from_manifest(
     for relative in PROJECT_DIRECTORIES {
         fs::create_dir_all(root.join(relative)).map_err(|e| {
             format!(
-                "Could not create LithoMark project directory '{}': {e}",
+                "Could not create Catalyst project directory '{}': {e}",
                 relative
             )
         })?;
@@ -380,7 +380,7 @@ fn validate_existing_manifest_for_manifest(
 
     if manifest.project_id != expected.project_id {
         return Err(format!(
-            "Selected folder belongs to a different LithoMark project ({}).",
+            "Selected folder belongs to a different Catalyst project ({}).",
             manifest.project_id
         ));
     }
@@ -515,7 +515,7 @@ mod tests {
         initialize_project_root(&root, &first).unwrap();
         let error = initialize_project_root(&root, &second).unwrap_err();
 
-        assert!(error.contains("different LithoMark project"));
+        assert!(error.contains("different Catalyst project"));
     }
 
     #[test]

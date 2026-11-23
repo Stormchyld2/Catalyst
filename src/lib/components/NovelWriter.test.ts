@@ -219,7 +219,7 @@ describe("prose sync UI", () => {
       item_type: "beat",
       field: "prose",
       item_title: "The knock",
-      current_value: "Revised in LithoMark.",
+      current_value: "Revised in Catalyst.",
       new_value: "Older novelWriter text.",
       db_id: "beat-1",
     } as const;
@@ -266,12 +266,12 @@ describe("prose sync UI", () => {
       })
     );
   });
-  it("applies with nothing ticked to keep LithoMark's side of conflicts", async () => {
+  it("applies with nothing ticked to keep Catalyst's side of conflicts", async () => {
     const change = {
       item_type: "beat",
       field: "prose",
       item_title: "The knock",
-      current_value: "Revised in LithoMark.",
+      current_value: "Revised in Catalyst.",
       new_value: "Older novelWriter text.",
       db_id: "beat-1",
     } as const;
@@ -283,14 +283,14 @@ describe("prose sync UI", () => {
       onSyncComplete,
     });
     expect(screen.getByTestId("sync-conflict-note").textContent).toContain(
-      "Leave it unticked to keep the LithoMark version"
+      "Leave it unticked to keep the Catalyst version"
     );
     expect(screen.getByTestId("sync-conflict-help").textContent).toContain(
-      "the LithoMark version is kept"
+      "the Catalyst version is kept"
     );
     const confirm = screen.getByTestId("sync-confirm") as HTMLButtonElement;
     expect(confirm.disabled).toBe(false);
-    expect(confirm.textContent).toContain("Keep LithoMark version");
+    expect(confirm.textContent).toContain("Keep Catalyst version");
     await fireEvent.click(confirm);
     await waitFor(() =>
       expect(invoke).toHaveBeenCalledWith("apply_sync", {

@@ -61,7 +61,7 @@ describe("StartScreen", () => {
       id: "glass-meridian",
       name: "The Glass Meridian",
       source_type: "Blank",
-      project_root: "C:/Temp/LithoMark/The Glass Meridian",
+      project_root: "C:/Temp/Catalyst/The Glass Meridian",
       genre: "Speculative Mystery",
       word_target: 88000,
     });
@@ -91,7 +91,7 @@ describe("StartScreen", () => {
     expect(row.textContent).not.toContain("(");
     expect(row.querySelector("time")?.getAttribute("datetime")).toBe("2026-09-10T12:00:00Z");
     expect(row.querySelector("time")?.getAttribute("aria-label")).toMatch(/^Modified /);
-    expect(within(list).getByRole("button", { name: "Remove The Letter from LithoMark" })).toBeTruthy();
+    expect(within(list).getByRole("button", { name: "Remove The Letter from Catalyst" })).toBeTruthy();
   });
 
   const many = (n: number) =>
@@ -185,8 +185,8 @@ describe("StartScreen", () => {
 
   it("names the consequence when confirming a delete", async () => {
     render(StartScreen, { recentProjects: [project()] });
-    await fireEvent.click(screen.getByRole("button", { name: "Remove The Letter from LithoMark" }));
-    expect(screen.getByText('Remove "The Letter" from LithoMark?')).toBeTruthy();
+    await fireEvent.click(screen.getByRole("button", { name: "Remove The Letter from Catalyst" }));
+    expect(screen.getByText('Remove "The Letter" from Catalyst?')).toBeTruthy();
     expect(screen.getByTestId("dialog-message").textContent).toContain("local files remain untouched");
   });
 });

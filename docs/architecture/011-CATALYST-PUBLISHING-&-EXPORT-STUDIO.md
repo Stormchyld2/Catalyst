@@ -1,10 +1,10 @@
-# 011 — LithoMark Publishing & Export Studio — Architecture Roadmap
+# 011 — Catalyst Publishing & Export Studio — Architecture Roadmap
 
 **Status:** Future subsystem  
 **Priority:** Post-core Writer OS  
 **Subsystem:** Publishing & Export Studio
 
-**Architectural principle:** LithoMark manuscript files remain authoritative. Publication formatting is a separate, portable presentation layer applied during preview and export.
+**Architectural principle:** Catalyst manuscript files remain authoritative. Publication formatting is a separate, portable presentation layer applied during preview and export.
 
 Publishing & Export Studio must never require proprietary formatting inside manuscript Markdown.
 
@@ -12,7 +12,7 @@ Publishing & Export Studio must never require proprietary formatting inside manu
 
 # 1. Core Architectural Boundary
 
-LithoMark should distinguish between:
+Catalyst should distinguish between:
 
 **Content** — what the author wrote.
 
@@ -23,7 +23,7 @@ and:
 The basic architecture should be:
 
 ```text
-LithoMark Project
+Catalyst Project
         │
         ├── Manuscript Markdown
         ├── Chapter / Scene Structure
@@ -63,7 +63,7 @@ Generated documents are outputs, not authoritative manuscript files.
 
 # Phase A — Publishing Project Format
 
-Publishing configuration should follow LithoMark's existing local-first and file-authoritative architecture.
+Publishing configuration should follow Catalyst's existing local-first and file-authoritative architecture.
 
 A project could contain:
 
@@ -106,20 +106,20 @@ exports:
   directory: exports/
 ```
 
-The configuration remains human-readable, portable, Git-friendly, and recoverable outside LithoMark.
+The configuration remains human-readable, portable, Git-friendly, and recoverable outside Catalyst.
 
 ---
 
 # Phase B — Intermediate Document Model
 
-LithoMark should not convert Markdown directly and independently into every output format.
+Catalyst should not convert Markdown directly and independently into every output format.
 
 Instead:
 
 ```text
 Markdown
     ↓
-LithoMark Document Model
+Catalyst Document Model
     ↓
 Exporters
 ```
@@ -204,7 +204,7 @@ The important architectural rule is:
 
 # Phase D — Publishing Profiles
 
-LithoMark should support reusable publishing profiles.
+Catalyst should support reusable publishing profiles.
 
 Initial profiles could include:
 
@@ -423,7 +423,7 @@ Small Caps
 Drop Caps
 ```
 
-LithoMark should not assume that every font available on the author's computer can legally be embedded in every exported format.
+Catalyst should not assume that every font available on the author's computer can legally be embedded in every exported format.
 
 Font embedding should therefore eventually track:
 
@@ -586,16 +586,16 @@ Traditional manuscript format
 Editable formatted manuscripts
 ```
 
-Where practical, LithoMark semantic styles should map to native Word styles rather than hard-coded formatting.
+Where practical, Catalyst semantic styles should map to native Word styles rather than hard-coded formatting.
 
 For example:
 
 ```text
-LithoMark Body
+Catalyst Body
         ↓
 Word Normal / LM Body
 
-LithoMark Chapter Title
+Catalyst Chapter Title
         ↓
 Word Heading / LM Chapter Title
 ```
@@ -625,7 +625,7 @@ Page count
 Blank-page handling
 ```
 
-LithoMark should distinguish between an ordinary PDF and a validated print-oriented PDF.
+Catalyst should distinguish between an ordinary PDF and a validated print-oriented PDF.
 
 ---
 
@@ -650,9 +650,9 @@ Language Metadata
 
 Formatting should remain responsive to the reader's device and preferences.
 
-LithoMark should avoid forcing print typography into EPUB.
+Catalyst should avoid forcing print typography into EPUB.
 
-Generated EPUB files should eventually be passed through standards validation before LithoMark reports them as validated.
+Generated EPUB files should eventually be passed through standards validation before Catalyst reports them as validated.
 
 ---
 
@@ -668,7 +668,7 @@ Documentation
 Interchange
 ```
 
-Markdown export remains important because LithoMark's core philosophy requires portable text.
+Markdown export remains important because Catalyst's core philosophy requires portable text.
 
 Markdown export could support:
 
@@ -680,7 +680,7 @@ Clean Manuscript
 Manuscript with Metadata
 ```
 
-LithoMark should never make it difficult for an author to leave the application with their work intact.
+Catalyst should never make it difficult for an author to leave the application with their work intact.
 
 ---
 
@@ -724,7 +724,7 @@ These remain normal project configuration files.
 
 # Phase S — Export Validation
 
-LithoMark should validate an export before declaring it production-ready.
+Catalyst should validate an export before declaring it production-ready.
 
 Validation may include:
 
@@ -800,13 +800,13 @@ validation:
   status: passed
 ```
 
-This allows LithoMark to determine exactly which manuscript and formatting configuration produced a particular file.
+This allows Catalyst to determine exactly which manuscript and formatting configuration produced a particular file.
 
 ---
 
 # Phase U — Stale Export Detection
 
-LithoMark should know when an existing export no longer represents the current manuscript.
+Catalyst should know when an existing export no longer represents the current manuscript.
 
 For example:
 
@@ -839,7 +839,7 @@ This follows the same principle used by Audiobook Studio's source hashing.
 
 # Phase V — Publishing Studio UI
 
-Eventually the LithoMark sidebar could include:
+Eventually the Catalyst sidebar could include:
 
 ```text
 PUBLISHING
@@ -902,7 +902,7 @@ Source Hashing
 But their production pipelines differ:
 
 ```text
-                 LithoMark Manuscript
+                 Catalyst Manuscript
                          │
              ┌───────────┴───────────┐
              ▼                       ▼
@@ -920,7 +920,7 @@ Neither subsystem should become dependent upon the other.
 
 # Phase X — Template System Integration
 
-Publishing profiles should eventually integrate with LithoMark's broader template system.
+Publishing profiles should eventually integrate with Catalyst's broader template system.
 
 A template could define:
 
@@ -952,7 +952,7 @@ They do not create proprietary manuscript formats.
 
 # What Publishing & Export Studio Should NOT Become
 
-LithoMark should not attempt to become:
+Catalyst should not attempt to become:
 
 - Microsoft Word;
 - Adobe InDesign;
@@ -965,7 +965,7 @@ Publishing & Export Studio should remain:
 
 **A manuscript-aware book formatting and export system.**
 
-Its purpose is to take the structured manuscript LithoMark already understands and reliably transform it into professional publishing and submission formats.
+Its purpose is to take the structured manuscript Catalyst already understands and reliably transform it into professional publishing and submission formats.
 
 ---
 
@@ -1061,7 +1061,7 @@ Front/Back Matter
 DOCX / PDF / EPUB
 ```
 
-That alone would allow an author to move from writing to a formatted deliverable without leaving LithoMark for routine export work.
+That alone would allow an author to move from writing to a formatted deliverable without leaving Catalyst for routine export work.
 
 More advanced typography, print validation, reusable custom profiles, and specialized publishing features can follow later.
 
@@ -1083,11 +1083,11 @@ An EPUB file is not the manuscript.
 
 They are generated representations of the manuscript.
 
-If every generated export is deleted, LithoMark must be capable of rebuilding them from the authoritative project files.
+If every generated export is deleted, Catalyst must be capable of rebuilding them from the authoritative project files.
 
 If Publishing & Export Studio itself someday disappears, the author's manuscript, front matter, back matter, metadata, styles, and configuration should remain accessible as ordinary files.
 
-That preserves LithoMark Writer OS's local-first, file-authoritative, application-independent philosophy.
+That preserves Catalyst's local-first, file-authoritative, application-independent philosophy.
 
 ## Locked Preview Boundary
 

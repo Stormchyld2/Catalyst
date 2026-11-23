@@ -1,6 +1,6 @@
 # Catalyst — Active Agent Instructions
 
-> **Catalyst is an offline-first tabletop RPG Campaign & Adventure Studio.** The following new-project instructions supersede inherited LithoMark writer/book instructions in this file. Inherited writer architecture remains historical/compatibility reference only; do not silently rebrand or mutate existing book projects.
+> **Catalyst is an offline-first tabletop RPG Campaign & Adventure Studio.** The following instructions supersede the inherited writer/book instructions later in this file. That inherited writer architecture is compatibility reference only; existing book projects must still open without silent mutation.
 
 ## Active RPG architecture hierarchy
 
@@ -17,17 +17,17 @@
 11. The approved roadmap separates **Campaign Wizard**, **World Builder**, **Adventure Studio**, **Character Studio**, **Map Studio**, **GM Console**, and **global Dice Roller**. Unfinished modules are not allowed to block valid campaign creation.
 12. For git, use Catalyst's active feature branch and dedicated PR; do not assume the inherited LithoMark `migration/kindling-foundation` branch exists in Catalyst. Do not merge to `main` without user approval. Coordinate with ongoing Claude feature branches and do not edit their code as part of documentation cleanup.
 
-**When inherited statements below conflict with the above for new RPG campaigns, the above controls.** Historical references to LithoMark/Kindling are intentionally retained where they describe disk formats, migration, provenance, or still-working writer-era services.
+**When inherited statements below conflict with the above for new RPG campaigns, the above controls.** Product naming is Catalyst throughout (LithoMark branding was replaced on 2026-11-23). Literal on-disk identifiers such as the `lithomark-project` format marker and the `.lithomark` folder change only together with the code that reads them, through a tested migration. Kindling is the upstream open-source donor and keeps its name.
 
 ---
 
-# LithoMark Writer OS — Agent Instructions
+# Catalyst — Inherited Agent Instructions
 
 These instructions apply to the entire repository. Read them before modifying code.
 
 ## Mission
 
-LithoMark is a local-first Writer OS. It combines manuscript writing, structured story development, linked knowledge, review workflows, publishing/export, audio/TTS capabilities, Git integration, templates, and an extensible plugin architecture without making the application itself the only way a writer can access their work.
+Catalyst's inherited foundation is a local-first writing environment. It combines manuscript writing, structured story development, linked knowledge, review workflows, publishing/export, audio/TTS capabilities, Git integration, templates, and an extensible plugin architecture without making the application itself the only way a writer can access their work.
 
 Preserving user ownership, portability, durable identity, and architectural boundaries is more important than implementing a feature quickly.
 
@@ -39,7 +39,7 @@ Preserving user ownership, portability, durable identity, and architectural boun
 4. Prefer Markdown, YAML, JSON, and normal local folders wherever practical.
 5. Any cache, index, search database, or projection must be disposable and fully rebuildable from authoritative project files.
 6. SQLite may be used only for rebuildable infrastructure unless an architecture document explicitly states otherwise.
-7. A LithoMark project must remain understandable and recoverable without LithoMark.
+7. A Catalyst project must remain understandable and recoverable without Catalyst.
 8. Projects/books are isolated. Never resolve ordinary project data across project boundaries.
 9. Runtime features must use actual project files. Do not add mock, demo, placeholder, or hard-coded project data as a production fallback.
 10. Synthetic fixtures are allowed in tests, QA, and explicit demo harnesses only.
@@ -49,8 +49,8 @@ Preserving user ownership, portability, durable identity, and architectural boun
 Target dependency direction:
 
 ```text
-LithoMark UI
-    -> LithoMark Domain API
+Catalyst UI
+    -> Catalyst Domain API
         -> Domain Models / Domain Services
             -> Project Services
                 -> Authoritative Project Files
@@ -97,7 +97,7 @@ Wikilink contract:
 - Do not silently rewrite authored Markdown merely because a link was resolved.
 - The shared project link resolver is the authority for link resolution. Do not implement separate resolver logic in Write, Story Development, Review, Search, or Context Panel.
 
-Read `docs/architecture/002-DOCUMENT-MODEL.md` and `docs/architecture/010-LITHOMARK-PROJECT-WORKSPACE-ARCHITECTURE.md` before changing link behavior.
+Read `docs/architecture/002-DOCUMENT-MODEL.md` and `docs/architecture/010-CATALYST-PROJECT-WORKSPACE-ARCHITECTURE.md` before changing link behavior.
 
 ## Canon, Timeline, and Continuity
 
@@ -171,22 +171,22 @@ Story Development is one domain with multiple views/services, not multiple compe
 
 ## Legacy Kindling Boundary
 
-Legacy Kindling code is migration/compatibility input, not automatically target LithoMark architecture.
+Legacy Kindling code is migration/compatibility input, not automatically target Catalyst architecture.
 
 In particular:
 
-- Legacy SQLite reference tables are not the LithoMark link graph authority.
+- Legacy SQLite reference tables are not the Catalyst link graph authority.
 - Legacy scene-reference raw UUID records are not the new stable-ID relationship model.
 - Legacy cross-project reference-copy commands are not the target persistence model.
-- Do not revive or extend these systems as new LithoMark infrastructure merely because code already exists.
+- Do not revive or extend these systems as new Catalyst infrastructure merely because code already exists.
 
-When porting Kindling behavior, preserve useful behavior only after translating it through current LithoMark domain boundaries.
+When porting Kindling behavior, preserve useful behavior only after translating it through current Catalyst domain boundaries.
 
-Read `docs/architecture/012-LITHOMARK-WRITER-OS-INTEGRATION-ARCHITECTURE.md` before significant Kindling migrations.
+Read `docs/architecture/012-CATALYST-WRITER-OS-INTEGRATION-ARCHITECTURE.md` before significant Kindling migrations.
 
 ## Plugins
 
-LithoMark supports Core, first-party plugins, and future community plugins.
+Catalyst supports Core, first-party plugins, and future community plugins.
 
 - First-party status does not bypass permissions.
 - Plugins use the public Plugin API and declared permissions.
@@ -198,7 +198,7 @@ LithoMark supports Core, first-party plugins, and future community plugins.
 
 Review, beta reading, and ARC workflows must preserve manuscript/project authority and integrity.
 
-A future free reviewer/viewer is expected so reviewers do not need the full LithoMark application. Do not architect review data so that only the full desktop application can interpret or recover it.
+A future free reviewer/viewer is expected so reviewers do not need the full Catalyst application. Do not architect review data so that only the full desktop application can interpret or recover it.
 
 ## Context Panel
 
@@ -243,7 +243,7 @@ While coding:
 - Preserve unknown YAML/frontmatter fields unless the documented operation explicitly removes them.
 - Preserve Markdown-significant whitespace and existing file semantics.
 - Protect against path traversal and unsafe project-relative paths.
-- Treat Windows behavior as first-class; LithoMark is actively developed and tested on Windows 11.
+- Treat Windows behavior as first-class; Catalyst is actively developed and tested on Windows 11.
 
 ## Testing
 

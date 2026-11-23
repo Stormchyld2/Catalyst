@@ -26,7 +26,7 @@ beforeAll(async () => {
   const read = (path: string): string =>
     readFileSync(new URL(path, import.meta.url).pathname, "utf8");
   const appCss = read("../../app.css");
-  tokensCss = read("../../styles/lithomark/tokens.css");
+  tokensCss = read("../../styles/catalyst/tokens.css");
   // The app's disabled-control rules: the global disabled pair through the
   // segment adapter, after Press's `.ka-segment.ka-selected` accent fill.
   const start = appCss.indexOf("/* Disabled state is a token pair");

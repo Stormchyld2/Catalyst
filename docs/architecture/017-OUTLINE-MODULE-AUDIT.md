@@ -29,7 +29,7 @@ The navigation entry is registered, but the Outline editor/timeline has **not** 
 
 ## Locked Timeline Product Direction
 
-The Outline workspace should match the functional depth of dedicated plotting software while presenting a distinctly LithoMark interface rather than copying another product's visual design.
+The Outline workspace should match the functional depth of dedicated plotting software while presenting a distinctly Catalyst interface rather than copying another product's visual design.
 
 The primary Outline experience is the **Timeline**:
 - chapters / acts across the horizontal axis;
@@ -45,7 +45,7 @@ Two additional views operate over exactly the same file-backed records:
 
 These are views, not separate data stores.
 
-LithoMark should distinguish:
+Catalyst should distinguish:
 - **Narrative order:** the order in which the reader encounters chapters/scenes.
 - **Story chronology:** when events occur in-world.
 

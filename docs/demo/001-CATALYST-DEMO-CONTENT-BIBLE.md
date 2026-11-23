@@ -1,8 +1,8 @@
-# LithoMark Demo Project Content Bible
+# Catalyst Demo Project Content Bible
 
 Status: Synthetic demo source material  
-Purpose: Realistic content for LithoMark integration, manual QA, screenshots, and the future Create Demo Project generator.  
-Rule: This is source material only. The runtime demo project must create normal LithoMark documents through Core services and generate fresh stable IDs.
+Purpose: Realistic content for Catalyst integration, manual QA, screenshots, and the future Create Demo Project generator.  
+Rule: This is source material only. The runtime demo project must create normal Catalyst documents through Core services and generate fresh stable IDs.
 
 # Project
 
@@ -858,7 +858,7 @@ Mara discovers that the anomaly appears between steps four and six rather than i
 
 ### Canon / Accuracy Notes
 
-This demo is designed to test LithoMark, not to serve as authoritative technical guidance.
+This demo is designed to test Catalyst, not to serve as authoritative technical guidance.
 
 ---
 
@@ -902,7 +902,7 @@ No demo content should depend on an image being present.
 
 # Outline / Planning Seed
 
-This is intentionally small. It exists to exercise later Outline and Planning work without locking LithoMark to one methodology.
+This is intentionally small. It exists to exercise later Outline and Planning work without locking Catalyst to one methodology.
 
 ## Chapter 1 — The Missing Block
 
@@ -1082,7 +1082,7 @@ Toward Old Quay.
 
 # Demo Coverage Matrix
 
-| LithoMark capability | Demo material |
+| Catalyst capability | Demo material |
 | --- | --- |
 | Character template | Mara, Tomas, Nia, Elias |
 | Location template | Old Quay, East Reach, Meridian Operations Center |
@@ -1111,7 +1111,7 @@ Toward Old Quay.
 
 When the Create Demo Project generator is implemented:
 
-1. Create a fresh normal LithoMark project folder.
+1. Create a fresh normal Catalyst project folder.
 2. Generate a fresh project UUID.
 3. Create every Markdown document through the Core Document Service.
 4. Generate fresh type-prefixed document IDs.
@@ -1120,4 +1120,4 @@ When the Create Demo Project generator is implemented:
 7. Do not ship fixed project/document UUIDs in this content source.
 8. Do not load this material as an automatic fallback.
 9. The user must explicitly choose Create Demo Project.
-10. The resulting demo must be editable, movable, Git-trackable, and structurally indistinguishable from any other LithoMark project.
+10. The resulting demo must be editable, movable, Git-trackable, and structurally indistinguishable from any other Catalyst project.

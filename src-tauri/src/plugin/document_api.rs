@@ -1,4 +1,4 @@
-//! Permission-gated document API exposed to LithoMark plugins.
+//! Permission-gated document API exposed to Catalyst plugins.
 //!
 //! Plugins receive this facade rather than direct filesystem or persistence
 //! access. Authoritative writes still flow through the Core Document Service.
@@ -6,7 +6,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::document::service::{
-    create_document, read_document, save_document, LithoMarkDocument, SaveResult,
+    create_document, read_document, save_document, CatalystDocument, SaveResult,
 };
 
 use super::{ExtensionContext, PluginPermission};
@@ -27,7 +27,7 @@ impl<'a> PluginDocumentApi<'a> {
         })
     }
 
-    pub fn read(&self, relative_path: &Path) -> Result<LithoMarkDocument, String> {
+    pub fn read(&self, relative_path: &Path) -> Result<CatalystDocument, String> {
         self.context.require(PluginPermission::DocumentRead)?;
         read_document(self.project_root, relative_path)
     }
@@ -38,7 +38,7 @@ impl<'a> PluginDocumentApi<'a> {
         document_type: &str,
         title: Option<&str>,
         body: &str,
-    ) -> Result<LithoMarkDocument, String> {
+    ) -> Result<CatalystDocument, String> {
         self.context.require(PluginPermission::DocumentCreate)?;
         create_document(
             self.project_root,
@@ -51,7 +51,7 @@ impl<'a> PluginDocumentApi<'a> {
 
     pub fn save(
         &self,
-        document: &LithoMarkDocument,
+        document: &CatalystDocument,
         expected_source_hash: Option<&str>,
     ) -> Result<SaveResult, String> {
         self.context.require(PluginPermission::DocumentWrite)?;
@@ -60,7 +60,7 @@ impl<'a> PluginDocumentApi<'a> {
 
     /// Returns the project-relative path a plugin can safely retain as a
     /// document locator. The absolute project root is deliberately not exposed.
-    pub fn relative_path(document: &LithoMarkDocument) -> PathBuf {
+    pub fn relative_path(document: &CatalystDocument) -> PathBuf {
         document.relative_path.clone()
     }
 }
