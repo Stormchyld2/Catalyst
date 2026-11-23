@@ -1,7 +1,7 @@
-# 026 — Campaign Wizard Implementation Notes
+# 032 — Campaign Wizard Implementation Notes
 
 **Status:** Implemented (first milestone)
-**Implements:** `020-CAMPAIGN-WIZARD-ARCHITECTURE.md`, which is the design authority. This note records what is built and where the build deviates from 020. It is numbered 026 to avoid colliding with 020–025.
+**Implements:** `020-CAMPAIGN-WIZARD-ARCHITECTURE.md`, which is the design authority. This note records what is built and where the build deviates from 020. It is numbered 032 because 020–031 are already taken.
 
 ## Built
 
