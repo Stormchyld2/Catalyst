@@ -35,6 +35,8 @@ pub const CAMPAIGN_DIRECTORIES: &[&str] = &[
     "Story Development/Sessions",
     "Story Development/Sessions/Session Prep",
     "Story Development/Sessions/Session Logs",
+    // Dice roller roll history (one subfolder per game session).
+    "Story Development/Sessions/Roll Logs",
     "Story Development/Characters/NPCs",
     "Story Development/Characters/Villains & Antagonists",
     "Story Development/Characters/Player Characters",

@@ -20,7 +20,7 @@ Both modes call `create_new_campaign` (`src-tauri/src/campaign_wizard.rs`), regi
 Story Development/
 ├── Campaign/                 Campaign Overview.md (metadata), Table & Safety.md, House Rules.md
 ├── Adventures/               Arcs/, Quests & Hooks/, Encounters/
-├── Sessions/                 Session Prep/ (Session 0 and Session 1), Session Logs/
+├── Sessions/                 Session Prep/ (Session 0 and Session 1), Session Logs/, Roll Logs/ (dice history)
 ├── Characters/               NPCs/, Villains & Antagonists/, Player Characters/ (README placeholder)
 ├── Worldbuilding & Settings/ Overview.md plus category folders
 └── Game Master/              Templates/, Random Tables/, Handouts/
