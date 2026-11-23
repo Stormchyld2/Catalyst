@@ -1,5 +1,7 @@
 # 024 — Catalyst Complete Engine Build Register and Ownership Matrix
 
+> **Count update:** initial S01–S29 + M01–M18 + C01–C12 = 59; architecture 026 adds M19–M21, so current planned total = **62**. Existing main module table remains the original 18, with the three additions in §4A.
+
 **Status:** Approved scope and assignment matrix; implementation statuses remain **unverified** pending code-level audit  
 **Updated:** 2026-11-23  
 **Repositories:** [Catalyst](https://github.com/Stormchyld2/Catalyst) and [Catalyst Character Studio](https://github.com/Stormchyld2/Catalyst-Character-Builder)  
@@ -95,6 +97,16 @@ The following rows mirror Character Studio's approved implementation plan, not a
 | C11 | Character Import/Export & Print Profiles | Native Markdown/YAML/JSON roundtrips, character import mapping, blank/completed/decorative PDF sheet profiles using shared print interfaces | Catalyst Character Studio repo (user + ChatGPT) | Unverified |
 | C12 | Character History, Diff & Reconciliation | Auditable changes, advancement history, undo/recovery where valid, rule-pack upgrades, conflicting manual overrides and template migrations | Catalyst Character Studio repo (user + ChatGPT) | Unverified |
 
+## 4A. Remote and Android module additions (approved after initial 59-engine inventory)
+
+| ID | Engine / module | Implementation owner | Required work | Status |
+|---|---|---|---|---|
+| M19 | Catalyst Remote — GM mobile browser workspace | Parent Catalyst / Claude | QR-paired local browser controller; soundboard first, then dice, encounters, maps, references and party actions; uses S25/S10/S24 | Planned; not yet audited |
+| M20 | Player Sharing Service adapter | Parent Catalyst / Claude | Character-bound authenticated player endpoints and projected character/inventory records, GM approvals, safe sync commands and audit; uses S25/S10/S09 | Planned; not yet audited |
+| M21 | Android Character Companion | Standalone Character Studio team | Android mobile character sheets/inventory/resources, offline characters, sync client using same character domain; after Windows completion | Planned; not yet audited |
+
+**Parallel-code exclusion:** User reports Claude currently working on soundboard (S24), left panel, Frost Blue theme migration (025), and Campaign Wizard (M05). Treat them as **In progress (user-reported, unverified)**; check active branches and avoid touching their implementation paths. For the remote, implement stable S25/S10/S09 contracts and M19/M20 afterward, without replacing soundboard work.
+
 ## 5. Shared engine handoff checklist
 
 Every shared engine must expose a documented versioned typed contract with clear authority:
@@ -122,7 +134,7 @@ Before Claude starts any engine, compare engine ID, intended owner, actual repos
 5. **World/map/GM:** S17–S23, S26–S27 and M06–M18 based on product milestones.
 6. **Later features:** S24/S25/S29, local LAN/Android/player display and advanced audio/accessibility work as dependencies permit.
 
-**Do not implement 59 engines simultaneously.** This list contains **29 shared (S01–S29), 18 module-specific (M01–M18), and 12 character-specific (C01–C12)**—some intentionally wrap or consume shared services and are not separate executable processes. A build addendum must pick a small, testable slice.
+**Do not implement 62 engines simultaneously.** This list contains **29 shared (S01–S29), 21 module-specific (M01–M21), and 12 character-specific (C01–C12)**—some intentionally wrap or consume shared services and are not separate executable processes. A build addendum must pick a small, testable slice.
 
 ## 7. Per-engine execution record (required during implementation)
 
