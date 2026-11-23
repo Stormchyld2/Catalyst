@@ -22,7 +22,7 @@ describe("Writer OS workspace state", () => {
   });
 
   it("does not allow a project-only workspace without a project", () => {
-    expect(workspace.setActive("review", false)).toBe("home");
+    expect(workspace.setActive("listen", false)).toBe("home");
     expect(workspace.active).toBe("home");
   });
 

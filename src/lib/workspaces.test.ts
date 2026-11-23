@@ -3,13 +3,14 @@ import {
   DEFAULT_GLOBAL_WORKSPACE,
   DEFAULT_PROJECT_WORKSPACE,
   WORKSPACES,
+  WORKSPACE_GROUPS,
   getWorkspace,
   isPreviewWorkspace,
   resolveWorkspace,
   workspacesForState,
 } from "./workspaces";
 
-describe("Writer OS workspace registry", () => {
+describe("Catalyst workspace registry", () => {
   it("uses Home globally and Write as the default project workspace", () => {
     expect(DEFAULT_GLOBAL_WORKSPACE).toBe("home");
     expect(DEFAULT_PROJECT_WORKSPACE).toBe("write");
@@ -22,13 +23,11 @@ describe("Writer OS workspace registry", () => {
       "home",
       "story-development",
       "outline",
+      "characters",
       "write",
-      "review",
       "listen",
-      "audiobook",
       "publish",
       "git",
-      "terminal",
       "settings",
     ]);
   });
@@ -49,7 +48,7 @@ describe("Writer OS workspace registry", () => {
     expect(resolveWorkspace("write", true)).toBe("write");
     expect(resolveWorkspace("story-development", true)).toBe("story-development");
     expect(resolveWorkspace("outline", true)).toBe("outline");
-    expect(resolveWorkspace("review", true)).toBe("review");
+    expect(resolveWorkspace("listen", true)).toBe("listen");
   });
 
   it("only exposes global workspaces before a project is open", () => {
@@ -61,12 +60,42 @@ describe("Writer OS workspace registry", () => {
 
   it("marks the active Core Preview workspaces", () => {
     expect(WORKSPACES.filter((workspace) => isPreviewWorkspace(workspace.id)).map((w) => w.id))
-      .toEqual(["home", "story-development", "outline", "write", "git", "terminal"]);
+      .toEqual(["home", "story-development", "outline", "write", "git"]);
   });
 
-  it("describes Story Development as the project Wiki/planning workspace", () => {
+  it("removes the Terminal and book-only workspaces from the campaign rail", () => {
+    const ids = WORKSPACES.map((workspace) => workspace.id as string);
+    expect(ids).not.toContain("terminal");
+    expect(ids).not.toContain("review");
+    expect(ids).not.toContain("audiobook");
+  });
+
+  it("uses tabletop campaign labels while keeping stable workspace ids", () => {
+    expect(getWorkspace("outline").label).toBe("Adventures");
+    expect(getWorkspace("characters").label).toBe("Characters");
+    expect(getWorkspace("write").label).toBe("Campaign Notes");
+    expect(getWorkspace("listen").label).toBe("Soundboard");
+    expect(getWorkspace("publish").label).toBe("Print & Export");
+    expect(getWorkspace("git").label).toBe("GitHub Sync");
+  });
+
+  it("groups the rail into campaign, table, sharing, and app sections", () => {
+    expect(WORKSPACE_GROUPS.map((group) => group.id)).toEqual(["campaign", "table", "share", "app"]);
+    expect(WORKSPACES.filter((w) => w.group === "campaign").map((w) => w.id)).toEqual([
+      "home",
+      "story-development",
+      "outline",
+      "characters",
+      "write",
+    ]);
+    expect(WORKSPACES.filter((w) => w.group === "table").map((w) => w.id)).toEqual(["listen"]);
+    expect(WORKSPACES.filter((w) => w.group === "share").map((w) => w.id)).toEqual(["publish", "git"]);
+    expect(getWorkspace("settings").group).toBe("app");
+  });
+
+  it("describes World Builder (Story Development) as the campaign Wiki workspace", () => {
     const workspace = getWorkspace("story-development");
-    expect(workspace.label).toBe("Story Dev");
+    expect(workspace.label).toBe("World Builder");
     expect(workspace.description).toContain("Wiki");
     expect(workspace.requiresProject).toBe(true);
   });

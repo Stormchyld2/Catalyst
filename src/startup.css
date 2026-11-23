@@ -1,5 +1,6 @@
 @import "./styles/catalyst/fonts.css";
 @import "./styles/catalyst/tokens.css";
+@import "./styles/catalyst/catalyst-design-tokens.css";
 
 /* This stylesheet is linked by index.html, independently of the JS bundle. */
 

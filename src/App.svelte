@@ -29,12 +29,12 @@
   import GuidanceOverlay from "./lib/components/GuidanceOverlay.svelte";
   import CommandPalette from "./lib/components/CommandPalette.svelte";
   import ModuleRail from "./lib/components/ModuleRail.svelte";
+  import { DEFAULT_PROJECT_WORKSPACE, getWorkspace } from "./lib/workspaces";
   import StoryDevelopmentWorkspace from "./lib/components/StoryDevelopmentWorkspace.svelte";
   import RecoveryManagerDialog from "./lib/components/RecoveryManagerDialog.svelte";
   import ProjectDashboard from "./lib/components/ProjectDashboard.svelte";
   import GitWorkspace from "./lib/components/GitWorkspace.svelte";
   import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
-  import TerminalWorkspace from "./lib/components/TerminalWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
   import CampaignWizardDialog from "./lib/components/CampaignWizardDialog.svelte";
   import { shortcuts } from "./lib/stores/shortcuts.svelte";
@@ -836,20 +836,19 @@
       />
     {:else if workspace.active === "git"}
       <GitWorkspace project={currentProject.value} />
-    {:else if workspace.active === "terminal"}
-      <TerminalWorkspace project={currentProject.value} />
     {:else}
       <section class="workspace-placeholder" aria-live="polite">
         <div class="workspace-placeholder__card">
           <p class="workspace-placeholder__eyebrow">Catalyst</p>
-          <h1>{workspace.active.charAt(0).toUpperCase() + workspace.active.slice(1)}</h1>
-          <p>This workspace is part of the Writer OS shell and will be implemented in a later phase.</p>
+          <h1>{getWorkspace(workspace.active).label}</h1>
+          <p>{getWorkspace(workspace.active).description}</p>
+          <p>This workspace is coming in a later milestone.</p>
           <button
             type="button"
             class="ka-button"
             onclick={() => workspace.enterProject()}
           >
-            Return to Write
+            Return to {getWorkspace(DEFAULT_PROJECT_WORKSPACE).label}
           </button>
         </div>
       </section>

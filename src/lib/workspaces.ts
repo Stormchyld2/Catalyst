@@ -11,21 +11,33 @@ export type WorkspaceId =
   | "write"
   | "story-development"
   | "outline"
-  | "review"
+  | "characters"
   | "listen"
-  | "audiobook"
   | "publish"
   | "git"
-  | "terminal"
   | "settings";
 
 export type WorkspaceStage = "core-preview" | "later-core" | "optional-first-party";
+
+/**
+ * Rail grouping for tabletop campaigns. Ids stay stable for compatibility with
+ * existing projects and code; labels follow the Catalyst RPG module names.
+ */
+export type WorkspaceGroup = "campaign" | "table" | "share" | "app";
+
+export const WORKSPACE_GROUPS: readonly { id: WorkspaceGroup; label: string }[] = [
+  { id: "campaign", label: "Campaign" },
+  { id: "table", label: "At the table" },
+  { id: "share", label: "Save & share" },
+  { id: "app", label: "App" },
+] as const;
 
 export interface WorkspaceDefinition {
   id: WorkspaceId;
   label: string;
   requiresProject: boolean;
   stage: WorkspaceStage;
+  group: WorkspaceGroup;
   description: string;
 }
 
@@ -35,76 +47,71 @@ export const WORKSPACES: readonly WorkspaceDefinition[] = [
     label: "Home",
     requiresProject: false,
     stage: "core-preview",
-    description: "Project library, recent work, project creation, opening, import, and clone.",
+    group: "campaign",
+    description: "Campaign library, recent work, campaign creation, opening, import, and clone.",
   },
   {
     id: "story-development",
-    label: "Story Dev",
+    label: "World Builder",
     requiresProject: true,
     stage: "core-preview",
-    description: "Project Wiki, characters, locations, worldbuilding, and reference material.",
+    group: "campaign",
+    description: "Campaign Wiki: worldbuilding, locations, factions, NPCs, lore, and reference material.",
   },
   {
     id: "outline",
-    label: "Outline",
+    label: "Adventures",
     requiresProject: true,
     stage: "core-preview",
-    description: "Visual timeline, plotlines, chapters, scenes, and beats.",
+    group: "campaign",
+    description: "Adventure planning: timeline, quests, story arcs, scenes, and beats.",
+  },
+  {
+    id: "characters",
+    label: "Characters",
+    requiresProject: true,
+    stage: "later-core",
+    group: "campaign",
+    description: "Character Studio: player characters and sheets (coming from the Character Studio milestone).",
   },
   {
     id: "write",
-    label: "Write",
+    label: "Campaign Notes",
     requiresProject: true,
     stage: "core-preview",
-    description: "File-authoritative manuscript navigation and writing.",
-  },
-  {
-    id: "review",
-    label: "Review",
-    requiresProject: true,
-    stage: "later-core",
-    description: "Developmental review, beta reading, ARC, and revision workflows.",
+    group: "campaign",
+    description: "File-authoritative campaign writing: session notes, read-aloud text, and handouts.",
   },
   {
     id: "listen",
-    label: "Listen",
+    label: "Soundboard",
     requiresProject: true,
     stage: "later-core",
-    description: "Core text-to-speech reader for the active manuscript.",
-  },
-  {
-    id: "audiobook",
-    label: "Audiobook",
-    requiresProject: true,
-    stage: "optional-first-party",
-    description: "Optional first-party audiobook production workspace.",
+    group: "table",
+    description: "Campaign soundboard: offline ambience, music, and sound-effect pads for live play.",
   },
   {
     id: "publish",
-    label: "Publish",
+    label: "Print & Export",
     requiresProject: true,
     stage: "later-core",
-    description: "Book formatting, export, and publishing preparation.",
+    group: "share",
+    description: "Print and export character sheets, handouts, maps, and session reports.",
   },
   {
     id: "git",
-    label: "Git",
+    label: "GitHub Sync",
     requiresProject: true,
     stage: "core-preview",
-    description: "Writer-friendly version-control status, commit, pull, push, and conflicts.",
-  },
-  {
-    id: "terminal",
-    label: "Terminal",
-    requiresProject: true,
-    stage: "core-preview",
-    description: "Integrated terminal scoped to the active project.",
+    group: "share",
+    description: "Save campaign history and sync it to a GitHub account: status, commit, pull, push.",
   },
   {
     id: "settings",
     label: "Settings",
     requiresProject: false,
     stage: "later-core",
+    group: "app",
     description: "Application settings and optional component management.",
   },
 ] as const;

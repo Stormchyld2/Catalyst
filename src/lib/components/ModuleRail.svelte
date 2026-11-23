@@ -1,18 +1,21 @@
 <script lang="ts">
   import {
-    BookOpenText,
-    BookOpen,
+    Earth,
+    FileOutput,
     GitBranch,
-    Headphones,
     Home,
-    LibraryBig,
-    ListTree,
-    Mic2,
+    Map as MapIcon,
+    NotebookPen,
     Settings,
-    SquareTerminal,
-    Upload,
+    Users,
+    AudioLines,
   } from "lucide-svelte";
-  import { WORKSPACES, type WorkspaceId } from "../workspaces";
+  import {
+    WORKSPACES,
+    WORKSPACE_GROUPS,
+    type WorkspaceDefinition,
+    type WorkspaceId,
+  } from "../workspaces";
   import { workspace } from "../stores/workspace.svelte";
 
   let {
@@ -33,17 +36,29 @@
 
   const icons: Record<WorkspaceId, typeof Home> = {
     home: Home,
-    write: BookOpenText,
-    "story-development": LibraryBig,
-    outline: ListTree,
-    review: BookOpen,
-    listen: Headphones,
-    audiobook: Mic2,
-    publish: Upload,
+    "story-development": Earth,
+    outline: MapIcon,
+    characters: Users,
+    write: NotebookPen,
+    listen: AudioLines,
+    publish: FileOutput,
     git: GitBranch,
-    terminal: SquareTerminal,
     settings: Settings,
   };
+
+  const visible = WORKSPACES.filter((item) => item.stage !== "optional-first-party");
+  const groups = WORKSPACE_GROUPS.filter((group) => group.id !== "app")
+    .map((group) => ({ ...group, items: visible.filter((item) => item.group === group.id) }))
+    .filter((group) => group.items.length > 0);
+  const appItems = visible.filter((item) => item.group === "app");
+
+  function isUnavailable(item: WorkspaceDefinition) {
+    return (
+      item.requiresProject &&
+      !hasActiveProject &&
+      !(item.id === "story-development" && onStartStoryDevelopment)
+    );
+  }
 
   let switchingWorkspace = false;
 
@@ -89,45 +104,61 @@
   }
 </script>
 
+{#snippet railButton(item: WorkspaceDefinition)}
+  {@const Icon = icons[item.id]}
+  {@const unavailable = isUnavailable(item)}
+  {@const active = workspace.active === item.id && !unavailable}
+  <button
+    type="button"
+    class="module-rail__button"
+    class:module-rail__button--active={active}
+    class:module-rail__button--future={item.stage !== "core-preview"}
+    aria-label={item.label}
+    aria-current={active ? "page" : undefined}
+    disabled={unavailable}
+    title={unavailable ? `${item.label} — open a campaign first` : item.label}
+    data-testid={`module-${item.id}`}
+    onclick={() => selectWorkspace(item.id)}
+  >
+    <Icon size={20} aria-hidden="true" />
+    <span>{item.label}</span>
+  </button>
+{/snippet}
+
 <nav class="module-rail" aria-label="Catalyst workspaces">
-  <div class="module-rail__brand" aria-hidden="true">L</div>
+  <div class="module-rail__brand" aria-hidden="true">C</div>
 
   <div class="module-rail__modules">
-    {#each WORKSPACES.filter((item) => item.stage !== "optional-first-party") as item (item.id)}
-      {@const Icon = icons[item.id]}
-      {@const unavailable =
-        item.requiresProject &&
-        !hasActiveProject &&
-        !(item.id === "story-development" && onStartStoryDevelopment)}
-      <button
-        type="button"
-        class="module-rail__button"
-        class:module-rail__button--active={workspace.active === item.id && !unavailable}
-        class:module-rail__button--future={item.stage !== "core-preview"}
-        aria-label={item.label}
-        aria-current={workspace.active === item.id && !unavailable ? "page" : undefined}
-        disabled={unavailable}
-        title={unavailable ? `${item.label} — open a project first` : item.label}
-        data-testid={`module-${item.id}`}
-        onclick={() => selectWorkspace(item.id)}
-      >
-        <Icon size={20} aria-hidden="true" />
-        <span>{item.label}</span>
-      </button>
+    {#each groups as group (group.id)}
+      <div class="module-rail__group" role="group" aria-label={group.label} data-testid={`rail-group-${group.id}`}>
+        <p class="module-rail__group-label" aria-hidden="true">{group.label}</p>
+        {#each group.items as item (item.id)}
+          {@render railButton(item)}
+        {/each}
+      </div>
+    {/each}
+  </div>
+
+  <!-- Global utilities and app settings stay pinned to the bottom of the rail. -->
+  <div class="module-rail__utilities">
+    {#each appItems as item (item.id)}
+      {@render railButton(item)}
     {/each}
   </div>
 </nav>
 
 <style>
+  /* Obsidian + Frost Blue (docs/architecture/025-CATALYST-DESIGN-SYSTEM.md). */
   .module-rail {
-    flex: 0 0 72px;
-    width: 72px;
+    flex: 0 0 76px;
+    width: 76px;
     min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    border-right: 1px solid var(--color-border);
-    background: var(--color-surface);
+    border-right: 1px solid var(--cat-border-subtle);
+    background: var(--cat-sidebar);
+    color: var(--cat-silver);
     overflow-y: auto;
     overflow-x: hidden;
   }
@@ -137,15 +168,44 @@
     flex: 0 0 54px;
     display: grid;
     place-items: center;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-accent-text);
-    font: 700 22px/1 var(--font-display);
+    border-bottom: 1px solid var(--cat-border-subtle);
+    color: var(--cat-accent);
+    font: 700 22px/1 var(--font-ui);
+    letter-spacing: 0.02em;
   }
 
   .module-rail__modules {
     display: grid;
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .module-rail__group {
+    display: grid;
+    gap: 2px;
+  }
+
+  .module-rail__group + .module-rail__group {
+    margin-top: 2px;
+    padding-top: 6px;
+    border-top: 1px solid var(--cat-border-subtle);
+  }
+
+  .module-rail__group-label {
+    margin: 2px 0 2px;
+    color: var(--cat-muted);
+    font: 600 8.5px/1.2 var(--font-ui);
+    letter-spacing: 0.08em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .module-rail__utilities {
+    margin-top: auto;
+    display: grid;
     gap: 2px;
     padding: 6px;
+    border-top: 1px solid var(--cat-border-subtle);
   }
 
   .module-rail__button {
@@ -157,28 +217,38 @@
     gap: 4px;
     padding: 6px 4px;
     border: 0;
-    border-radius: var(--radius-m);
+    border-radius: 6px;
     background: transparent;
-    color: var(--color-text-muted);
+    color: var(--cat-silver);
     cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease;
   }
 
   .module-rail__button span {
-    max-width: 62px;
-    font: 500 9px/1.15 var(--font-ui);
+    max-width: 66px;
+    font: 500 9.5px/1.15 var(--font-ui);
     text-align: center;
     white-space: normal;
     overflow-wrap: anywhere;
   }
 
   .module-rail__button:hover:not(:disabled) {
-    background: var(--color-surface-raised);
-    color: var(--color-text);
+    background: var(--cat-hover);
+    color: var(--cat-text);
+  }
+
+  .module-rail__button:focus-visible {
+    outline: 2px solid var(--cat-focus);
+    outline-offset: -2px;
   }
 
   .module-rail__button--active {
-    background: var(--color-surface-raised);
-    color: var(--color-accent-text);
+    background: var(--cat-accent-soft);
+    color: var(--cat-text);
+  }
+
+  .module-rail__button--active :global(svg) {
+    color: var(--cat-accent);
   }
 
   .module-rail__button--active::before {
@@ -187,14 +257,18 @@
     inset: 8px auto 8px -6px;
     width: 3px;
     border-radius: 0 3px 3px 0;
-    background: var(--color-accent-text);
-  }
-
-  .module-rail__button--future:not(.module-rail__button--active) {
-    color: var(--color-text-muted);
+    background: var(--cat-accent);
   }
 
   .module-rail__button:disabled {
     background: transparent !important;
+    color: var(--cat-disabled);
+    cursor: not-allowed;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .module-rail__button {
+      transition: none;
+    }
   }
 </style>
