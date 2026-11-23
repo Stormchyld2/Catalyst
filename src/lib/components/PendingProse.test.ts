@@ -144,6 +144,8 @@ it("export workspace exports the prose saved at export time, not when it opened"
   const call = vi.mocked(invoke).mock.calls.find(([name]) => name === "export_workspace_document");
   expect(JSON.stringify(call)).toContain("Text saved just before exporting.");
   expect(JSON.stringify(call)).not.toContain("Text when the workspace opened.");
+  // Let the first export finish before starting the next one.
+  await screen.findByRole("button", { name: "Export EPUB" });
 
   // A failed re-read is reported by the manuscript loader and exports nothing.
   vi.mocked(invoke).mockClear();
@@ -164,7 +166,7 @@ it("export workspace exports the prose saved at export time, not when it opened"
   vi.mocked(invoke).mockClear();
   await unsavedDraft();
   vi.mocked(save).mockResolvedValueOnce("/tmp/book.epub");
-  await fireEvent.click(screen.getByRole("button", { name: "Export EPUB" }));
+  await fireEvent.click(await screen.findByRole("button", { name: "Export EPUB" }));
   const notice = await screen.findByText(/Save or recover unsaved prose before exporting/);
   // The notice is the message itself, not "Error: …".
   expect(notice.textContent).not.toMatch(/Error:/);

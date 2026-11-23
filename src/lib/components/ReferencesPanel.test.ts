@@ -11,6 +11,7 @@ import ReferenceEditDialog from "./ReferenceEditDialog.svelte";
 import FieldRenderer from "./FieldRenderer.svelte";
 import Onboarding from "./Onboarding.svelte";
 import sampleSource from "../../../src-tauri/src/commands/sample_project.rs?raw";
+import sampleChapterOne from "../../../docs/projects/The Glass Meridian/Manuscript/Chapter 01 - The Missing Block.md?raw";
 
 vi.hoisted(() => {
   const values = new Map<string, string>();
@@ -205,8 +206,12 @@ describe("reference fixture rendering", () => {
     ui.goToStep("tour-sidebar");
     render(Onboarding);
     expect(screen.queryByText("Chapter 1: The Beginning")).toBeNull();
-    expect(screen.getByText("The Letter")).toBeTruthy();
-    expect(sampleSource).toMatch(/Chapter::new\(project.id, "The Letter"/);
+    // The first-run sample is the file-authoritative Glass Meridian project;
+    // the tour must show the chapter title that sample actually seeds.
+    expect(sampleSource).toContain("Manuscript/Chapter 01 - The Missing Block.md");
+    const seededTitle = sampleChapterOne.match(/^title: (.+)$/m)?.[1];
+    expect(seededTitle).toBe("Chapter 1 — The Missing Block");
+    expect(screen.getByText(seededTitle!)).toBeTruthy();
   });
 });
 

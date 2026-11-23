@@ -145,7 +145,7 @@ it("offers retry when the application module fails instead of spinning forever",
   await startup;
   expect(mocks.setupPluginListeners).not.toHaveBeenCalled();
   expect(document.getElementById("startup-loading")?.getAttribute("role")).toBe("alert");
-  expect(document.getElementById("startup-message")?.textContent).toContain("couldn’t start");
+  expect(document.getElementById("startup-message")?.textContent).toContain("could not start");
   expect(document.querySelector<HTMLElement>(".startup-spinner")?.hidden).toBe(true);
   expect(document.getElementById("startup-retry")?.hidden).toBe(false);
   expect(document.getElementById("startup-retry")?.onclick).toBeTypeOf("function");

@@ -378,6 +378,8 @@ it("reveals a chapter and its collapsed Part after navigation from a search resu
   expect(screen.getByText("Search destination")).toBeTruthy();
   // Manual collapse remains possible; expansion responds only to navigation.
   await fireEvent.click(screen.getByRole("button", { name: "Target chapter" }));
+  // Chapter toggles first save pending prose, so the collapse settles asynchronously.
+  await vi.advanceTimersByTimeAsync(0);
   expect(screen.queryByText("Search destination")).toBeNull();
 });
 

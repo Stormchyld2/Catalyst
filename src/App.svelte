@@ -437,15 +437,16 @@
       window.dispatchEvent(new CustomEvent("lithomark:flush-documents-before-close", {
         detail: { pendingDocumentSaves },
       }));
-      event.preventDefault();
+      // Tauri destroys the window after this handler resolves unless it calls
+      // preventDefault(), so only prevent the close when something blocks it.
       const documentsSaved = await Promise.allSettled(pendingDocumentSaves);
       if (documentsSaved.some((result) => result.status === "rejected" || !result.value)) {
+        event.preventDefault();
         ui.showError("Some documents could not be saved. Catalyst will remain open.");
         return;
       }
-      if (!(await requestProjectChange())) return;
-      if (await flushBeforeClose()) {
-        await getCurrentWindow().destroy();
+      if (!(await requestProjectChange()) || !(await flushBeforeClose())) {
+        event.preventDefault();
       }
     });
     return () => {

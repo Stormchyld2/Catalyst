@@ -61,6 +61,13 @@ async function mount(scope: "project" | "chapter" | "scene" = "project") {
       projectId: mockProject.id,
     })
   );
+  // The manuscript (and any contextual chapter/scene scope) applies once loading ends.
+  // (Exchange formats such as novelWriter have no manuscript refresh control.)
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Refresh saved manuscript" })?.hasAttribute("aria-busy")
+    ).not.toBe(true)
+  );
   await tick();
   return app;
 }

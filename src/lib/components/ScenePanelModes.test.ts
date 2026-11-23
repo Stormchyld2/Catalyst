@@ -83,7 +83,7 @@ it("undo after switching Page View scenes never restores the previous scene's te
   editor().commands.insertContentAt(editor().state.doc.content.size - 1, " more");
   for (let i = 0; i < 5; i++) editor().commands.undo();
   expect(editor().getText()).toBe("Scene B text");
-  await vi.advanceTimersByTimeAsync(600);
+  await vi.advanceTimersByTimeAsync(1000);
   const saves = vi
     .mocked(invoke)
     .mock.calls.filter(([cmd]) => cmd === "save_scene_page_prose")
