@@ -55,7 +55,7 @@
 | `021-CHARACTER-STUDIO-ARCHITECTURE.md` | **Approved new RPG target** | Reuse selected licensed donors after audit; implement guided/manual builder and sheet engine |
 | `022-RPG-SOURCEBOOK-LIBRARY-ARCHITECTURE.md` | **Approved shared RPG target** | Implement once for PDF reading/search/reference and use across Character Studio, GM Console, World Builder and other Catalyst modules |
 | `023-CATALYST-SHARED-AND-MODULE-ENGINES.md` | **Approved engine target inventory** | Audit before building; distinguish shared engines from module-owned engines and reuse existing services |
-| `024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` | **Approved ownership and work matrix** | Main app vs standalone Character Studio ownership for all 59 listed engines; code statuses unverified until audited |
+| `024-ENGINE-IMPLEMENTATION-OWNERSHIP-MATRIX.md` | **Approved ownership and work matrix** | Main app vs standalone Character Studio ownership for all 62 listed engines (59 initial plus M19–M21 from 026); code statuses unverified until audited |
 | `025-CATALYST-DESIGN-SYSTEM.md` | **Approved cross-app branding** | Obsidian, charcoal, silver and Frost Blue; stage migration of inherited LithoMark UI tokens |
 | `026-LAN-REMOTE-PLAYER-SHARING-ANDROID.md` | **Approved future LAN/mobile architecture** | GM browser remote, player-scoped sharing service, offline Android companion; coordinate S25/S10/S09 with main code |
 
@@ -67,7 +67,7 @@ Create these as separate, reviewable design milestones:
 - World Builder RPG taxonomy and entity templates beyond initial wizard seeding.
 - Adventure Studio / quest and encounter documents and transitions.
 - Map Studio manual editor, generators, map schema, asset licenses and VTT interfaces.
-- 3D Dice Roller global tray, physics, roll history and GM Console integration.
+- 3D Dice Roller global tray, physics, roll history and GM Console integration. (Drafted on the dice roller branch, PR #2, currently numbered 020–024; renumber before merge to avoid colliding with 020–024 here.)
 - Game Master Console, campaign state, private/public visibility and LAN authority.
 - Print Studio: player/GM handouts, maps, ink-friendly character sheets.
 - Android companion and offline LAN sync, staged after Windows foundation.
