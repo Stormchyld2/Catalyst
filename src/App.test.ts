@@ -12,6 +12,7 @@ import { synopsisSaves } from "./lib/stores/synopsisSaves.svelte";
 import { session } from "./lib/stores/session.svelte";
 import { runImport } from "./lib/utils/import";
 import { currentProject } from "./lib/stores/project.svelte";
+import { workspace } from "./lib/stores/workspace.svelte";
 import { mockProject, mockScenes, mockChapters } from "./dev/mock-data";
 import App from "./App.svelte";
 import { shortcuts } from "./lib/stores/shortcuts.svelte";
@@ -59,6 +60,8 @@ beforeEach(async () => {
   vi.mocked(exit).mockClear();
   vi.mocked(getCurrentWindow().onCloseRequested).mockClear();
   currentProject.setProject(mockProject);
+  // Opening a project enters its default (Write) workspace in the Writer OS shell.
+  workspace.enterProject();
   currentProject.setCurrentScene({ ...mockScenes[0], planning_status: "undefined" });
   // Drain the real debounce timer before individual tests install fake timers or flush spies.
   await session.flush();
@@ -73,6 +76,7 @@ afterEach(async () => {
   ui.setExpandedBeat(null);
   vi.restoreAllMocks();
   currentProject.setProject(null);
+  workspace.leaveProject();
   await session.flush();
   vi.useRealTimers();
 });
@@ -88,7 +92,7 @@ it.each(["menu", "native"])("flushes a debounced synopsis before %s quit", async
   render(App);
   await vi.advanceTimersByTimeAsync(0);
   await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-  await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this sceneâ€¦"), {
+  await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this scene…"), {
     target: { value: "Last words before quitting" },
   });
   let finish!: () => void;
@@ -137,7 +141,7 @@ it.each(["menu", "native"])(
     render(App);
     await vi.advanceTimersByTimeAsync(0);
     await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-    await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this sceneâ€¦"), {
+    await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this scene…"), {
       target: { value: "Do not lose this synopsis" },
     });
     vi.mocked(invoke).mockImplementation(async (cmd) => {
@@ -273,11 +277,40 @@ it.each(["import", "new"])(
       vi.mocked(runImport).mockResolvedValue(next);
       await menu("import_ywriter");
     } else {
+      // New projects are created through the file-authoritative New Book Foundation flow.
+      vi.mocked(invoke).mockImplementation(async (cmd) => {
+        if (cmd === "create_new_book_foundation")
+          return {
+            manifest: {
+              project_id: next.id,
+              title: next.name,
+              project_type: "novel",
+              created_at: "2026-09-30T00:00:00Z",
+            },
+            paths: { root: "/tmp/New project" },
+          };
+        if (cmd === "get_story_development_index") return { entries: [], issues: [] };
+        return cmd === "get_entity_template_registry"
+          ? { templates: [], issues: [], user_templates_dir: "/tmp/templates" }
+          : [];
+      });
       await menu("new_project");
-      vi.mocked(invoke).mockImplementation(async (cmd) =>
-        cmd === "create_blank_project" ? next : []
-      );
-      await fireEvent.click(screen.getByRole("button", { name: "Create" }));
+      const wizard = within(await screen.findByRole("dialog", { name: /New Book/ }));
+      await fireEvent.input(wizard.getByRole("textbox", { name: "Book title" }), {
+        target: { value: next.name },
+      });
+      await fireEvent.input(wizard.getByRole("textbox", { name: "Project folder" }), {
+        target: { value: "/tmp/New project" },
+      });
+      for (let step = 0; step < 10 && !wizard.queryByRole("button", { name: "Create Book" }); step++) {
+        if (wizard.queryByRole("heading", { name: "Worldbuilding", level: 2 })) {
+          await fireEvent.input(wizard.getByRole("textbox", { name: "Setting" }), {
+            target: { value: "Synthetic test setting" },
+          });
+        }
+        await fireEvent.click(wizard.getByRole("button", { name: /Next/ }));
+      }
+      await fireEvent.click(wizard.getByRole("button", { name: "Create Book" }));
     }
     await waitFor(() => expect(currentProject.value?.id).toBe(next.id));
     expect(screen.queryByLabelText("Find")).toBeNull();
@@ -358,7 +391,7 @@ it.each(["menu", "native"])(
     render(App);
     await vi.advanceTimersByTimeAsync(0);
     await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-    await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this sceneâ€¦"), {
+    await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this scene…"), {
       target: { value: "Deleted with its scene" },
     });
     vi.mocked(invoke).mockImplementation(async (cmd) => {
@@ -388,7 +421,7 @@ it("keeps both synopsis error warnings visible while typing continues", async ()
   render(App);
   await vi.advanceTimersByTimeAsync(0);
   await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-  const textarea = screen.getByPlaceholderText("Write a brief synopsis for this sceneâ€¦");
+  const textarea = screen.getByPlaceholderText("Write a brief synopsis for this scene…");
   await fireEvent.input(textarea, { target: { value: "Unsaved" } });
   vi.mocked(invoke).mockImplementation(async (cmd) => {
     if (cmd === "save_scene_synopsis") throw "disk full";
@@ -591,7 +624,7 @@ it("gives quit preparation exclusive keyboard and command ownership", async () =
   render(App);
   await vi.advanceTimersByTimeAsync(0);
   await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-  const editor = screen.getByPlaceholderText("Write a brief synopsis for this sceneÃ¢â‚¬Â¦");
+  const editor = screen.getByPlaceholderText("Write a brief synopsis for this scene…");
   await fireEvent.input(editor, { target: { value: "Keep this editor open" } });
 
   vi.mocked(invoke).mockImplementation(async (cmd) => {
@@ -626,7 +659,7 @@ it("gives quit preparation exclusive keyboard and command ownership", async () =
     await menu(command);
 
   expect(currentProject.value?.id).toBe(mockProject.id);
-  expect(screen.queryByPlaceholderText("Type a command or searchÃ¢â‚¬Â¦")).toBeNull();
+  expect(screen.queryByPlaceholderText("Type a command or search…")).toBeNull();
   expect(screen.queryByText("Export Project")).toBeNull();
 
   await fireEvent.keyDown(window, { key: "Escape" });
@@ -634,7 +667,7 @@ it("gives quit preparation exclusive keyboard and command ownership", async () =
   expect(screen.queryByRole("button", { name: "Keep editing" })).toBeNull();
 
   await fireEvent.keyDown(window, { key: "k", ctrlKey: true });
-  expect(screen.getByPlaceholderText("Type a command or searchÃ¢â‚¬Â¦")).toBeTruthy();
+  expect(screen.getByPlaceholderText("Type a command or search…")).toBeTruthy();
   await vi.advanceTimersByTimeAsync(0);
 });
 it.each(["export", "export success"])(
@@ -854,9 +887,12 @@ it.each(["an app dialog", "a file picker", "an import"])(
     await menu("close_project");
     await menu("new_project");
     await menu("command_palette");
+    // Closing a project is asynchronous (open documents may save first); let it settle.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await tick();
     expect(currentProject.value?.id).toBe(mockProject.id);
     expect(screen.queryByText("New project")).toBeNull();
-    expect(screen.queryByPlaceholderText("Type a command or searchâ€¦")).toBeNull();
+    expect(screen.queryByPlaceholderText("Type a command or search…")).toBeNull();
 
     if (modal === "an app dialog")
       await fireEvent.keyDown(document.activeElement!, { key: "Escape" });
@@ -868,7 +904,7 @@ it.each(["an app dialog", "a file picker", "an import"])(
       await tick();
     }
     await menu("close_project");
-    expect(currentProject.value).toBeNull();
+    await waitFor(() => expect(currentProject.value).toBeNull());
   }
 );
 
@@ -882,7 +918,7 @@ it("ignores shortcuts while a dialog is open even when focus has fallen to the p
   expect(document.activeElement).toBe(document.body);
   await fireEvent.keyDown(document.body, { key: "k", metaKey: true });
   await fireEvent.keyDown(document.body, { key: "k", ctrlKey: true });
-  expect(screen.queryByPlaceholderText("Type a command or searchâ€¦")).toBeNull();
+  expect(screen.queryByPlaceholderText("Type a command or search…")).toBeNull();
   expect(screen.getByTestId("about-dialog")).toBeTruthy();
 });
 
@@ -1050,11 +1086,11 @@ it("dispatches remapped commands once, drops old bindings, and ignores extra mod
   await tick();
   shortcuts.bindings.command_palette = "Mod+Alt+P";
   await fireEvent.keyDown(window, { key: "k", ctrlKey: true });
-  expect(screen.queryByPlaceholderText("Type a command or searchâ€¦")).toBeNull();
+  expect(screen.queryByPlaceholderText("Type a command or search…")).toBeNull();
   await fireEvent.keyDown(window, { key: "p", ctrlKey: true, altKey: true, shiftKey: true });
-  expect(screen.queryByPlaceholderText("Type a command or searchâ€¦")).toBeNull();
+  expect(screen.queryByPlaceholderText("Type a command or search…")).toBeNull();
   await fireEvent.keyDown(window, { key: "p", ctrlKey: true, altKey: true });
-  expect(screen.getByPlaceholderText("Type a command or searchâ€¦")).toBeTruthy();
+  expect(screen.getByPlaceholderText("Type a command or search…")).toBeTruthy();
 });
 
 it("blocks project commands and recording keys in Settings but keeps explicit Quit available", async () => {
@@ -1096,7 +1132,7 @@ it.each(["menu", "native"])(
     await vi.advanceTimersByTimeAsync(0);
     await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
     const editor = screen.getByPlaceholderText(
-      "Write a brief synopsis for this sceneâ€¦"
+      "Write a brief synopsis for this scene…"
     ) as HTMLTextAreaElement;
     await fireEvent.input(editor, { target: { value: "My unsaved writing" } });
     vi.mocked(invoke).mockImplementation(async (cmd) => {
@@ -1143,7 +1179,7 @@ it.each(["scene", "project", "other control", "unmount"])(
     await vi.advanceTimersByTimeAsync(0);
     await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
     const editor = screen.getByPlaceholderText(
-      "Write a brief synopsis for this sceneâ€¦"
+      "Write a brief synopsis for this scene…"
     ) as HTMLTextAreaElement;
     await fireEvent.input(editor, { target: { value: "My unsaved writing" } });
     editor.focus();

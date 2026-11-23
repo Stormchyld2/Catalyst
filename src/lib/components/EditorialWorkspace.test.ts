@@ -708,7 +708,7 @@ describe("editorial workspace", () => {
     expect(view.component.isOpen()).toBe(true);
     expect(view.queryByRole("dialog")).toBeNull();
     expect(view.getByRole("alert").textContent).toContain("Unsupported review package version");
-    expect(view.getByText("Open review or feedback fileâ€¦")).toBeTruthy();
+    expect(view.getByText("Open review or feedback file…")).toBeTruthy();
     await fireEvent.click(view.getByRole("button", { name: "Close review" }));
     await waitFor(() => expect(view.component.isOpen()).toBe(false));
   });
@@ -745,10 +745,10 @@ describe("editorial workspace", () => {
     const during = sources();
     await fireEvent.click(view.getByRole("button", { name: "Close Draft history" }));
     await waitFor(() => expect(view.queryByRole("dialog")).toBeNull());
-    // Closing waits for the reload under way rather than racing itâ€¦
+    // Closing waits for the reload under way rather than racing it…
     expect(sources()).toBe(during);
     release();
-    // â€¦then reloads the saved drafts once more.
+    // …then reloads the saved drafts once more.
     await waitFor(() => expect(sources()).toBe(during + 1));
     expect(view.queryByRole("alert")).toBeNull();
   });
@@ -1286,7 +1286,7 @@ describe("editorial workspace", () => {
       const text = editor().getText();
       document.querySelector<HTMLElement>(".manuscript-column")!.scrollTop = 123;
       await fireEvent.click(view.getByLabelText("Manuscript actions"));
-      await fireEvent.click(view.getByRole("menuitem", { name: "Review packages and roundsâ€¦" }));
+      await fireEvent.click(view.getByRole("menuitem", { name: "Review packages and rounds…" }));
       await waitFor(() =>
         expect(view.getByRole("button", { name: "Return to revisions" })).toBeTruthy()
       );
