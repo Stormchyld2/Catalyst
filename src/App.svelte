@@ -173,7 +173,7 @@
   async function requestProjectChange(): Promise<boolean> {
     const pendingDocumentSaves: Promise<boolean>[] = [];
     const permitted = window.dispatchEvent(
-      new CustomEvent("lithomark:before-project-change", {
+      new CustomEvent("catalyst:before-project-change", {
         cancelable: true,
         detail: { pendingDocumentSaves },
       })
@@ -435,7 +435,7 @@
       // Collect asynchronous saves from file-backed workspaces before closing.
       // A rejected/failed save must keep the window open.
       const pendingDocumentSaves: Promise<boolean>[] = [];
-      window.dispatchEvent(new CustomEvent("lithomark:flush-documents-before-close", {
+      window.dispatchEvent(new CustomEvent("catalyst:flush-documents-before-close", {
         detail: { pendingDocumentSaves },
       }));
       // Tauri destroys the window after this handler resolves unless it calls

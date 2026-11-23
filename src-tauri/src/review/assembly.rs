@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use super::integrity::source_integrity;
 use super::model::ReviewSourceIntegrity;
 
-pub const REVIEW_COPY_FORMAT: &str = "lithomark-review-copy";
+pub const REVIEW_COPY_FORMAT: &str = "catalyst-review-copy";
+pub const LEGACY_REVIEW_COPY_FORMAT: &str = "lithomark-review-copy";
 pub const REVIEW_COPY_FORMAT_VERSION: u32 = 1;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -26,7 +27,7 @@ impl ReviewCopyMetadata {
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        if self.format != REVIEW_COPY_FORMAT { return Err(format!("Unsupported review-copy format '{}'. Expected '{}'.", self.format, REVIEW_COPY_FORMAT)); }
+        if self.format != REVIEW_COPY_FORMAT && self.format != LEGACY_REVIEW_COPY_FORMAT { return Err(format!("Unsupported review-copy format '{}'. Expected '{}'.", self.format, REVIEW_COPY_FORMAT)); }
         if self.format_version != REVIEW_COPY_FORMAT_VERSION { return Err(format!("Unsupported Catalyst review-copy format version {}.", self.format_version)); }
         for (field, value) in [
             ("review_id", self.review_id.as_str()), ("round_id", self.round_id.as_str()),
@@ -97,7 +98,7 @@ mod tests {
     #[test]
     fn assembles_frontmatter_notice_and_manuscript() {
         let copy = assemble_review_copy("Manuscript/Chapter 01/Scene 01.md", &metadata(), "# Scene One\n\nThe door opened.").unwrap();
-        assert!(copy.markdown.starts_with("---\nformat: lithomark-review-copy\n"));
+        assert!(copy.markdown.starts_with("---\nformat: catalyst-review-copy\n"));
         assert!(copy.markdown.contains("reviewer_name: Jane Smith"));
         assert!(copy.markdown.contains("> **Catalyst Review Copy**"));
         assert!(copy.markdown.contains("Prepared for **Jane Smith**"));

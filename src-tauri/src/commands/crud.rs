@@ -149,7 +149,7 @@ pub async fn update_project_settings(
         manifest.reference_types = Some(reference_types);
     }
     if let Some(project_type) = settings.project_type {
-        if project_type != "novel" && project_type != "screenplay" {
+        if !matches!(project_type.as_str(), "novel" | "screenplay" | "campaign") {
             return Err("Unsupported project type.".into());
         }
         manifest.project_type = project_type;

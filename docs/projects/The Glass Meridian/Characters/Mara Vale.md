@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: character
   id: chr-625de761-cc13-4873-b448-74917ec58f04
 title: Mara Vale

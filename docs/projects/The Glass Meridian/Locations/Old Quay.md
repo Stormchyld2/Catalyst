@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: location
   id: loc-2d32dc6e-795c-4b2a-a401-715b49c2e319
 title: Old Quay

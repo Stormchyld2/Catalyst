@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: organization
   id: org-b4c681e8-10df-4ada-acfa-e9597eb8a04e
 title: Helix Municipal Systems

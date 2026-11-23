@@ -2,9 +2,10 @@ export type ThemePreference = "dark" | "light" | "system";
 /** Catalyst has a single primary accent, Frost Blue (design doc 025). */
 export type AccentPreference = "blue";
 
-const STORAGE_KEY = "lithomark:theme";
-const LEGACY_STORAGE_KEY = "kindling:theme";
-const ACCENT_STORAGE_KEY = "lithomark:accent";
+const STORAGE_KEY = "catalyst:theme";
+// Older builds stored the preference under these keys; migrate on first read.
+const LEGACY_STORAGE_KEYS = ["lithomark:theme", "kindling:theme"];
+const ACCENT_STORAGE_KEY = "catalyst:accent";
 let mediaQuery: MediaQueryList | null = null;
 let mediaListener: ((e: MediaQueryListEvent) => void) | null = null;
 
@@ -41,11 +42,13 @@ export function getStoredPreference(): ThemePreference {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "light" || stored === "dark" || stored === "system") return stored;
 
-  const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
-  if (legacy === "light" || legacy === "dark" || legacy === "system") {
-    localStorage.setItem(STORAGE_KEY, legacy);
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-    return legacy;
+  for (const key of LEGACY_STORAGE_KEYS) {
+    const legacy = localStorage.getItem(key);
+    if (legacy === "light" || legacy === "dark" || legacy === "system") {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      localStorage.removeItem(key);
+      return legacy;
+    }
   }
 
   return "dark";

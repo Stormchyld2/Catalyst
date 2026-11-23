@@ -259,7 +259,7 @@
         <figure class="brand">
           <img src={catalystLogo} alt="Catalyst" />
         </figure>
-        <p class="tagline">Write the story. Know the story.</p>
+        <p class="tagline">Build the world. Run the table.</p>
       </div>
 
       <section class="start-panel" aria-labelledby="start-heading">

@@ -108,7 +108,7 @@
     }
     if (error) return;
 
-    const canReplace = window.dispatchEvent(new CustomEvent("lithomark:before-project-change", { cancelable: true }));
+    const canReplace = window.dispatchEvent(new CustomEvent("catalyst:before-project-change", { cancelable: true }));
     if (!canReplace) return;
 
     saving = true;

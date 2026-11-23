@@ -13,7 +13,10 @@ use uuid::Uuid;
 
 use crate::models::Project;
 
-pub const PROJECT_FORMAT: &str = "lithomark-project";
+pub const PROJECT_FORMAT: &str = "catalyst-project";
+/// Format marker written before the Catalyst rename. Projects that carry it
+/// open normally and keep it; it is never rewritten silently.
+pub const LEGACY_PROJECT_FORMAT: &str = "lithomark-project";
 pub const PROJECT_FORMAT_VERSION: u32 = 1;
 pub const PROJECT_MANIFEST_FILENAME: &str = "project.yaml";
 
@@ -159,7 +162,7 @@ impl ProjectManifest {
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        if self.format != PROJECT_FORMAT {
+        if self.format != PROJECT_FORMAT && self.format != LEGACY_PROJECT_FORMAT {
             return Err(format!(
                 "Unsupported project format '{}'. Expected '{}'.",
                 self.format, PROJECT_FORMAT

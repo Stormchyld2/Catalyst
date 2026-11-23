@@ -44,10 +44,10 @@
 
   const STEP_HEADINGS: Record<OnboardingStep, { title: string; subtitle?: string }> = {
     welcome: { title: "Welcome to Catalyst" },
-    "tour-sidebar": { title: "Chapters and scenes", subtitle: "The left sidebar" },
-    "tour-editor": { title: "Synopsis and beats", subtitle: "The main editor" },
+    "tour-sidebar": { title: "Organize your notes", subtitle: "The Campaign Notes sidebar" },
+    "tour-editor": { title: "Scene summaries and beats", subtitle: "The Campaign Notes editor" },
     "tour-references": { title: "References", subtitle: "The right panel" },
-    import: { title: "Import your outline" },
+    import: { title: "Import your notes" },
   };
 
   const IMPORTS: { label: string; hint: string; run: () => void }[] = [
@@ -213,8 +213,8 @@
         {#if ui.onboardingStep === "welcome"}
           <img class="onboarding-mark" src={catalystLogo} alt="Catalyst" />
           <p class="onboarding-lede">
-            Transform your outline into a finished draft. Import your story structure and start
-            writing scene by scene.
+            Plan your campaign, build your world and run your sessions. Start fresh, explore the
+            sample campaign, or bring in notes you already have.
           </p>
         {:else if ui.onboardingStep === "tour-sidebar"}
           <div class="tour-figure" aria-hidden="true">
@@ -239,12 +239,8 @@
             <li><strong>Click a scene</strong> to load it in the editor.</li>
             <li>The <strong>highlighted scene</strong> is your current working scene.</li>
             <li>
-              Imported and template projects may include <strong>Parts</strong> (acts) as collapsible
-              groups above chapters.
-            </li>
-            <li>
-              Screenplay projects use <strong>Acts → Sequences → Scenes</strong> instead of Chapters
-              → Scenes, with <strong>page count</strong> estimates alongside each act.
+              Imported notes may include <strong>Parts</strong> (arcs) as collapsible groups above
+              chapters.
             </li>
           </ul>
         {:else if ui.onboardingStep === "tour-editor"}
@@ -272,16 +268,12 @@
             </div>
           </div>
           <ul class="tour-points">
-            <li>The <strong>synopsis</strong> gives you the scene overview from your outline.</li>
-            <li><strong>Beats</strong> are the key story moments within each scene.</li>
-            <li>Use beats as your writing prompts to draft each section.</li>
+            <li>The <strong>synopsis</strong> is a quick summary of the scene.</li>
+            <li><strong>Beats</strong> are its key moments: a reveal, a fight, a choice.</li>
+            <li>Use beats as prompts when you prep or run the scene.</li>
             <li>
-              Switch between <strong>Beats</strong> (outline-guided) and <strong>Page</strong>
-              (free-form writing) at the top of the scene.
-            </li>
-            <li>
-              In screenplays, scene titles are <strong>sluglines</strong> (for example,
-              <code>INT. CASTLE - NIGHT</code>). Catalyst suggests locations from your references.
+              Switch between <strong>Beats</strong> and <strong>Page</strong> (free-form notes,
+              read-aloud text) at the top of the scene.
             </li>
           </ul>
         {:else if ui.onboardingStep === "tour-references"}
@@ -316,19 +308,19 @@
             </li>
             <li>Use <strong>Add</strong> to search and link references to a scene.</li>
             <li>
-              Catalyst can <strong>detect</strong> character and location mentions in your prose.
+              Catalyst can <strong>detect</strong> character and location mentions in your notes.
               Look for the <strong>Suggested</strong> group.
             </li>
-            <li><strong>Hide panel</strong> collapses the sidebar so you can focus on writing.</li>
+            <li><strong>Hide panel</strong> collapses the sidebar so you can focus.</li>
           </ul>
         {:else if ui.onboardingStep === "import"}
           {#if guidedLoading}
             <div class="ka-progress od-field" role="status">
-              <span>Reading your outline…</span>
-              <progress aria-label="Reading your outline"></progress>
+              <span>Reading your file…</span>
+              <progress aria-label="Reading your file"></progress>
             </div>
           {:else if guidedPreview}
-            <p class="onboarding-lede">This outline contains the following.</p>
+            <p class="onboarding-lede">This file contains the following.</p>
             <dl class="ka-facts">
               <div>
                 <dt>Chapters</dt>
@@ -359,13 +351,13 @@
             <div class="ka-notice ka-notice--error od-row-top" role="alert">
               <CircleAlert class="w-5 h-5" aria-hidden="true" />
               <div class="od-field od-fill">
-                <strong>Couldn’t read that outline</strong>
+                <strong>Couldn’t read that file</strong>
                 <p>{guidedError}</p>
               </div>
             </div>
           {:else}
             <p class="onboarding-lede">
-              Choose your outline format. Catalyst previews it before importing.
+              Choose a format to import. Catalyst previews it before importing anything.
             </p>
             <ul class="import-list">
               {#each IMPORTS as format (format.label)}
@@ -387,11 +379,11 @@
                 class="ka-button ka-button--secondary"
                 onclick={trySampleProject}
               >
-                Try the sample project
+                Try the sample campaign
               </button>
               <button type="button" class="ka-button ka-button--ghost" onclick={skipOnboarding}>
                 <FilePlus class="w-5 h-5" aria-hidden="true" />
-                Start a new project from scratch
+                Start a new campaign from scratch
               </button>
             </div>
           {/if}
@@ -418,7 +410,7 @@
               class="ka-button ka-button--ghost ka-dialog-footer-start"
               onclick={skipOnboarding}
             >
-              Skip and start importing
+              Skip for now
             </button>
             <button
               type="button"
@@ -651,14 +643,6 @@
   }
   .tour-points strong {
     font-weight: 600;
-    color: var(--color-text);
-  }
-  .tour-points code {
-    white-space: nowrap;
-    padding: 0 var(--space-3xs);
-    border-radius: var(--radius-xs);
-    background: var(--color-surface-sunken);
-    font: var(--text-small) / 1.5 var(--font-mono);
     color: var(--color-text);
   }
 

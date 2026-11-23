@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-b5b7d7f0-7f08-4fd6-a56b-89dc5af7de85
 title: Foundation

@@ -753,6 +753,28 @@ impl Seeder {
     }
 }
 
+/// Copy the offline GM Reference Library (020 §9) into the campaign so the GM
+/// can edit it. Every entry is original Catalyst content.
+fn seed_gm_library(root: &Path, seeder: &mut Seeder) -> Result<(), String> {
+    use crate::gm_library::{GUIDES, GUIDES_FOLDER, LIBRARY_LICENSE, LIBRARY_SOURCE, TABLES, TABLES_FOLDER};
+    for guide in GUIDES {
+        seeder.record(root, GUIDES_FOLDER, guide.title, "gm-guide", guide.body, &[
+            ("guide_topic", s(guide.topic)),
+            ("source", s(LIBRARY_SOURCE)),
+            ("license", s(LIBRARY_LICENSE)),
+        ])?;
+    }
+    for table in TABLES {
+        seeder.record(root, TABLES_FOLDER, table.title, "random-table", &table.body(), &[
+            ("die", s(&table.die())),
+            ("table_category", s(table.category)),
+            ("source", s(LIBRARY_SOURCE)),
+            ("license", s(LIBRARY_LICENSE)),
+        ])?;
+    }
+    Ok(())
+}
+
 fn empty_field_value(field_type: &str) -> Value {
     match field_type {
         "list" => Value::Sequence(Vec::new()),
@@ -1044,6 +1066,8 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
         )?;
     }
 
+    seed_gm_library(root, &mut seeder)?;
+
     Ok(Seeded {
         overview_id: overview.identity.id,
         first_session_id,
@@ -1204,13 +1228,24 @@ mod tests {
         let siblings: Vec<_> = fs::read_dir(parent.path()).unwrap().collect();
         assert_eq!(siblings.len(), 1, "staging residue next to the campaign");
 
-        // Quick Start seeds only the overview: no invented facts or blank lore files.
+        // Quick Start seeds only the overview plus the GM Reference Library:
+        // no invented facts or blank lore files.
         let index = build_index(&root).unwrap();
         assert!(index.issues.is_empty(), "{:?}", index.issues);
+        let library: Vec<_> = index
+            .entries
+            .iter()
+            .filter(|e| e.entry_kind == "document" && e.relative_path.starts_with("Game Master/"))
+            .collect();
+        assert_eq!(library.len(), crate::gm_library::GUIDES.len() + crate::gm_library::TABLES.len());
+        let table = read_document(&root, Path::new("Game Master/Random Tables/Weather.md")).unwrap();
+        assert_eq!(table.metadata.get("template_id").and_then(|v| v.as_str()), Some("random-table"));
+        assert_eq!(table.metadata.get("die").and_then(|v| v.as_str()), Some("d8"));
+        assert!(table.body.contains("| 8 | Snowfall"));
         let docs: Vec<_> = index
             .entries
             .iter()
-            .filter(|e| e.entry_kind == "document")
+            .filter(|e| e.entry_kind == "document" && !e.relative_path.starts_with("Game Master/"))
             .collect();
         assert_eq!(docs.len(), 1);
         assert_eq!(docs[0].relative_path, OVERVIEW_PATH);

@@ -276,7 +276,7 @@ mod tests {
 
     #[test]
     fn checked_projection_rejects_unmatched_outline_without_changing_files() {
-        let root = std::env::temp_dir().join(format!("lithomark-outline-gate-{}", Uuid::new_v4()));
+        let root = std::env::temp_dir().join(format!("catalyst-outline-gate-{}", Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
         let project_id = Uuid::new_v4();
         let empty = checked_write_projection(&root, project_id).unwrap();
@@ -298,7 +298,7 @@ mod tests {
 
     #[test]
     fn initialization_from_write_preserves_ids_and_rejects_overwrite() {
-        let root = std::env::temp_dir().join(format!("lithomark-outline-seed-{}", Uuid::new_v4()));
+        let root = std::env::temp_dir().join(format!("catalyst-outline-seed-{}", Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
         let project_id = Uuid::new_v4();
         let chapter_id = Uuid::new_v4();
@@ -380,7 +380,7 @@ mod tests {
 
     #[test]
     fn file_round_trip_preserves_ids_after_rename_and_move() {
-        let root = std::env::temp_dir().join(format!("lithomark-outline-{}", Uuid::new_v4()));
+        let root = std::env::temp_dir().join(format!("catalyst-outline-{}", Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
         let chapter_a = Uuid::new_v4();
         let chapter_b = Uuid::new_v4();
@@ -415,7 +415,7 @@ mod tests {
 
     #[test]
     fn stale_save_is_rejected_without_overwriting() {
-        let root = std::env::temp_dir().join(format!("lithomark-outline-{}", Uuid::new_v4()));
+        let root = std::env::temp_dir().join(format!("catalyst-outline-{}", Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
         let first = Outline::default();
         let original_hash = save(&root, &first, None).unwrap();

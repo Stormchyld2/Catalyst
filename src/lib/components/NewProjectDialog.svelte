@@ -71,7 +71,7 @@
     }
 
     const canReplaceProject = window.dispatchEvent(
-      new CustomEvent("lithomark:before-project-change", { cancelable: true })
+      new CustomEvent("catalyst:before-project-change", { cancelable: true })
     );
     if (!canReplaceProject) return;
 

@@ -138,7 +138,7 @@ pub fn update_metadata_field(
     if key.is_empty() {
         return Err("Metadata key must not be empty.".into());
     }
-    if matches!(key, "lithomark" | "title") {
+    if matches!(key, "catalyst" | "lithomark" | "title") {
         return Err(format!("Metadata field '{key}' is reserved."));
     }
 

@@ -7,7 +7,9 @@ use uuid::Uuid;
 use super::integrity::sha256_hex;
 use super::model::ReviewManifest;
 
-pub const DISTRIBUTION_RECORD_FORMAT: &str = "lithomark-review-distribution-record";
+pub const DISTRIBUTION_RECORD_FORMAT: &str = "catalyst-review-distribution-record";
+/// Records written before the Catalyst rename remain readable.
+pub const LEGACY_DISTRIBUTION_RECORD_FORMAT: &str = "lithomark-review-distribution-record";
 pub const DISTRIBUTION_RECORD_FORMAT_VERSION: u32 = 1;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -62,7 +64,7 @@ impl DistributionRecord {
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        if self.format != DISTRIBUTION_RECORD_FORMAT {
+        if self.format != DISTRIBUTION_RECORD_FORMAT && self.format != LEGACY_DISTRIBUTION_RECORD_FORMAT {
             return Err(format!(
                 "Unsupported distribution record format '{}'. Expected '{}'.",
                 self.format, DISTRIBUTION_RECORD_FORMAT
@@ -287,7 +289,7 @@ mod tests {
 
         assert!(path.exists());
         let yaml = fs::read_to_string(path).unwrap();
-        assert!(yaml.contains("format: lithomark-review-distribution-record"));
+        assert!(yaml.contains("format: catalyst-review-distribution-record"));
         assert!(yaml.contains("review_id: review-1"));
         assert!(yaml.contains("package_reference: Exports/review-1"));
     }
