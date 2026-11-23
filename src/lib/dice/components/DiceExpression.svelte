@@ -87,7 +87,7 @@
     padding: 6px 10px;
     border-radius: 8px;
     border: 1px solid var(--dice-line);
-    background: #141416;
+    background: var(--dice-inset);
     color: var(--dice-text);
     font: 15px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
@@ -102,7 +102,7 @@
   }
   .problem {
     margin: 6px 0 0;
-    color: #f1b3aa;
+    color: var(--dice-error);
     font-size: 12px;
   }
   .examples {

@@ -113,8 +113,8 @@
     color: var(--dice-muted);
   }
   .dice-result__message--error {
-    border-color: rgba(229, 139, 127, 0.5);
-    color: #f1b3aa;
+    border-color: rgba(224, 139, 139, 0.5);
+    color: var(--dice-error);
     font-size: 13px;
     border-radius: 12px;
   }
@@ -138,7 +138,7 @@
       0 8px 28px rgba(110, 169, 207, 0.25);
   }
   .dice-result__panel.crit-failure {
-    border-color: rgba(229, 139, 127, 0.55);
+    border-color: rgba(224, 139, 139, 0.55);
   }
   .dice-result__meta {
     display: flex;
@@ -207,11 +207,11 @@
     color: var(--dice-on-accent);
   }
   .dice-chip.nat-high .dice-chip__type {
-    color: #14324a;
+    color: var(--dice-on-accent);
   }
   .dice-chip.nat-low {
-    background: rgba(229, 139, 127, 0.2);
-    color: #f6c1b9;
+    background: rgba(224, 139, 139, 0.2);
+    color: var(--dice-error);
   }
   .dice-chip--dropped {
     opacity: 1;
@@ -260,8 +260,8 @@
     color: var(--dice-accent);
   }
   .crit-failure .dice-result__crit {
-    color: #f1b3aa;
-    background: rgba(229, 139, 127, 0.18);
+    color: var(--dice-error);
+    background: rgba(224, 139, 139, 0.18);
   }
   .dice-sr {
     position: absolute;

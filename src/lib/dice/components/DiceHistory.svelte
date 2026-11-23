@@ -83,7 +83,7 @@
     padding: 2px 4px;
     border-radius: 6px;
     border: 1px solid var(--dice-line);
-    background: #232327;
+    background: var(--dice-raised);
     color: var(--dice-text);
     font-size: 12px;
   }
@@ -135,7 +135,7 @@
     text-shadow: 0 0 8px rgba(110, 169, 207, 0.7);
   }
   strong.fumble {
-    color: #f1b3aa;
+    color: var(--dice-error);
   }
   .empty {
     margin: 0;

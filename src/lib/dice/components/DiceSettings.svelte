@@ -200,7 +200,7 @@
     padding: 3px 6px;
     border-radius: 6px;
     border: 1px solid var(--dice-line);
-    background: #232327;
+    background: var(--dice-raised);
     color: var(--dice-text);
     font-size: 12px;
   }

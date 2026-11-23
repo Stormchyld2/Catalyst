@@ -576,24 +576,27 @@
 
 <style>
   .dice-tray {
-    /* Obsidian, charcoal, silver and Frost Blue (Catalyst design system, doc 025). */
-    --dice-charcoal: #18181b;
-    --dice-panel: #1f1f23;
-    --dice-glass: rgba(24, 24, 27, 0.72);
-    --dice-line: rgba(214, 218, 224, 0.16);
-    --dice-text: #e7e9ec;
-    --dice-muted: #a3a8b0;
-    --dice-silver: #c9ced6;
-    /* Frost Blue chrome (design system, doc 025). Gold is only a dice skin. */
+    /* The app's Obsidian + Frost Blue tokens (design system, doc 025), with the
+       same values as fallbacks. Gold is only an optional dice skin. */
+    --dice-charcoal: var(--cat-bg, #111214);
+    --dice-panel: var(--cat-panel, #202328);
+    --dice-glass: color-mix(in srgb, var(--cat-panel, #202328) 80%, transparent);
+    --dice-line: var(--cat-border-subtle, #343941);
+    --dice-text: var(--cat-text, #f0f1f3);
+    --dice-muted: var(--cat-muted, #a3a9b2);
+    --dice-silver: var(--cat-silver, #bcc2cc);
+    --dice-raised: var(--cat-raised, #2c3036);
+    --dice-inset: var(--cat-inset, #171a1f);
+    --dice-error: var(--cat-error, #e08b8b);
     --dice-accent: var(--cat-accent, #6ea9cf);
     --dice-accent-hover: var(--cat-accent-hover, #8cc0e1);
-    --dice-accent-strong: #5b97bf;
+    --dice-accent-strong: var(--cat-accent-pressed, #4d87b0);
     --dice-accent-soft: var(--cat-accent-soft, #223646);
-    --dice-on-accent: #0b1620;
-    --dice-glyph-fill: #e7e9ec;
-    --dice-glyph-text: #18181b;
+    --dice-on-accent: var(--cat-on-accent, #111214);
+    --dice-glyph-fill: var(--cat-text, #f0f1f3);
+    --dice-glyph-text: var(--cat-bg, #111214);
     /* Catalyst draws disabled buttons from this token pair (app.css), never opacity. */
-    --color-disabled-text: #6b7078;
+    --color-disabled-text: var(--cat-disabled, #858b95);
     --color-disabled-bg: rgba(255, 255, 255, 0.04);
     --color-disabled-border: transparent;
 
@@ -725,7 +728,7 @@
       radial-gradient(ellipse at 50% 40%, rgba(110, 169, 207, 0.06), transparent 60%),
       linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 40px 40px,
       linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 0 / 40px 40px,
-      radial-gradient(ellipse at center, #1c1c20, #0f0f11 85%);
+      radial-gradient(ellipse at center, var(--cat-sidebar, #17191d), var(--cat-bg, #111214) 85%);
     box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.6);
   }
   .dice-tray__felt[data-surface="leather"] {
@@ -835,7 +838,7 @@
   }
   .dice-strip__cell:disabled {
     cursor: default;
-    --dice-glyph-fill: #4a4d53;
+    --dice-glyph-fill: var(--cat-border, #41464e);
   }
   .dice-strip__count {
     font-size: 14px;
@@ -853,7 +856,7 @@
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid var(--dice-line);
-    background: rgba(24, 24, 27, 0.94);
+    background: var(--dice-panel);
     backdrop-filter: blur(12px);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
     font-size: 13px;
@@ -910,7 +913,7 @@
   }
   .dice-die-button:disabled {
     cursor: default;
-    --dice-glyph-fill: #4a4d53;
+    --dice-glyph-fill: var(--cat-border, #41464e);
   }
   .dice-icon-button:disabled {
     cursor: default;
