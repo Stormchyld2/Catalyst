@@ -251,3 +251,62 @@ Fit this into existing repository naming and architecture rather than creating a
 **Definition of done (V1 Character Studio):** On Windows, user can create a System-Neutral or appropriately licensed 5e-compatible character through either Guided or Manual mode, save/reopen it as normal portable files, use a digital sheet, print an accurate sheet and invoke the existing global dice engine. Advanced sheet designer and additional rules packs may ship as separate milestones but must be documented, not mislabeled complete.
 
 **Do not start broad character implementation until the Campaign Wizard's file/folder format is fixed and verified.** This document is intended to allow early donor evaluation while Claude's other branches remain independent.
+
+
+## 14. D&D Beyond functional-parity benchmark (2026 review)
+
+**Product direction:** As close as practicable to the **functional experience** of D&D Beyond's character creator and digital sheets, without copying proprietary branding, original illustrations, protected layout artwork, copyrighted sourcebook options, accounts or backend behavior. The approved Catalyst charcoal/silver/amber visual design remains distinct.
+
+Official benchmark references:
+- D&D Beyond Character Builder: https://www.dndbeyond.com/characters/builder
+- Builder Sections support: https://dndbeyond-support.wizards.com/hc/en-us/articles/7747202748436-Builder-Sections
+- Current user experience/changelog: https://www.dndbeyond.com/changelog/
+
+### Parity requirements
+
+| D&D Beyond-like behavior | Catalyst implementation requirement | Priority |
+|---|---|---|
+| Step-by-step creation and contextual help | Guided creation with searchable choice cards, summaries, prerequisites, explanations and progress indicator | V1 |
+| Character choices reflected in live stats | Real-time, provenance-aware derived values recalculated from rules and equipment | V1 |
+| Class, species, background and level choices | Rules-pack-driven optional steps and verified 5e SRD options; separate edition and source filtering | V1 |
+| Ability score methods | Standard array, point buy, roll and manual where pack permits; dice from shared roller | V1 |
+| Completeness feedback | Pending/illegal choices clearly flagged, no silently invented defaults | V1 |
+| Final interactive sheet | One editable character record with tabs/sections for combat, actions, spells, abilities, skills, inventory and notes | V1 |
+| Equipment affects stats | Equipped/unequipped, attuned where applicable, condition modifiers, item effects with breakdown | V1 |
+| In-play counters | HP, rests, conditions, slots/resources, death saves and other system-relevant trackers | V1 |
+| Level up | Re-enter relevant builder choices with before/after summary and retained history | V1 |
+| Personalization | Portrait/token, character backstory, optional themed sheet skins and local template library | V1 |
+| Printing/export | Completed, blank, decorative and ink-friendly sheets, JSON/YAML/Markdown portability | V1 baseline / expanded later |
+| Spell selection and management | Search/filter permitted spells, known/prepared rules, slot tracking; packs supply data | V1 for SRD-only content |
+| Companion/campaign sharing | GM/owner permission model and local campaign links, future player-safe LAN sync | Later |
+| Cross-device sync | Offline first; local backup/import and future encrypted LAN/Android sync, never mandatory cloud | Later |
+
+Do not confuse D&D Beyond's dedicated **Quickbuilder** with Catalyst **Quick Start Campaign**: the latter creates a campaign, not a level-one character. A suggested-character quickbuilder could be added later, subject to rules pack legality.
+
+### Interaction quality
+
+- Step cards show official source/edition and brief explanations; filter/search large option lists.
+- Sticky per-step progress and **Needs Attention** summary, before Create or Level Up.
+- Preview immediate character impact when selecting class, background, feat, weapon, armor, spell or stat increase.
+- "Why is this number X?" inspector on any derived stat with modifiers and inapplicable contributions distinguished.
+- Never discard notes or equipment when class/rules option changes; show invalidation/conflicts explicitly.
+- The sheet is primarily an **in-play console**, not just a printable PDF on screen.
+- No arbitrary free-account caps or required accounts; Catalyst owns files locally.
+- Manual mode remains an equally visible choice even where guided choices are offered.
+
+## 15. Better stack-aligned open-source candidates (verified repository README/license)
+
+The first donor list was broad. Prioritize **compatible technology and a healthy legal boundary** over feature count. Evaluate code at pinned revision before reuse; validate noncode game content and art separately.
+
+| Repository | Technology and fit | License | Recommendation |
+|---|---|---|---|
+| **rpgman** — https://github.com/caioldcarvalho/dnd-character-tracker | **Rust pure rules engine + Tauri 2 + SvelteKit/Svelte UI**, data-driven JSON content, guided Build/Sheet/Gear/Spells, live resources, stat provenance, 2024 SRD direction | MIT code | **First source audit**. Closest stack fit; engine concepts and selective functions are promising. Project README admits early status, incomplete spell database and partial species/background content. |
+| **Character Forge** — https://github.com/papsop/dnd-character | Guided 2024 rules flow, live legality/derived stats, offline browser, print-ready PDF and JSON export, SRD 5.2.1 content | MIT code/art; CC BY 4.0 SRD data; fonts OFL | **Second audit** for wizard validation, step design and sheet printing. Check exact UI and PDF dependencies. |
+| **Sheetsmith** — https://github.com/Richie735/obsidian-sheetsmith | Framework-independent TypeScript concepts, configurable field/formula engine and Markdown sheet layouts; tightly coupled to Obsidian shell | MIT code | **Third audit** for manual sheet designer and generic systems. Separate pure functions from Obsidian APIs. |
+| **Borealis** — https://github.com/TeamBorealis/borealis | More complete guided character flow but React frontend; Rust/Tauri elements may be portable | MIT/Apache-2.0 reported; verify | Secondary audit if guided 5e features lacking elsewhere. |
+| **OpenPentacle** — https://github.com/arrowedisgaming/OpenPentacle | Svelte 5 guided UI and pure TypeScript rules, but server/SQLite/auth and GPL-3.0 | GPL-3.0 | **Reference-only** absent explicit GPL licensing decision. Same framework does NOT override license incompatibility. |
+| **D&D 5e Character Creator** — https://github.com/TaylorMouse/dnd_character_creator | Vanilla JS offline guided builder and live sheet; depends on **separately supplied 5etools data** and official sheet PDF for export | MIT code only | Reference for UX/tests, **do not ship generator data or official PDF** unless rights individually cleared. |
+
+**Selected engineering strategy:** inspect `rpgman` Rust calculation engine first (including all dependency/licenses), `Character Forge` for validation and print path, and `Sheetsmith` for schema-driven manual sheet layouts. Port only clearly separable code into existing Catalyst services with notices and regression tests; do not import another project's app shell, database or content pipeline. Do not imply any reuse has occurred until an implementation PR proves it.
+
+An application built in SvelteKit may have components usable in a plain Svelte/Tauri app, but **its routing/server APIs are not automatically portable**. The Rust engine must be audited for version/edition coupling and not promoted to a universal tabletop system engine without proof.
