@@ -192,3 +192,9 @@ The standalone Character Studio repository additionally owns these **character-s
 **Scope rule:** C01–C12 are developed and tested in `Stormchyld2/Catalyst-Character-Builder`. The parent Catalyst team may define interfaces, fixtures and adapters, but must coordinate before modifying or duplicating these engines. Engine C08 consumes the existing global dice engine; C10 consumes the global Sourcebook Library; C11 consumes the global export/print primitives. Character Studio must not independently create competing shared infrastructure.
 
 **Build order:** C01 → C02/C03 → C09 (manual sheet MVP) → C04/C05/C06/C07/C08 (guided/advancement/live play) → C10/C11/C12 (sourcebook/print/migration polish). Keep first milestone small and demonstrably working.
+
+## 11. Current parallel workstream coordination (2026-11-23)
+
+The user reports Claude is **actively working on** the Campaign Soundboard (S24 audio playback/cues plus the soundboard UI), the Catalyst left-panel/navigation redesign, the Frost Blue visual-system migration (025), and completion of the Campaign Wizard (M05/020). This is an owner-reported **in progress** marker, not proof of code or test completion. **Do not reimplement, rename, merge, or modify these code paths from a separate engine addendum session** without checking the active branch and coordinating with Claude. Soundboard remote control (026/M19) is future integration work, not a reason to rewrite the soundboard currently being built.
+
+New 026 workstreams: parent Catalyst owns S25/S10/S09 network/permissions/events and M19 GM Remote browser plus M20 Player Sharing Service adapter; Character Studio repository owns future M21 Android Character Companion after Windows is finished. These three M IDs are added to the complete ownership register in 024; shared engine S25 remains the single LAN transport foundation.
