@@ -14,18 +14,24 @@ Both modes call `create_new_campaign` (`src-tauri/src/campaign_wizard.rs`), regi
 
 ## Storage
 
-`project.yaml` uses the existing `lithomark-project` v1 format with `project_type: campaign`, so existing projects and the reopen path are unchanged. All of the shared Catalyst folders are still created. These campaign folders are added under `Story Development/` so the existing wiki, file tree, search and Overview card work without changes:
+`project.yaml` keeps the existing `lithomark-project` v1 format with `project_type: campaign`, so the reopen path is unchanged. A campaign root uses its own tabletop layout and none of the book folders (Manuscript, Audiobook, Reviews, Notes, Project Meta and Story Development are not created):
 
 ```text
-Story Development/
-├── Campaign/                 Campaign Overview.md (metadata), Table & Safety.md, House Rules.md
-├── Adventures/               Arcs/, Quests & Hooks/, Encounters/
-├── Sessions/                 Session Prep/ (Session 0 and Session 1), Session Logs/, Roll Logs/ (dice history)
-├── Characters/               NPCs/, Villains & Antagonists/, Player Characters/ (README placeholder)
-├── Worldbuilding & Settings/ Overview.md plus category folders
-└── Game Master/              Templates/, Random Tables/, Handouts/
-Assets/Handouts, Assets/Tokens
+<Campaign>/
+├── project.yaml
+├── Campaign/      Campaign Overview.md (metadata), Table & Safety.md, House Rules.md
+├── World/         World Overview.md, Locations/, Factions & Governments/, Organizations & Guilds/,
+│                  Cultures & Peoples/, Religions & Pantheons/, History & Lore/, Magic & Technology/,
+│                  Bestiary & Creatures/, Items & Artifacts/, Languages/
+├── Characters/    NPCs/, Villains & Antagonists/, Player Characters/ (README placeholder)
+├── Adventures/    Arcs/, Quests & Hooks/, Encounters/
+├── Sessions/      Session Prep/ (Session 0 and Session 1), Session Logs/, Roll Logs/ (dice history)
+├── Game Master/   Templates/, Random Tables/, Handouts/
+├── Maps/
+└── Assets/        Art/, Handouts/, Tokens/
 ```
+
+The Story Development wiki (index, folder picker, new document, move and new folder) reads these roots in addition to the book roots, using `CAMPAIGN_ROOTS` in `campaign_wizard.rs`. Existing book projects keep their layout and open unchanged.
 
 Campaign metadata (system, edition, genre, tone, table settings, conflict, starter, setup mode, and `campaign_id` equal to the project id) lives in the YAML frontmatter of `Campaign Overview.md`. Every seeded document gets a core stable ID (`note-`, `chr-`, `loc-`, `org-`, `obj-`, `evt-`, `plt-`, `tpl-`).
 

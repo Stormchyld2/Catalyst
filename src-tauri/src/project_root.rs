@@ -238,6 +238,16 @@ pub fn initialize_project_root_from_manifest(
     root: &Path,
     manifest: &ProjectManifest,
 ) -> Result<ProjectPaths, String> {
+    initialize_project_root_with_directories(root, manifest, PROJECT_DIRECTORIES)
+}
+
+/// Initialize a project root with an explicit directory layout. Book projects
+/// use the shared Catalyst layout; campaigns supply their own tabletop layout.
+pub fn initialize_project_root_with_directories(
+    root: &Path,
+    manifest: &ProjectManifest,
+    directories: &[&str],
+) -> Result<ProjectPaths, String> {
     manifest.validate()?;
 
     if root.as_os_str().is_empty() {
@@ -263,7 +273,7 @@ pub fn initialize_project_root_from_manifest(
     fs::create_dir_all(root)
         .map_err(|e| format!("Could not create project root '{}': {e}", root.display()))?;
 
-    for relative in PROJECT_DIRECTORIES {
+    for relative in directories {
         fs::create_dir_all(root.join(relative)).map_err(|e| {
             format!(
                 "Could not create Catalyst project directory '{}': {e}",

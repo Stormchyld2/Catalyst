@@ -19,38 +19,63 @@ use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 
 use crate::document::service::{create_document, save_document, CatalystDocument};
-use crate::project_root::{initialize_project_root_from_manifest, ProjectManifest, ProjectPaths};
+use crate::project_root::{
+    initialize_project_root_with_directories, ProjectManifest, ProjectPaths,
+};
 
 pub const CAMPAIGN_PROJECT_TYPE: &str = "campaign";
 
-/// Campaign-specific folders created in addition to the shared Catalyst
-/// project directories. They live beneath `Story Development` so the existing
-/// Story Development wiki, file tree, search and Overview card work unchanged.
+/// Top-level folders of a campaign root. A campaign uses a tabletop layout
+/// of its own rather than the book layout (Manuscript, Audiobook, Reviews…).
+/// The Story Development wiki reads these roots (see [`CAMPAIGN_ROOTS`]).
 pub const CAMPAIGN_DIRECTORIES: &[&str] = &[
-    "Story Development/Campaign",
-    "Story Development/Adventures",
-    "Story Development/Adventures/Arcs",
-    "Story Development/Adventures/Quests & Hooks",
-    "Story Development/Adventures/Encounters",
-    "Story Development/Sessions",
-    "Story Development/Sessions/Session Prep",
-    "Story Development/Sessions/Session Logs",
+    "Campaign",
+    "World",
+    "World/Locations",
+    "World/Factions & Governments",
+    "World/Organizations & Guilds",
+    "World/Cultures & Peoples",
+    "World/Religions & Pantheons",
+    "World/History & Lore",
+    "World/Magic & Technology",
+    "World/Bestiary & Creatures",
+    "World/Items & Artifacts",
+    "World/Languages",
+    "Characters",
+    "Characters/NPCs",
+    "Characters/Villains & Antagonists",
+    "Characters/Player Characters",
+    "Adventures",
+    "Adventures/Arcs",
+    "Adventures/Quests & Hooks",
+    "Adventures/Encounters",
+    "Sessions",
+    "Sessions/Session Prep",
+    "Sessions/Session Logs",
     // Dice roller roll history (one subfolder per game session).
-    "Story Development/Sessions/Roll Logs",
-    "Story Development/Characters/NPCs",
-    "Story Development/Characters/Villains & Antagonists",
-    "Story Development/Characters/Player Characters",
-    "Story Development/Worldbuilding & Settings/Religions & Pantheons",
-    "Story Development/Worldbuilding & Settings/History & Lore",
-    "Story Development/Worldbuilding & Settings/Bestiary & Creatures",
-    "Story Development/Worldbuilding & Settings/Magic & Technology",
-    "Story Development/Worldbuilding & Settings/Languages",
-    "Story Development/Game Master",
-    "Story Development/Game Master/Templates",
-    "Story Development/Game Master/Random Tables",
-    "Story Development/Game Master/Handouts",
+    "Sessions/Roll Logs",
+    "Game Master",
+    "Game Master/Templates",
+    "Game Master/Random Tables",
+    "Game Master/Handouts",
+    "Maps",
+    "Assets",
+    "Assets/Art",
     "Assets/Handouts",
     "Assets/Tokens",
+];
+
+/// Campaign top-level folders that hold wiki documents. The Story
+/// Development index, folder picker and document creation accept these roots
+/// in addition to the book roots, so campaigns and existing projects both work.
+pub const CAMPAIGN_ROOTS: &[&str] = &[
+    "Campaign",
+    "World",
+    "Characters",
+    "Adventures",
+    "Sessions",
+    "Game Master",
+    "Maps",
 ];
 
 // ── Worldbuilding categories ────────────────────────────────────────────────
@@ -69,21 +94,21 @@ pub const WORLD_CATEGORIES: &[WorldCategoryDef] = &[
     WorldCategoryDef {
         id: "factions",
         label: "Factions & Governments",
-        folder: "Governments & Factions",
+        folder: "Factions & Governments",
         entry_type: "organization",
         entry_template: "faction-secret-society",
     },
     WorldCategoryDef {
         id: "organizations",
         label: "Organizations & Guilds",
-        folder: "Organizations",
+        folder: "Organizations & Guilds",
         entry_type: "organization",
         entry_template: "organization-profile",
     },
     WorldCategoryDef {
         id: "cultures",
         label: "Cultures & Peoples",
-        folder: "Cultures & Societies",
+        folder: "Cultures & Peoples",
         entry_type: "note",
         entry_template: "worldbuilding-profile",
     },
@@ -118,7 +143,7 @@ pub const WORLD_CATEGORIES: &[WorldCategoryDef] = &[
     WorldCategoryDef {
         id: "items",
         label: "Items & Artifacts",
-        folder: "Objects & Artifacts",
+        folder: "Items & Artifacts",
         entry_type: "object",
         entry_template: "object-item-profile",
     },
@@ -387,11 +412,7 @@ pub fn create_campaign(input: &NewCampaignInput) -> Result<NewCampaignProject, S
     let mut manifest = ProjectManifest::new(name, CAMPAIGN_PROJECT_TYPE);
     manifest.genre = non_empty(&input.genre);
     manifest.description = non_empty(&input.pitch);
-    let paths = initialize_project_root_from_manifest(&root, &manifest)?;
-    for relative in CAMPAIGN_DIRECTORIES {
-        fs::create_dir_all(root.join(relative))
-            .map_err(|e| format!("Could not create campaign folder '{relative}': {e}"))?;
-    }
+    let paths = initialize_project_root_with_directories(&root, &manifest, CAMPAIGN_DIRECTORIES)?;
 
     let overview = seed_campaign(&root, &manifest, input)?;
 
@@ -443,7 +464,7 @@ fn seed_campaign(
     // Campaign Overview: the human-facing metadata document.
     let mut overview = create_document(
         root,
-        Path::new("Story Development/Campaign/Campaign Overview.md"),
+        Path::new("Campaign/Campaign Overview.md"),
         "note",
         Some(input.name.trim()),
         &input.pitch,
@@ -475,7 +496,7 @@ fn seed_campaign(
     // Table & safety.
     let mut table = create_document(
         root,
-        Path::new("Story Development/Campaign/Table & Safety.md"),
+        Path::new("Campaign/Table & Safety.md"),
         "note",
         Some("Table & Safety"),
         "## Expectations\n\n## Scheduling\n\n## Safety Notes\n",
@@ -498,7 +519,7 @@ fn seed_campaign(
     };
     let mut rules = create_document(
         root,
-        Path::new("Story Development/Campaign/House Rules.md"),
+        Path::new("Campaign/House Rules.md"),
         "note",
         Some("House Rules"),
         rules_body,
@@ -514,7 +535,7 @@ fn seed_campaign(
     };
     let mut world = create_document(
         root,
-        Path::new("Story Development/Worldbuilding & Settings/Overview.md"),
+        Path::new("World/World Overview.md"),
         "note",
         Some("World Overview"),
         world_body,
@@ -549,7 +570,7 @@ fn seed_world_categories(root: &Path, categories: &[CampaignWorldCategory]) -> R
         if !seen.insert(def.id) {
             continue;
         }
-        let folder = format!("Story Development/Worldbuilding & Settings/{}", def.folder);
+        let folder = format!("World/{}", def.folder);
         let notes = category.notes.trim();
         let mut overview = create_document(
             root,
@@ -593,11 +614,7 @@ fn seed_world_categories(root: &Path, categories: &[CampaignWorldCategory]) -> R
 fn seed_locations(root: &Path, locations: &[CampaignLocation]) -> Result<(), String> {
     let mut used = BTreeMap::new();
     for location in locations {
-        let relative = unique_entity_path(
-            "Story Development/Worldbuilding & Settings/Locations",
-            &location.name,
-            &mut used,
-        );
+        let relative = unique_entity_path("World/Locations", &location.name, &mut used);
         let mut document = create_document(
             root,
             &relative,
@@ -620,9 +637,9 @@ fn seed_npcs(root: &Path, npcs: &[CampaignNpc]) -> Result<(), String> {
     let mut used = BTreeMap::new();
     for npc in npcs {
         let folder = if npc.antagonist {
-            "Story Development/Characters/Villains & Antagonists"
+            "Characters/Villains & Antagonists"
         } else {
-            "Story Development/Characters/NPCs"
+            "Characters/NPCs"
         };
         let relative = unique_entity_path(folder, &npc.name, &mut used);
         let mut document = create_document(
@@ -650,7 +667,7 @@ fn seed_npcs(root: &Path, npcs: &[CampaignNpc]) -> Result<(), String> {
 /// README without Catalyst frontmatter is ignored by the Story Development
 /// index, so it never shows up as a broken document.
 fn seed_player_characters_placeholder(root: &Path) -> Result<(), String> {
-    let path = root.join("Story Development/Characters/Player Characters/README.md");
+    let path = root.join("Characters/Player Characters/README.md");
     fs::write(
         &path,
         "# Player Characters\n\nCharacter Studio (coming soon) will create player characters here.\n\
@@ -661,8 +678,7 @@ fn seed_player_characters_placeholder(root: &Path) -> Result<(), String> {
 
 fn seed_story(root: &Path, starter: &StarterDef, story: &CampaignStory) -> Result<(), String> {
     for (title, body) in starter.arcs {
-        let relative = Path::new("Story Development/Adventures/Arcs")
-            .join(format!("{}.md", safe_filename(title)));
+        let relative = Path::new("Adventures/Arcs").join(format!("{}.md", safe_filename(title)));
         let mut arc = create_document(root, &relative, "plot-thread", Some(title), body)?;
         insert_string(&mut arc.metadata, "campaign_kind", "arc");
         insert_string(&mut arc.metadata, "status", "planned");
@@ -677,11 +693,7 @@ fn seed_story(root: &Path, starter: &StarterDef, story: &CampaignStory) -> Resul
         .filter(|h| !h.is_empty())
     {
         let title = truncate_title(hook);
-        let relative = unique_entity_path(
-            "Story Development/Adventures/Quests & Hooks",
-            &title,
-            &mut used,
-        );
+        let relative = unique_entity_path("Adventures/Quests & Hooks", &title, &mut used);
         let mut doc = create_document(root, &relative, "plot-thread", Some(&title), hook)?;
         insert_string(&mut doc.metadata, "campaign_kind", "hook");
         insert_string(&mut doc.metadata, "status", "available");
@@ -698,7 +710,7 @@ fn seed_sessions(root: &Path, first: &CampaignFirstSession) -> Result<(), String
     };
     let mut zero = create_document(
         root,
-        Path::new("Story Development/Sessions/Session Prep/Session 00 — Session Zero.md"),
+        Path::new("Sessions/Session Prep/Session 00 — Session Zero.md"),
         "note",
         Some("Session 0 — Session Zero"),
         zero_body,
@@ -721,7 +733,7 @@ fn seed_sessions(root: &Path, first: &CampaignFirstSession) -> Result<(), String
     }
     let mut one = create_document(
         root,
-        Path::new("Story Development/Sessions/Session Prep/Session 01.md"),
+        Path::new("Sessions/Session Prep/Session 01.md"),
         "note",
         Some("Session 1"),
         &body,
@@ -743,8 +755,8 @@ fn seed_gm_templates(root: &Path, ids: Option<&[String]>) -> Result<(), String> 
             .collect(),
     };
     for def in selected {
-        let relative = Path::new("Story Development/Game Master/Templates")
-            .join(format!("{}.md", safe_filename(def.title)));
+        let relative =
+            Path::new("Game Master/Templates").join(format!("{}.md", safe_filename(def.title)));
         let mut doc = create_document(root, &relative, "template", Some(def.title), def.body)?;
         insert_string(&mut doc.metadata, "campaign_kind", "gm-template");
         insert_string(&mut doc.metadata, "gm_template_id", def.id);
@@ -894,14 +906,22 @@ mod tests {
         for dir in CAMPAIGN_DIRECTORIES {
             assert!(root.join(dir).is_dir(), "missing campaign folder {dir}");
         }
-        // Shared Catalyst folders remain so existing modules keep working.
-        assert!(root.join("Manuscript").is_dir());
-        assert!(root.join("Story Development/Characters/Main Cast").is_dir());
+        // Campaigns do not inherit the book layout.
+        for book_folder in [
+            "Manuscript",
+            "Audiobook",
+            "Reviews",
+            "Project Meta",
+            "Notes",
+            "Story Development",
+        ] {
+            assert!(
+                !root.join(book_folder).exists(),
+                "campaign must not create {book_folder}"
+            );
+        }
 
-        assert_eq!(
-            created.overview_path,
-            "Story Development/Campaign/Campaign Overview.md"
-        );
+        assert_eq!(created.overview_path, "Campaign/Campaign Overview.md");
         let overview = read_document(&root, Path::new(&created.overview_path)).unwrap();
         assert_eq!(overview.identity.id, created.overview_id);
         assert!(overview.identity.id.starts_with("note-"));
@@ -919,26 +939,36 @@ mod tests {
             Some(&Value::String("Fifth Edition Fantasy".into()))
         );
 
+        assert!(root.join("Adventures/Arcs/Arc 1 — The Call.md").is_file());
         assert!(root
-            .join("Story Development/Adventures/Arcs/Arc 1 — The Call.md")
+            .join("Sessions/Session Prep/Session 00 — Session Zero.md")
             .is_file());
-        assert!(root
-            .join("Story Development/Sessions/Session Prep/Session 00 — Session Zero.md")
-            .is_file());
-        assert!(root
-            .join("Story Development/Sessions/Session Prep/Session 01.md")
-            .is_file());
+        assert!(root.join("Sessions/Session Prep/Session 01.md").is_file());
         // Quick Start installs every GM starter template.
-        let templates = fs::read_dir(root.join("Story Development/Game Master/Templates"))
+        let templates = fs::read_dir(root.join("Game Master/Templates"))
             .unwrap()
             .count();
         assert_eq!(templates, GM_TEMPLATES.len());
         assert!(root
-            .join("Story Development/Characters/Player Characters/README.md")
+            .join("Characters/Player Characters/README.md")
             .is_file());
 
         let index = build_index(&root).unwrap();
         assert!(index.issues.is_empty(), "index issues: {:?}", index.issues);
+        // The Story Development wiki indexes the campaign roots.
+        for path in [
+            "Campaign/Campaign Overview.md",
+            "World/World Overview.md",
+            "Sessions/Session Prep/Session 01.md",
+            "Game Master/Templates/Session Prep.md",
+            "Adventures/Arcs/Arc 1 — The Call.md",
+        ] {
+            assert!(
+                index.entries.iter().any(|e| e.relative_path == path),
+                "wiki is missing {path}"
+            );
+        }
+        assert!(index.entries.iter().any(|e| e.section == "Campaign"));
     }
 
     #[test]
@@ -947,11 +977,7 @@ mod tests {
         let root = parent.path().join("Drowned Crown");
         create_campaign(&guided(&root)).unwrap();
 
-        let overview = read_document(
-            &root,
-            Path::new("Story Development/Campaign/Campaign Overview.md"),
-        )
-        .unwrap();
+        let overview = read_document(&root, Path::new("Campaign/Campaign Overview.md")).unwrap();
         assert_eq!(
             overview.metadata.get("player_count"),
             Some(&Value::Number(4.into()))
@@ -960,11 +986,7 @@ mod tests {
             overview.metadata.get("starter"),
             Some(&Value::String("sandbox".into()))
         );
-        let table = read_document(
-            &root,
-            Path::new("Story Development/Campaign/Table & Safety.md"),
-        )
-        .unwrap();
+        let table = read_document(&root, Path::new("Campaign/Table & Safety.md")).unwrap();
         assert_eq!(
             table.metadata.get("safety_tools"),
             Some(&Value::Sequence(vec![
@@ -972,22 +994,18 @@ mod tests {
                 Value::String("X-Card".into())
             ]))
         );
-        let rules = read_document(
-            &root,
-            Path::new("Story Development/Campaign/House Rules.md"),
-        )
-        .unwrap();
+        let rules = read_document(&root, Path::new("Campaign/House Rules.md")).unwrap();
         assert_eq!(rules.body, "Flanking grants advantage.\n");
 
-        let wb = "Story Development/Worldbuilding & Settings";
+        let wb = "World";
         assert!(root
             .join(format!(
-                "{wb}/Governments & Factions/Factions & Governments Overview.md"
+                "{wb}/Factions & Governments/Factions & Governments Overview.md"
             ))
             .is_file());
         let court = read_document(
             &root,
-            Path::new(&format!("{wb}/Governments & Factions/The Tide Court.md")),
+            Path::new(&format!("{wb}/Factions & Governments/The Tide Court.md")),
         )
         .unwrap();
         assert!(court.identity.id.starts_with("org-"));
@@ -996,7 +1014,7 @@ mod tests {
             Some(&Value::String("faction-secret-society".into()))
         );
         assert!(root
-            .join(format!("{wb}/Governments & Factions/The Tide Court 2.md"))
+            .join(format!("{wb}/Factions & Governments/The Tide Court 2.md"))
             .is_file());
         assert!(root
             .join(format!(
@@ -1005,7 +1023,7 @@ mod tests {
             .is_file());
         let crown = read_document(
             &root,
-            Path::new(&format!("{wb}/Objects & Artifacts/Crown of Depths.md")),
+            Path::new(&format!("{wb}/Items & Artifacts/Crown of Depths.md")),
         )
         .unwrap();
         assert!(crown.identity.id.starts_with("obj-"));
@@ -1025,38 +1043,27 @@ mod tests {
         assert_eq!(port.title.as_deref(), Some("Port: Saltmere?"));
         assert!(port.identity.id.starts_with("loc-"));
 
-        let mara = read_document(
-            &root,
-            Path::new("Story Development/Characters/NPCs/Captain Mara.md"),
-        )
-        .unwrap();
+        let mara = read_document(&root, Path::new("Characters/NPCs/Captain Mara.md")).unwrap();
         assert!(mara.identity.id.starts_with("chr-"));
         assert_eq!(
             mara.metadata.get("affiliation"),
             Some(&Value::String("Iron Navy".into()))
         );
         assert!(root
-            .join("Story Development/Characters/Villains & Antagonists/The Drowned King.md")
+            .join("Characters/Villains & Antagonists/The Drowned King.md")
             .is_file());
 
+        assert!(root.join("Adventures/Arcs/Region Overview.md").is_file());
         assert!(root
-            .join("Story Development/Adventures/Arcs/Region Overview.md")
+            .join("Adventures/Quests & Hooks/A map washes ashore.md")
             .is_file());
-        assert!(root
-            .join("Story Development/Adventures/Quests & Hooks/A map washes ashore.md")
-            .is_file());
-        let one = read_document(
-            &root,
-            Path::new("Story Development/Sessions/Session Prep/Session 01.md"),
-        )
-        .unwrap();
+        let one = read_document(&root, Path::new("Sessions/Session Prep/Session 01.md")).unwrap();
         assert!(one.body.contains("A storm at sea."));
 
-        let templates: HashSet<_> =
-            fs::read_dir(root.join("Story Development/Game Master/Templates"))
-                .unwrap()
-                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
-                .collect();
+        let templates: HashSet<_> = fs::read_dir(root.join("Game Master/Templates"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
         assert_eq!(
             templates,
             HashSet::from([
@@ -1083,7 +1090,7 @@ mod tests {
         }
 
         // Edit, save, and reopen purely from disk.
-        let path = Path::new("Story Development/Characters/NPCs/Captain Mara.md");
+        let path = Path::new("Characters/NPCs/Captain Mara.md");
         let mut doc = read_document(&root, path).unwrap();
         let id = doc.identity.id.clone();
         let hash = doc.source_hash.clone();
@@ -1162,13 +1169,14 @@ mod tests {
         let parent = tempfile::tempdir().unwrap();
         let novel_root = parent.path().join("Novel");
         let manifest = ProjectManifest::new("Old Book", "novel");
-        initialize_project_root_from_manifest(&novel_root, &manifest).unwrap();
+        crate::project_root::initialize_project_root_from_manifest(&novel_root, &manifest).unwrap();
         let campaign_root = parent.path().join("Campaign");
         create_campaign(&quick_start(&campaign_root)).unwrap();
 
         let novel = project_from_root(&novel_root).unwrap();
         assert_eq!(novel.project_type, "novel");
-        assert!(!novel_root.join("Story Development/Campaign").exists());
+        assert!(!novel_root.join("Campaign").exists());
+        assert!(novel_root.join("Manuscript").is_dir());
         assert!(build_index(&novel_root).unwrap().issues.is_empty());
     }
 }

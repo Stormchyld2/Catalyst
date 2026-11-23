@@ -230,6 +230,14 @@ pub fn resolve_story_image_reference(
 fn story_development_read_roots() -> impl Iterator<Item = &'static str> {
     std::iter::once(CANONICAL_STORY_DEVELOPMENT_ROOT)
         .chain(LEGACY_STORY_DEVELOPMENT_ROOTS.iter().copied())
+        // Campaign roots ("Characters" is already a legacy root; a root that
+        // is read twice would duplicate entries, so it is skipped here).
+        .chain(
+            crate::campaign_wizard::CAMPAIGN_ROOTS
+                .iter()
+                .copied()
+                .filter(|root| !LEGACY_STORY_DEVELOPMENT_ROOTS.contains(root)),
+        )
         .chain(SHARED_PROJECT_ASSET_ROOTS.iter().copied())
 }
 

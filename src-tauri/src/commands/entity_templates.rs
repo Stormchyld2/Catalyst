@@ -73,7 +73,7 @@ pub async fn create_story_document_from_template(
         return Err("Selected template is no longer available.".into());
     }
     let base = std::path::PathBuf::from(&input.destination_folder);
-    let allowed = ["Story Development", "Characters", "Locations", "Worldbuilding", "Organizations", "Items", "General", "Timeline", "Research", "Planning", "Story Bible", "Story"];
+    let allowed = story_roots();
     let parts: Vec<_> = base.components().collect();
     if parts.is_empty() || !parts.iter().all(|c| matches!(c, std::path::Component::Normal(_)))
         || !allowed.iter().any(|v| base.starts_with(v)) {
@@ -146,8 +146,7 @@ pub async fn create_story_document_from_template(
 pub async fn get_story_development_folders(project_root: String) -> Result<Vec<String>, String> {
     let root = std::path::PathBuf::from(project_root);
     if !root.is_absolute() || !root.is_dir() { return Err("Invalid project root.".into()); }
-    let roots = ["Story Development", "Story Bible", "Story", "Characters", "Locations",
-        "Worldbuilding", "Timeline", "Research", "Planning", "Organizations", "Items", "General"];
+    let roots = story_roots();
     let mut folders = Vec::new();
     for name in roots {
         let path = root.join(name);
@@ -184,8 +183,7 @@ pub async fn create_story_development_folder(
         return Err("Enter a valid folder name.".into());
     }
     let parent = std::path::PathBuf::from(&parent_folder);
-    let allowed = ["Story Development", "Story Bible", "Story", "Characters", "Locations",
-        "Worldbuilding", "Timeline", "Research", "Planning", "Organizations", "Items", "General"];
+    let allowed = story_roots();
     if !parent.components().all(|c| matches!(c, std::path::Component::Normal(_)))
         || !allowed.iter().any(|v| parent.starts_with(v)) {
         return Err("Select a Story Development parent folder.".into());
@@ -351,4 +349,15 @@ mod template_assignment_tests {
         assert_eq!(merged, again);
         assert!(second_added.is_empty());
     }
+}
+
+/// Top-level folders where Story Development documents may live: the book
+/// roots (canonical and legacy) plus the campaign roots.
+fn story_roots() -> Vec<&'static str> {
+    let mut roots = vec!["Story Development", "Story Bible", "Story", "Characters", "Locations",
+        "Worldbuilding", "Timeline", "Research", "Planning", "Organizations", "Items", "General"];
+    for root in crate::campaign_wizard::CAMPAIGN_ROOTS {
+        if !roots.contains(root) { roots.push(root); }
+    }
+    roots
 }

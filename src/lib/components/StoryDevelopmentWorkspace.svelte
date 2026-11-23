@@ -412,8 +412,10 @@
       relocateError = "Enter a different project-relative Markdown path.";
       return;
     }
-    if (!destinationPath.startsWith("Story Development/") && !destinationPath.startsWith("Characters/")
-      && !destinationPath.startsWith("Locations/") && !destinationPath.startsWith("Worldbuilding/")) {
+    // Book roots plus the campaign roots (see campaign_wizard.rs CAMPAIGN_ROOTS).
+    const storyRoots = ["Story Development", "Characters", "Locations", "Worldbuilding",
+      "Campaign", "World", "Adventures", "Sessions", "Game Master", "Maps"];
+    if (!storyRoots.some((root) => destinationPath.startsWith(`${root}/`))) {
       relocateError = "Choose a path within the Story Development hierarchy.";
       return;
     }
