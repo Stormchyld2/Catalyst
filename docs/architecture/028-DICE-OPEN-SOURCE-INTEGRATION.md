@@ -1,8 +1,8 @@
-# 021 — Dice Open-Source Integration
+# 028 — Dice Open-Source Integration
 
 **Status:** Assessment complete; Dice Box 1.1.4 integrated
 **Date:** 2026-11-23
-**Parent:** 020-DICE-ROLLER-ARCHITECTURE.md
+**Parent:** 027-DICE-ROLLER-ARCHITECTURE.md
 
 ## Decision
 

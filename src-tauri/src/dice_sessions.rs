@@ -13,7 +13,7 @@
 //! The files are authoritative and readable without Catalyst. There is no
 //! database. Records are validated before they are written: dice values must be
 //! real faces and totals must add up, so history never holds an impossible roll.
-//! See docs/architecture/022-DICE-RESULT-PROTOCOL.md.
+//! See docs/architecture/029-DICE-RESULT-PROTOCOL.md.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

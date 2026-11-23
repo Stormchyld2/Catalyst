@@ -1,8 +1,8 @@
-# 024 — Dice Implementation Roadmap
+# 031 — Dice Implementation Roadmap
 
 **Status:** Phases 1–3 complete, pending review
 **Date:** 2026-11-23
-**Parent:** 020-DICE-ROLLER-ARCHITECTURE.md
+**Parent:** 027-DICE-ROLLER-ARCHITECTURE.md
 
 ## Phase 1 — 2d20 proof of concept (done)
 
@@ -30,14 +30,14 @@ Done:
 
 ## Phase 3 — GM integration (done, API only)
 
-- Roll request builders for initiative, attacks, damage, saves, skills, ability checks and encounter rolls (doc 023).
+- Roll request builders for initiative, attacks, damage, saves, skills, ability checks and encounter rolls (doc 030).
 - Public, GM-private and player-private rolls; visibility rules for future senders.
-- File-authoritative campaign session history (doc 022).
+- File-authoritative campaign session history (doc 029).
 - The GM Console, characters and encounters modules themselves do not exist yet.
 
 ## Phase 4 — Player display and LAN readiness
 
-- Host-authoritative resolution and the roll event protocol (doc 022).
+- Host-authoritative resolution and the roll event protocol (doc 029).
 - Player-safe visibility: private rolls are never transmitted to unauthorized clients.
 - Public animation synchronization, which needs a renderer that can land on predetermined values.
 
@@ -49,8 +49,8 @@ Critical-success effects, presets and favourites, dice sets, accessibility passe
 
 ## Known limitations
 
-- Dice Box 1.1.4 has no `destroy()`; the adapter terminates its workers instead (doc 021).
-- Dice Box cannot land dice on chosen values, so multiplayer clients cannot replay a host's roll as physics (doc 022).
+- Dice Box 1.1.4 has no `destroy()`; the adapter terminates its workers instead (doc 028).
+- Dice Box cannot land dice on chosen values, so multiplayer clients cannot replay a host's roll as physics (doc 029).
 - Reopening the expanded tray, or changing dice colour, size, surface or speed, restarts the 3D renderer (about a second).
 - Resizing the tray by hand clears settled dice from the mat (Dice Box rebuilds its world); the result panel keeps the values.
 - The number colour on the dice comes from the Dice Box theme and is not separately configurable.

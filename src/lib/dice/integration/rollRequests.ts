@@ -6,7 +6,7 @@
  *
  *   const record = await diceTray.roll(attackRoll(goblin, { bonus: 4 }), { show: true });
  *
- * See docs/architecture/023-DICE-GM-CONSOLE-INTEGRATION.md.
+ * See docs/architecture/030-DICE-GM-CONSOLE-INTEGRATION.md.
  */
 import { applyRollMode, formatDiceNotation, parseDiceNotation } from "../engine/diceNotation";
 import type { RollMode, RollRequest, RollSource, RollVisibility } from "../types/dice";

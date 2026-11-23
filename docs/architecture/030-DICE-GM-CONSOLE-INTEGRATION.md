@@ -1,8 +1,8 @@
-# 023 — Dice GM Console Integration
+# 030 — Dice GM Console Integration
 
 **Status:** Integration API implemented. The GM Console, Character Studio and Encounter Manager do not exist in Catalyst yet; they call this API when they land.
 **Date:** 2026-11-23
-**Parent:** 020-DICE-ROLLER-ARCHITECTURE.md
+**Parent:** 027-DICE-ROLLER-ARCHITECTURE.md
 
 ## Entry point
 
@@ -19,7 +19,7 @@ if (hit?.critical === "success") {
 // A result is null if the roll was cancelled or failed. It is never a guess.
 ```
 
-`{ show: true }` opens the tray (expanded, if animation is on) and waits up to 8 seconds for the 3D table before rolling; if 3D is unavailable the roll resolves instantly from the unbiased random source. Rolls made while a campaign session is active are saved to that session's file automatically (doc 022).
+`{ show: true }` opens the tray (expanded, if animation is on) and waits up to 8 seconds for the 3D table before rolling; if 3D is unavailable the roll resolves instantly from the unbiased random source. Rolls made while a campaign session is active are saved to that session's file automatically (doc 029).
 
 A module must not create its own renderer, canvas or random source.
 

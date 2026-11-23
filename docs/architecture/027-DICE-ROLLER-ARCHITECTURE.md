@@ -1,9 +1,9 @@
-# 020 — Dice Roller Architecture
+# 027 — Dice Roller Architecture
 
 **Status:** Phases 1–3 implemented (global floating tray; physics d4, d6, d8, d10, d12, d20, d100; combinations, modifiers, keep rules, advantage/disadvantage; GM integration API; campaign session files). Player display and LAN planned.
 **Date:** 2026-11-23
 **Parent:** 000-CATALYST-ARCHITECTURE.md
-**Related:** 021 Dice Open-Source Integration; 022 Dice Result Protocol; 023 Dice GM Console Integration; 024 Dice Implementation Roadmap
+**Related:** 028 Dice Open-Source Integration; 029 Dice Result Protocol; 030 Dice GM Console Integration; 031 Dice Implementation Roadmap
 
 ## Purpose
 
@@ -66,7 +66,7 @@ src/lib/dice/
 └── tests/                       unit and component tests
 ```
 
-The GM Console, encounter and character modules do not exist in Catalyst yet, so instead of the spec's `gmConsole.ts`, `encounters.ts` and `characters.ts`, `integration/rollRequests.ts` provides the builders those modules will call (initiative, attack, damage, saves, skills, ability checks, encounter rolls). See doc 023.
+The GM Console, encounter and character modules do not exist in Catalyst yet, so instead of the spec's `gmConsole.ts`, `encounters.ts` and `characters.ts`, `integration/rollRequests.ts` provides the builders those modules will call (initiative, attack, damage, saves, skills, ability checks, encounter rolls). See doc 030.
 
 ## Resolution
 
@@ -92,7 +92,7 @@ A roll in progress is abandoned, and nothing is recorded, when the user presses 
 
 ## Offline operation and CSP
 
-All runtime assets are bundled (doc 021). The production CSP in `src-tauri/tauri.conf.json` gained only what Dice Box needs locally:
+All runtime assets are bundled (doc 028). The production CSP in `src-tauri/tauri.conf.json` gained only what Dice Box needs locally:
 
 | Directive | Added | Why |
 | --- | --- | --- |
@@ -105,7 +105,7 @@ No remote origin was added.
 
 ## Storage
 
-Tray preferences use `localStorage` (per-user conveniences). Roll history is in memory (500 entries) for the running app session. While a campaign session is active, every roll is also appended to that session's file in the project (doc 022). No database is introduced.
+Tray preferences use `localStorage` (per-user conveniences). Roll history is in memory (500 entries) for the running app session. While a campaign session is active, every roll is also appended to that session's file in the project (doc 029). No database is introduced.
 
 ## Sound
 

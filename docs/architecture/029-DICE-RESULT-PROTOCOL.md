@@ -1,8 +1,8 @@
-# 022 — Dice Result Protocol
+# 029 — Dice Result Protocol
 
 **Status:** Record shape, roll kinds, criticals and campaign session files implemented; network transport planned
 **Date:** 2026-11-23
-**Parent:** 020-DICE-ROLLER-ARCHITECTURE.md
+**Parent:** 027-DICE-ROLLER-ARCHITECTURE.md
 
 ## Roll record
 
@@ -84,7 +84,7 @@ Two clients running independent physics will not produce the same outcome, so in
 1. A client sends a **roll request** (expression, visibility, context) to the host.
 2. The **host** resolves the roll with the unbiased random source and records it. The host is authoritative.
 3. The host sends the **record** only to clients allowed to see it (rules below).
-4. Clients that receive a public record may animate it, **only if** the renderer can land on the recorded values. Dice Box 1.1.4 cannot force outcomes (doc 021), so until a presentation adapter that can is found (for example, investigating `@3d-dice/dice-box-threejs`), receiving clients show the result without a physics animation that might disagree with it.
+4. Clients that receive a public record may animate it, **only if** the renderer can land on the recorded values. Dice Box 1.1.4 cannot force outcomes (doc 028), so until a presentation adapter that can is found (for example, investigating `@3d-dice/dice-box-threejs`), receiving clients show the result without a physics animation that might disagree with it.
 
 Message shapes: `roll.request` → `{ requestId, request: RollRequest }`; `roll.result` → `{ requestId, record: RollRecord }`; `roll.rejected` → `{ requestId, reason }`.
 

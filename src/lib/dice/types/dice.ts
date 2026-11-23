@@ -2,7 +2,7 @@
  * Shared dice types. These are the contract between the dice engine, the
  * renderer adapters, the floating tray, and future RPG modules (GM Console,
  * Character Studio, Encounter Manager). See
- * docs/architecture/022-DICE-RESULT-PROTOCOL.md.
+ * docs/architecture/029-DICE-RESULT-PROTOCOL.md.
  */
 
 /** Standard polyhedral dice. d100 is percentile (rendered as d100 + d10). */
