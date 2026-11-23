@@ -1,4 +1,4 @@
-# 027 — Campaign Soundboard
+# 033 — Campaign Soundboard
 
 Status: implemented (replaces the old Listen placeholder; workspace id stays `listen`, label "Soundboard").
 

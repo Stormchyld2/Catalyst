@@ -2,7 +2,7 @@
 
 ## Campaign soundboard — design reference
 
-The Catalyst soundboard (`docs/architecture/027-CAMPAIGN-SOUNDBOARD.md`) was designed after reviewing
+The Catalyst soundboard (`docs/architecture/033-CAMPAIGN-SOUNDBOARD.md`) was designed after reviewing
 the following project. No source code from it is included in Catalyst; its notice is kept here as
 credit for the design ideas (three-channel music/ambience/effects mixer and pad grid).
 
