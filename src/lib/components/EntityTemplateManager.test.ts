@@ -15,6 +15,7 @@ const registry = {
       id: "character-profile",
       name: "Character Profile",
       category: "character",
+      scope: "story-development",
       document_type: "character",
       subtype: null,
       version: 1,
@@ -33,6 +34,7 @@ const registry = {
       id: "custom-place",
       name: "Custom Place",
       category: "location",
+      scope: "worldbuilding",
       document_type: "location",
       subtype: null,
       version: 1,
@@ -81,6 +83,19 @@ describe("EntityTemplateManager", () => {
     await fireEvent.click(screen.getByRole("button", { name: /Custom Place/ }));
     expect((screen.getByDisplayValue("custom-place") as HTMLInputElement).disabled).toBe(false);
     expect(screen.getByRole("button", { name: "Delete" })).toBeTruthy();
+  });
+
+  it("supports category filtering and copying a built-in template", async () => {
+    render(EntityTemplateManager, { props: { onClose: vi.fn() } });
+    await screen.findByRole("button", { name: /Character Profile/ });
+    await fireEvent.change(screen.getByLabelText("Filter template category"), { target: { value: "location" } });
+    expect(screen.queryByRole("button", { name: /Character Profile/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Custom Place/ })).toBeTruthy();
+    await fireEvent.change(screen.getByLabelText("Filter template category"), { target: { value: "all" } });
+    await fireEvent.click(screen.getByRole("button", { name: /Character Profile/ }));
+    await fireEvent.click(screen.getByRole("button", { name: "Duplicate selected template to customize" }));
+    expect((screen.getByDisplayValue("Character Profile (Custom)") as HTMLInputElement).disabled).toBe(false);
+    expect(screen.getByRole("button", { name: /Save template/i })).toBeTruthy();
   });
 
   it("creates a user template through the file-backed save command", async () => {
