@@ -58,6 +58,7 @@
     let cancelled = false;
     homeCampaign = null;
     homeCampaignError = null;
+    loadingDashboardMetrics = false;
     if (!latest || latest.project_type !== "campaign" || !latest.project_root) return;
     loadingDashboardMetrics = true;
     invoke<HomeCampaignStats>("get_campaign_dashboard_summary", { projectRoot: latest.project_root })
