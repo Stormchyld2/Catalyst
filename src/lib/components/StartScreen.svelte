@@ -30,8 +30,6 @@
 
   let {
     recentProjects = $bindable(),
-    onImportLongform,
-    onImportComplete,
     onNewProject,
     onOpenProjectFolder,
     onOpenEditorial,
