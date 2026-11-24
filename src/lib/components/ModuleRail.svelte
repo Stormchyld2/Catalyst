@@ -19,6 +19,7 @@
   } from "../workspaces";
   import { workspace } from "../stores/workspace.svelte";
   import { diceTray } from "../dice";
+  import catalystIcon from "../../assets/catalyst-icon.png";
 
   let {
     hasActiveProject,
@@ -128,7 +129,9 @@
 {/snippet}
 
 <nav class="module-rail" aria-label="Catalyst workspaces">
-  <div class="module-rail__brand" aria-hidden="true">C</div>
+  <div class="module-rail__brand" aria-label="Catalyst" role="img">
+    <img class="module-rail__brand-image" src={catalystIcon} alt="" />
+  </div>
 
   <div class="module-rail__modules">
     {#each groups as group (group.id)}
@@ -187,6 +190,15 @@
     color: var(--cat-accent);
     font: 700 22px/1 var(--font-ui);
     letter-spacing: 0.02em;
+  }
+
+  .module-rail__brand-image {
+    display: block;
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
   }
 
   .module-rail__modules {
