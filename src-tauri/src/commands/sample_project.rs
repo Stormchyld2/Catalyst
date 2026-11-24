@@ -38,7 +38,7 @@ const ENTRIES: &[DemoEntry] = &[
         title: "START HERE - GM Guide",
         visibility: "gm-only",
         body: r#"# Welcome to The Hollow Crown
-This **original Dungeons & Dragons 5th Edition (2014-style)** one-shot introduces World Builder, quests, encounters, sessions, clues and reusable templates. Allow roughly 2–3 hours. It is written for **four 1st-level D&D 5e characters** (adjustable for three to five PCs). Players supply their own fifth-edition rules; no proprietary rules pack is bundled. This is an independent original adventure, not an official D&D product.
+This **original Dungeons & Dragons 5th Edition (2014-style)** one-shot introduces World Builder, quests, encounters, sessions, clues and reusable templates. Allow roughly 3–4 hours (one long session). It is written for **four 1st-level D&D 5e characters** (adjustable for three to five PCs). Players supply their own fifth-edition rules; no proprietary rules pack is bundled. This is an independent original adventure, not an official D&D product.
 
 ## Your opening
 The village of Briar Glen has lost its bell and three residents have begun sleepwalking toward Briarwatch Tower. The players are asked to investigate before sunset.
@@ -98,8 +98,10 @@ The seal is failing because someone removed a bronze tuning weight, not because 
         template: "adventure-scene",
         title: "Scene 1 - The Silent Bell",
         visibility: "gm-only",
-        body: r#"## Opening description
-Mist gathers around the rooflines of Briar Glen. The tower bell should announce sunset, but the village is silent. A woman in a wool cloak stands beside an empty bell frame.
+        body: r#"> Short scene summary. Read-aloud text, NPC dialogue and full running notes are in *Scene One - GM Dossier*.
+
+## Opening description
+Mist gathers around the rooflines of Briar Glen. The village bell should announce sunset, but Briar Glen is silent. A woman in a wool cloak stands beside an empty bell frame.
 
 ## Player choices
 Speak with Mira Fen, question the exhausted guard Orin Hale, inspect the bell frame, or follow the trail of bare footprints.
@@ -121,7 +123,9 @@ Scene 2 - The Briarwatch Ascent.
         template: "adventure-scene",
         title: "Scene 2 - The Briarwatch Ascent",
         visibility: "gm-only",
-        body: r#"## Setup
+        body: r#"> Short scene summary. Read-aloud text, NPC dialogue and full running notes are in *Scene Two - GM Dossier*.
+
+## Setup
 The abandoned tower is accessible by a narrow overgrown road. A loose stone stair, wind-driven chimes and a thornbound guardian obstruct the way.
 
 ## Exploration
@@ -142,7 +146,9 @@ Scene 3 - The Crown Seal.
         template: "adventure-scene",
         title: "Scene 3 - The Crown Seal",
         visibility: "gm-only",
-        body: r#"## Strong opening
+        body: r#"> Short scene summary. Read-aloud text, NPC dialogue and full running notes are in *Scene Three - GM Dossier*.
+
+## Strong opening
 A circular chamber holds a fractured bronze crown suspended in a ring of pale light. Three sleepwalkers stand motionless outside the ring. A voice speaks from every direction: "Give me my name, and I will return theirs."
 
 ## Decision
@@ -368,7 +374,7 @@ Use Catalyst dice when available, or physical dice. The Markdown table is not wi
         title: "Session 1 - The Silent Bell",
         visibility: "gm-only",
         body: r#"# Opening Session
-**Play time:** roughly 2–3 hours. **Rules:** D&D 5e, four 1st-level characters, 2014-style encounter assumptions.
+**Play time:** roughly 3–4 hours. **Rules:** D&D 5e, four 1st-level characters, 2014-style encounter assumptions.
 
 ## Strong Start
 The village bell is silent at sunset. Mira Fen asks the party to find the missing villagers.
@@ -490,12 +496,15 @@ No reward is granted automatically by the Catalyst inventory system. Add items a
         template: "session-plan",
         title: "D&D 5e Encounter and Session Timing",
         visibility: "gm-only",
-        body: r#"# GM Session Clock (2–3 hours)
-- **0–25 minutes:** intro, hook and village witnesses.
-- **25–60 minutes:** road and tower exploration, find tuning-weight clue.
-- **60–100 minutes:** guardian negotiation or optional combat; enter vault.
-- **100–145 minutes:** puzzle, rival-faction scene and decisive bargain.
-- **145–180 minutes:** consequences, rewards and session log.
+        body: r#"# GM Session Clock (3–4 hours)
+- **0–20 minutes:** Session Zero check-in, premade characters and table expectations.
+- **20–60 minutes:** intro, hook and village witnesses.
+- **60–110 minutes:** road and tower exploration, find tuning-weight clue.
+- **110–150 minutes:** guardian negotiation or optional combat; enter vault.
+- **150–200 minutes:** puzzle, rival-faction scene and decisive bargain.
+- **200–230 minutes:** consequences, rewards and session log.
+
+For a shorter evening (about 2½ hours), use the compressed pacing below.
 
 ## Expected Challenges
 One or two low-stakes social DC 10–12 checks, one short exploration sequence, one puzzle with multiple solutions, and at most one short optional combat. Tune difficulty after seeing the characters' actual capabilities.
@@ -644,7 +653,7 @@ A warped timber door opens onto old signal equipment and **the missing bronze tu
 The Thornbound Sentinel stands beside a fallen ward symbol. It **does not attack on sight**. Characters who replace the symbol, speak “Hold the line,” or move without damaging runes pass peacefully. If a character deliberately destroys the ward after a warning, the sentinel attacks using its custom 5e document. It disengages if the party retreats or protects the markings.
 
 ## Keyed location 4 — Upper bell landing
-Hollow chimes ring when wind passes through them. DC 11 Perception identifies a repeating low tone near the hidden stair. Without a successful check, a chime knocks against a wall and reveals its seam. Smashing all chimes manifests an optional Hollow Echo; if the sentinel was already fought, use eerie voices instead of a second fight.
+The tower's own bell was moved down to Briar Glen generations ago; only its empty cradle and a ring of ward chimes remain. Hollow chimes ring when wind passes through them. DC 11 Perception identifies a repeating low tone near the hidden stair. Without a successful check, a chime knocks against a wall and reveals its seam. Smashing all chimes manifests an optional Hollow Echo; if the sentinel was already fought, use eerie voices instead of a second fight.
 
 ## Keyed location 5 — Spiral stair
 A broad stone stair descends to the vault. The crown marks are visible in the order **seed → flame → crown** on a faded relief. Let players copy or sketch them. Avoid a fall trap; beginner groups should focus on discovery.
@@ -680,7 +689,7 @@ Use the Crown Vault schematic and Scene Three. Have the missing tuning weight an
 An inscription: “Life before fire; duty beyond both.” Three discs: **seed, flame, crown**. Correct order stabilizes the ring. DC 11 Arcana can assist; DC 11 Religion recognizes a protective rite; direct experimentation and clue gathering are equally valid. Every failed attempt creates sound and urgency but no instant character death. Creative mechanical repair is acceptable.
 
 ## Restoring the seal
-Place the bronze weight into the bell mechanism at the edge of the chamber and align seed–flame–crown. A character can do either step without a roll if they have discovered how. Elowen joins hands with the group to hold the rhythm. The sleepers awaken safely. Read *Ending A - The Bell Rings Again*.
+Set the bronze tuning weight into the resonance cradle at the edge of the chamber (the vault half of the village bell's ward; the bell above is tuned to it) and align seed–flame–crown. When the ring holds, the village bell can sound true again. A character can do either step without a roll if they have discovered how. Elowen joins hands with the group to hold the rhythm. The sleepers awaken safely. Read *Ending A - The Bell Rings Again*.
 
 ## Breaking the seal
 Deliberately destroy the ring (tools or magic as appropriate) after describing that it binds something. A wave of cold wind passes through the party; the sleepers awaken. No unavoidable damage. Read *Ending B - The Open Vault*. The archive door can open, but the region loses the ward.
@@ -1202,11 +1211,11 @@ Never require a player to attack or sacrifice the sleepers. Each of the three en
         path: "Game Master/Handouts/The Bellwright's Repair Note.md", template: "handout", title: "The Bellwright's Repair Note",
         visibility: "gm-only",
         body: r###"# A torn note from Bram Dens
-> If the tower bell ever falls quiet, find the bronze weight first. The old signal shed keeps spares and repair tools.
+> If the village bell ever falls quiet, find the bronze weight first. The old signal shed keeps spares and repair tools.
 >
 > Do not strike the ward marks. Seed comes before fire, and fire is tended for the crown.
 
-This in-world handout can be found in the mill, village stores or beside the upper bell frame. Give it when players need an additional clue. GM: the note makes the main puzzle solvable without passing a check."###,
+This in-world handout can be found in the mill, the village stores or on the tower's upper bell landing. Give it when players need an additional clue. GM: the note makes the main puzzle solvable without passing a check."###,
     },
     DemoEntry {
         path: "Game Master/Handouts/A Page from the Royal Archive.md", template: "handout", title: "A Page from the Royal Archive",
@@ -1218,34 +1227,6 @@ This in-world handout can be found in the mill, village stores or beside the upp
 
 ## Distribution
 Use only if the party chooses to open the archive or makes a restoration bargain that grants limited access. The page suggests another bell site but does not force a sequel."###,
-    },
-    DemoEntry {
-        path: "Worldbuilding/Organizations & Factions/Ash Wardens - GM Profile.md", template: "faction-secret-society", title: "Ash Wardens - GM Profile",
-        visibility: "gm-only",
-        body: r###"# Ash Wardens
-A dwindling order that maintains protective bells and ward stones across the Briar Marches.
-
-**Local contact:** Elowen Thatch. **Public goal:** keep villagers safe. **Secret:** they quietly concealed the royal archive, fearful that it contained instructions to break the wards.
-
-## Party relationship
-Helpful to cautious PCs. Can ally with Kael if access is supervised and the seal remains intact. They have no special combat abilities assumed by this adventure.
-
-## Adventure use
-Explain protective markings, supply the seed/flame/crown order, reward repaired wards. If the party destroys the seal, their attitude becomes strained but not automatically hostile."###,
-    },
-    DemoEntry {
-        path: "Worldbuilding/Organizations & Factions/Gloam Seekers - GM Profile.md", template: "faction-secret-society", title: "Gloam Seekers - GM Profile",
-        visibility: "gm-only",
-        body: r###"# Gloam Seekers
-An informal circle of scholars and travelers searching for forgotten historical records.
-
-**Local agent:** Kael Voss. **Public goal:** recover knowledge. **Secret:** some members would accept danger to retrieve the archive; Kael himself prefers avoiding harm.
-
-## Party relationship
-Neutral initially, then cooperative if the party shares findings. They are a faction to negotiate with, not a necessary combat encounter.
-
-## Adventure use
-Argue the ethical case for opening the archive; offer a compromise whereby the ward is repaired and historical records copied under supervision."###,
     },
     DemoEntry {
         path: "Game Master/GM Notes/Adventure Continuation - Optional Second Session.md", template: "gm-notes", title: "Adventure Continuation - Optional Second Session",
@@ -1321,7 +1302,7 @@ fn input_for(root: &Path) -> Result<NewCampaignInput, String> {
         "setup_mode": "guided",
         "basics": {
             "subtitle": "An Original D&D 5e Adventure for Four Level-1 Characters",
-            "premise": "The bell of Briarwatch Tower has fallen silent, and villagers are walking in their sleep toward an ancient crown-shaped seal.",
+            "premise": "The bell of Briar Glen has fallen silent, and villagers are walking in their sleep toward an ancient crown-shaped seal.",
             "genre": "Fantasy Mystery",
             "tone": "Mysterious, heroic, choice-driven",
             "gm_name": "Demo Game Master"
@@ -1339,13 +1320,12 @@ fn input_for(root: &Path) -> Result<NewCampaignInput, String> {
             {"name":"Elowen Thatch","disposition":"ally","role":"Keeper of the Ash Warden traditions","motivation":"Repair the ancient seal without sacrificing villagers","description":"An elderly ward-keeper who understands three carved crown marks."},
             {"name":"Kael Voss","disposition":"neutral","role":"Scholar and Gloam Seeker agent","motivation":"Enter the lost royal archive beneath the tower","description":"A persuasive scholar who knows more about the vault than he admits."}
         ],
-        "creatures": [
-            {"name":"Thornbound Sentinel","kind":"Guardian construct","detail":"Variable, ruleset-defined","description":"A wicker-and-root guardian that protects the stairwell. It responds to ward signs and can be bypassed."},
-            {"name":"Hollow Echo","kind":"Supernatural echo","detail":"Variable, ruleset-defined","description":"A brief manifestation of lost memories. It is a hazard or optional creature, not a mandatory fight."}
-        ],
+        // Creatures are seeded as full 5e stat-block documents, not as
+        // generic wizard records, so each creature has one record.
+        "creatures": [],
         "factions": [
-            {"name":"The Ash Wardens","kind":"Maintain the ancient seal","detail":"Potential allies","description":"A scattered group that protects frontier communities from echoes; Elowen preserves their traditions."},
-            {"name":"The Gloam Seekers","kind":"Recover royal history at any cost","detail":"Ambiguous rivals","description":"Archivists and seekers led locally by Kael Voss, willing to risk opening the vault."}
+            {"name":"The Ash Wardens","kind":"Maintain the ancient seal","detail":"Potential allies","description":"A dwindling order that maintains protective bells and ward stones across the Briar Marches.\n\n**Local contact:** Elowen Thatch. **Public goal:** keep villagers safe. **Secret:** they quietly concealed the royal archive, fearful that it contained instructions to break the wards.\n\n## Party relationship\nHelpful to cautious PCs. Can ally with Kael if access is supervised and the seal remains intact. They have no special combat abilities assumed by this adventure.\n\n## Adventure use\nExplain protective markings, supply the seed/flame/crown order, reward repaired wards. If the party destroys the seal, their attitude becomes strained but not automatically hostile."},
+            {"name":"The Gloam Seekers","kind":"Recover royal history at any cost","detail":"Ambiguous rivals","description":"An informal circle of scholars and travelers searching for forgotten historical records.\n\n**Local agent:** Kael Voss. **Public goal:** recover knowledge. **Secret:** some members would accept danger to retrieve the archive; Kael himself prefers avoiding harm.\n\n## Party relationship\nNeutral initially, then cooperative if the party shares findings. They are a faction to negotiate with, not a necessary combat encounter.\n\n## Adventure use\nArgue the ethical case for opening the archive; offer a compromise whereby the ward is repaired and historical records copied under supervision."}
         ],
         "story": {
             "structure":"mixed", "length":"one-shot",
@@ -1358,7 +1338,7 @@ fn input_for(root: &Path) -> Result<NewCampaignInput, String> {
             "starting_location":"Briar Glen",
             "entries":[
                 {"name":"Briar Glen","kind":"Frontier village","description":"A hamlet of timber homes beside the old watch road. The villagers fear the silent bell."},
-                {"name":"Briarwatch Tower","kind":"Abandoned watchtower","description":"A stone tower with broken bells, wind chimes, a guardian and the vault below."},
+                {"name":"Briarwatch Tower","kind":"Abandoned watchtower","description":"A stone tower with an empty bell landing, ward chimes, a guardian and the vault below."},
                 {"name":"Crown Vault","kind":"Ancient sealed chamber","description":"A chamber of stone rings and a hovering broken crown-shaped ward."}
             ]
         },
@@ -1540,6 +1520,48 @@ mod tests {
         ensure_demo(&root).unwrap();
         assert_eq!(fs::read_to_string(&notes).unwrap(), "The party chose to restore the seal.");
         assert_eq!(load_demo_project(&root).unwrap().id, project.id);
+    }
+
+    #[test]
+    fn demo_creation_leaves_no_staging_or_recovery_files_in_a_deep_folder() {
+        // Mirrors a long Windows app-data path (e.g. a long user name or a
+        // synced folder). Runs on every OS; on Windows it exercises
+        // ReplaceFileW beyond MAX_PATH.
+        let temp = tempfile::tempdir().unwrap();
+        let deep = temp.path().join("A".repeat(60)).join("B".repeat(60)).join(DEMO_SUBDIR);
+        let root = deep.join(DEMO_TITLE);
+        ensure_demo(&root).unwrap();
+        ensure_demo(&root).unwrap();
+        let siblings: Vec<_> = fs::read_dir(&deep).unwrap().map(|e| e.unwrap().file_name()).collect();
+        assert_eq!(siblings, vec![std::ffi::OsString::from(DEMO_TITLE)], "staging residue");
+        let leftovers: Vec<_> = walkdir::WalkDir::new(&root).into_iter().filter_map(Result::ok)
+            .filter(|e| e.file_name().to_string_lossy().starts_with(".catalyst-save-"))
+            .map(|e| e.path().display().to_string())
+            .collect();
+        assert!(leftovers.is_empty(), "{leftovers:?}");
+    }
+
+    #[test]
+    fn demo_content_has_one_record_per_creature_and_faction_and_one_play_time() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join(DEMO_SUBDIR).join(DEMO_TITLE);
+        ensure_demo(&root).unwrap();
+        let creatures: Vec<_> = fs::read_dir(root.join("Creatures & Monsters/Custom Creatures")).unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).collect();
+        assert_eq!(creatures.len(), 2, "{creatures:?}");
+        assert!(creatures.iter().all(|name| name.contains("5e Stat Block")));
+        let factions: Vec<_> = fs::read_dir(root.join("Worldbuilding/Organizations & Factions")).unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).collect();
+        assert_eq!(factions.len(), 2, "{factions:?}");
+        let wardens = fs::read_to_string(root.join("Worldbuilding/Organizations & Factions/The Ash Wardens.md")).unwrap();
+        assert!(wardens.contains("Elowen Thatch"));
+        for entry in walkdir::WalkDir::new(&root).into_iter().filter_map(Result::ok)
+            .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("md"))
+        {
+            let text = fs::read_to_string(entry.path()).unwrap();
+            assert!(!text.contains("2–3 hours"), "{}", entry.path().display());
+            assert!(!text.contains("tower bell"), "{}", entry.path().display());
+        }
     }
 
     #[test]

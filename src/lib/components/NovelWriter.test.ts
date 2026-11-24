@@ -135,35 +135,13 @@ describe("novelWriter import", () => {
     vi.mocked(open).mockResolvedValue(null);
     expect(await runImport("novelwriter")).toBeNull();
   });
-  it("offers guided preview/import and a menu command", async () => {
+  it("is no longer offered from onboarding or the command palette", async () => {
+    // Catalyst removed manuscript imports from the UI; the backend importer
+    // above stays for compatibility only.
     ui.goToStep("import");
-    vi.mocked(open).mockResolvedValue("/source");
-    vi.mocked(invoke).mockImplementation(async (cmd) =>
-      cmd === "preview_import"
-        ? {
-            project_name: "Guided novel",
-            chapter_count: 1,
-            scene_count: 2,
-            beat_count: 3,
-            character_count: 1,
-            location_count: 1,
-          }
-        : project
-    );
     render(Onboarding);
-    await fireEvent.click(screen.getByRole("button", { name: /novelWriter/ }));
-    await waitFor(() =>
-      expect(invoke).toHaveBeenCalledWith("preview_import", {
-        path: "/source",
-        format: "novelwriter",
-      })
-    );
-    expect(await screen.findByText(/Guided novel/)).toBeTruthy();
-    await fireEvent.click(screen.getByTestId("guided-import-confirm"));
-    await waitFor(() =>
-      expect(invoke).toHaveBeenCalledWith("import_novelwriter", { path: "/source" })
-    );
-    expect(COMMAND_DEFS.some((c) => c.id === "import_novelwriter")).toBe(true);
+    expect(screen.queryByRole("button", { name: /novelWriter/ })).toBeNull();
+    expect(COMMAND_DEFS.some((c) => c.id.startsWith("import_"))).toBe(false);
   });
 });
 
@@ -414,21 +392,12 @@ describe("timeline and custom references", () => {
 });
 
 describe("novelWriter home screen import", () => {
-  it("picks a project folder, opens the import and notifies reference classification", async () => {
+  it("is replaced by Import RPG Content on Home", async () => {
     currentProject.setProject(null);
     ui.setView("start");
-    vi.mocked(open).mockResolvedValue("/source");
-    vi.mocked(invoke).mockResolvedValue(project);
-    const onImportComplete = vi.fn();
-    render(StartScreen, { recentProjects: [], onImportComplete });
-
-    await fireEvent.click(screen.getByRole("button", { name: /Import Bring in work/ }));
-    await fireEvent.click(screen.getByRole("button", { name: /novelWriter Project folder/ }));
-
-    await waitFor(() => expect(onImportComplete).toHaveBeenCalledWith(project, "novelwriter"));
-    expect(open).toHaveBeenCalledWith({ multiple: false, directory: true });
-    expect(invoke).toHaveBeenCalledWith("import_novelwriter", { path: "/source" });
-    expect(currentProject.value?.id).toBe(project.id);
-    expect(ui.currentView).toBe("editor");
+    render(StartScreen, { recentProjects: [] });
+    expect(screen.queryByRole("button", { name: /Bring in work/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Import RPG Content/ })).toBeTruthy();
   });
 });
+

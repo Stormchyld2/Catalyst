@@ -11,9 +11,9 @@ describe("Writer OS workspace state", () => {
     expect(workspace.leaveProject()).toBe("home");
   });
 
-  it("enters an active project in Write by default", () => {
-    expect(workspace.enterProject()).toBe("write");
-    expect(workspace.active).toBe("write");
+  it("enters an active campaign on its Home dashboard by default", () => {
+    expect(workspace.enterProject()).toBe("home");
+    expect(workspace.active).toBe("home");
   });
 
   it("can enter an active project directly in Story Development", () => {
@@ -36,8 +36,8 @@ describe("Writer OS workspace state", () => {
     expect(workspace.setLegacyView("start", true)).toBe("home");
   });
 
-  it("bridges legacy editor to Write only when a project is active", () => {
+  it("bridges legacy editor to the campaign default workspace", () => {
     expect(workspace.setLegacyView("editor", false)).toBe("home");
-    expect(workspace.setLegacyView("editor", true)).toBe("write");
+    expect(workspace.setLegacyView("editor", true)).toBe("home");
   });
 });

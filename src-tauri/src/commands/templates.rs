@@ -337,47 +337,10 @@ mod tests {
     }
 
     #[test]
-    fn test_load_bundled_templates() {
-        let templates = load_bundled_templates();
-        assert_eq!(templates.len(), 5);
-
-        let names: Vec<&str> = templates.iter().map(|t| t.name.as_str()).collect();
-        assert!(names.contains(&"Save the Cat"));
-        assert!(names.contains(&"Three-Act Structure"));
-        assert!(names.contains(&"Hero's Journey"));
-        assert!(names.contains(&"Story Circle"));
-        assert!(names.contains(&"Seven-Point Story Structure"));
-
-        for t in &templates {
-            assert!(t.bundled);
-            assert!(!t.structure.is_empty());
-            assert!(!t.project_types.is_empty());
-        }
-    }
-
-    #[test]
-    fn test_bundled_template_structure_validity() {
-        let templates = load_bundled_templates();
-        for t in &templates {
-            for part in &t.structure {
-                assert!(!part.title.is_empty(), "Part title empty in {}", t.name);
-                for ch in &part.children {
-                    assert!(!ch.title.is_empty(), "Chapter title empty in {}", t.name);
-                    for scene in &ch.scenes {
-                        assert!(!scene.title.is_empty(), "Scene title empty in {}", t.name);
-                    }
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn test_save_the_cat_has_15_beats() {
-        let templates = load_bundled_templates();
-        let stc = templates.iter().find(|t| t.name == "Save the Cat").unwrap();
-        let total_chapters: usize = stc.structure.iter().map(|p| p.children.len()).sum();
-        assert_eq!(total_chapters, 15);
-        assert_eq!(stc.structure.len(), 3); // 3 acts
+    fn novel_outline_presets_are_no_longer_bundled() {
+        // Catalyst retired the novel presets (Save the Cat, Hero's Journey...).
+        // Saved user-authored outlines keep working (see test_user_template_crud).
+        assert!(load_bundled_templates().is_empty());
     }
 
     #[test]
@@ -386,8 +349,19 @@ mod tests {
         let project = Project::new("Template Test".to_string(), SourceType::Blank, None);
         db::insert_project(&conn, &project).unwrap();
 
-        let templates = load_bundled_templates();
-        let template = &templates[0]; // Save the Cat
+        // A saved user outline: three parts of five chapters, one scene each.
+        let structure: Vec<TemplatePart> = (1..=3).map(|part| TemplatePart {
+            title: format!("Part {part}"),
+            children: (1..=5).map(|chapter| crate::models::TemplateChapter {
+                title: format!("Chapter {part}.{chapter}"),
+                synopsis: None,
+                scenes: vec![crate::models::TemplateScene { title: "Scene".into(), synopsis: None }],
+            }).collect(),
+        }).collect();
+        let template = StoryTemplate {
+            id: "user-outline".into(), name: "User outline".into(), source: None, description: None,
+            project_types: vec!["novel".into()], structure, bundled: false, created_at: None,
+        };
 
         let tx = conn.unchecked_transaction().unwrap();
         let mut next_pos = 0i32;
@@ -462,7 +436,7 @@ mod tests {
 
         assert_eq!(parts.len(), 3);
         assert_eq!(non_parts.len(), 15);
-        assert_eq!(chapters.len(), 18); // 3 acts + 15 sequences
+        assert_eq!(chapters.len(), 18); // 3 parts + 15 chapters
     }
 
     #[test]

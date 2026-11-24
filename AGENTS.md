@@ -252,6 +252,8 @@ Rules:
 - Test ambiguous, unresolved, invalid, duplicate, and project-isolation cases where relevant.
 - Do not claim tests passed unless they were actually executed and passed.
 - Report commands run and their results.
+- Before starting new work, confirm the latest "Windows build" GitHub Actions run on your branch passed. If it failed, fix the reported errors first.
+- Before pushing, run `npm run check` and `cargo check --no-default-features --all-targets` (from `src-tauri`). CI runs both before the Windows build, so a type or compile error fails within a few minutes.
 
 ## Architectural Changes
 

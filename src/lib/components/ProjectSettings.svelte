@@ -41,13 +41,31 @@
       : ""
   );
   const projectId = initial.id;
+  // Campaign configuration: title in project.yaml, the rest in campaign.yaml.
+  type CampaignSettings = {
+    title: string; tone: string; gm_name: string; ruleset_name: string; edition: string;
+    starting_level: string; advancement: string; play_mode: string; schedule: string;
+    session_length: string; party_name: string; expected_players: string;
+  };
+  let campaign = $state<CampaignSettings | null>(null);
+  let campaignBaseline = $state("");
+  let campaignLoadError = $state<string | null>(null);
   baseline = untrack(() =>
     JSON.stringify([authorPenName, genre, description, wordTarget, referenceTypes])
   );
   let dailyGoal = $state<number | undefined>(undefined);
   let goalLoaded = $state(false);
   onMount(async () => {
-    if (isCampaign) return;
+    if (isCampaign) {
+      if (!initial.project_root) return;
+      try {
+        campaign = await invoke<CampaignSettings>("get_campaign_settings", { projectRoot: initial.project_root });
+        campaignBaseline = JSON.stringify(campaign);
+      } catch (e) {
+        campaignLoadError = `Could not load campaign settings: ${String(e)}`;
+      }
+      return;
+    }
     try {
       const stats = await invoke<WritingStats>("get_writing_stats", { projectId });
       dailyGoal = stats.daily_goal;
@@ -75,6 +93,7 @@
   $effect(() => {
     dirty =
       snapshot !== baseline ||
+      (campaign !== null && JSON.stringify(campaign) !== campaignBaseline) ||
       (goalLoaded && dailyGoal !== savedGoal) ||
       tagState.dirty ||
       Object.values(fieldStates).some((state) => state.dirty);
@@ -132,6 +151,15 @@
         ...(!isCampaign && goalLoaded ? { daily_writing_goal: dailyGoal } : {}),
       };
 
+      if (isCampaign && campaign && initial.project_root && JSON.stringify(campaign) !== campaignBaseline) {
+        if (!campaign.title.trim()) throw new Error("Campaign name cannot be empty.");
+        campaign = await invoke<CampaignSettings>("update_campaign_settings", {
+          projectRoot: initial.project_root,
+          settings: $state.snapshot(campaign),
+        });
+        campaignBaseline = JSON.stringify(campaign);
+      }
+
       const updatedProject = await invoke<Project>("update_project_settings", {
         projectId,
         settings,
@@ -180,6 +208,15 @@
     </div>
 
     {/if}
+    {#if isCampaign}
+      {#if campaignLoadError}<p role="alert" class="ka-error">{campaignLoadError}</p>{/if}
+      {#if campaign}
+        <div class="ka-field od-field">
+          <label for="campaign-title">Campaign name</label>
+          <input id="campaign-title" type="text" bind:value={campaign.title} disabled={saving} />
+        </div>
+      {/if}
+    {/if}
     <!-- Genre -->
     <div class="ka-field od-field">
       <label for="genre">
@@ -192,13 +229,74 @@
         placeholder={isCampaign ? "e.g., Fantasy, Horror, Science Fiction" : "e.g., Literary Fiction, Science Fiction, Mystery"}
         disabled={saving}
       />
-      <p class="ka-help">{isCampaign ? "Genre describes the tabletop campaign. Game system, party and play schedule are recorded in campaign.yaml." : "Genre will be displayed on manuscript title pages."}</p>
+      <p class="ka-help">{isCampaign ? "Shown on the Campaign Dashboard." : "Genre will be displayed on manuscript title pages."}</p>
     </div>
+
+    {#if isCampaign && campaign}
+      <div class="ka-field od-field">
+        <label for="campaign-tone">Tone <span class="ka-optional">(optional)</span></label>
+        <input id="campaign-tone" type="text" bind:value={campaign.tone} placeholder="e.g., Grim, heroic, mysterious" disabled={saving} />
+      </div>
+      <div class="ka-field od-field">
+        <label for="campaign-gm">Game Master <span class="ka-optional">(optional)</span></label>
+        <input id="campaign-gm" type="text" bind:value={campaign.gm_name} disabled={saving} />
+      </div>
+      <fieldset class="campaign-group">
+        <legend>Ruleset</legend>
+        <div class="ka-field od-field">
+          <label for="campaign-ruleset">Game system</label>
+          <input id="campaign-ruleset" type="text" bind:value={campaign.ruleset_name} placeholder="e.g., Dungeons & Dragons 5e" disabled={saving} />
+        </div>
+        <div class="ka-field od-field">
+          <label for="campaign-edition">Edition</label>
+          <input id="campaign-edition" type="text" bind:value={campaign.edition} disabled={saving} />
+        </div>
+        <div class="ka-field od-field">
+          <label for="campaign-level">Starting level</label>
+          <input id="campaign-level" type="text" bind:value={campaign.starting_level} disabled={saving} />
+        </div>
+        <div class="ka-field od-field">
+          <label for="campaign-advancement">Advancement</label>
+          <input id="campaign-advancement" type="text" bind:value={campaign.advancement} placeholder="e.g., Milestone, XP" disabled={saving} />
+        </div>
+      </fieldset>
+      <fieldset class="campaign-group">
+        <legend>Party</legend>
+        <div class="ka-field od-field">
+          <label for="campaign-party">Party name</label>
+          <input id="campaign-party" type="text" bind:value={campaign.party_name} disabled={saving} />
+        </div>
+        <div class="ka-field od-field">
+          <label for="campaign-players">Expected players</label>
+          <input id="campaign-players" type="text" inputmode="numeric" bind:value={campaign.expected_players} disabled={saving} />
+        </div>
+      </fieldset>
+      <fieldset class="campaign-group">
+        <legend>Sessions</legend>
+        <div class="ka-field od-field">
+          <label for="campaign-play-mode">Play mode</label>
+          <select id="campaign-play-mode" bind:value={campaign.play_mode} disabled={saving}>
+            <option value="physical">In person</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="digital">Online</option>
+          </select>
+        </div>
+        <div class="ka-field od-field">
+          <label for="campaign-schedule">Schedule</label>
+          <input id="campaign-schedule" type="text" bind:value={campaign.schedule} placeholder="e.g., Weekly" disabled={saving} />
+        </div>
+        <div class="ka-field od-field">
+          <label for="campaign-session-length">Session length</label>
+          <input id="campaign-session-length" type="text" bind:value={campaign.session_length} placeholder="e.g., 3 hours" disabled={saving} />
+        </div>
+      </fieldset>
+      <p class="ka-help">House rules are a campaign document: Rules &amp; Mechanics/House Rules in World Builder.</p>
+    {/if}
 
     <!-- Description -->
     <div class="ka-field od-field">
       <label for="project-description">
-        Project Description <span class="ka-optional">(optional)</span>
+        {isCampaign ? "Campaign Description" : "Project Description"} <span class="ka-optional">(optional)</span>
       </label>
       <textarea
         id="project-description"
@@ -283,7 +381,7 @@
   {#if section === "details" || section === "references"}
     {#if error}<p role="alert" class="ka-error">{error}</p>{/if}
     <div class="settings-actions">
-      {#if saved && !dirty}<p role="status" class="ka-help">Project changes saved.</p>{/if}
+      {#if saved && !dirty}<p role="status" class="ka-help">{isCampaign ? "Campaign changes saved." : "Project changes saved."}</p>{/if}
       <button
         type="button"
         onclick={handleSave}
@@ -291,8 +389,13 @@
         aria-busy={saving || undefined}
         class="ka-button"
         >{#if saving}<Loader2 class="w-5 h-5 animate-spin" aria-hidden="true" />
-          Saving…{:else}Save project changes{/if}</button
+          Saving…{:else}{isCampaign ? "Save campaign changes" : "Save project changes"}{/if}</button
       >
     </div>
   {/if}
 </div>
+
+<style>
+  .campaign-group { border: 1px solid var(--color-border); border-radius: var(--radius-m); padding: 12px 14px; display: grid; gap: 10px; }
+  .campaign-group legend { padding: 0 6px; font-weight: 650; }
+</style>

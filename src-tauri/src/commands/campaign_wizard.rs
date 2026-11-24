@@ -87,3 +87,22 @@ pub async fn get_campaign_dashboard_summary(
         latest_session_plan,
     })
 }
+
+/// Campaign Settings: title (project.yaml) and table configuration (campaign.yaml).
+#[tauri::command]
+pub async fn get_campaign_settings(project_root: String) -> Result<campaign_wizard::CampaignSettings, String> {
+    let root = PathBuf::from(project_root);
+    if !root.is_absolute() { return Err("Campaign path must be absolute.".into()); }
+    campaign_wizard::read_campaign_settings(&root)
+}
+
+#[tauri::command]
+pub async fn update_campaign_settings(
+    project_root: String,
+    settings: campaign_wizard::CampaignSettings,
+) -> Result<campaign_wizard::CampaignSettings, String> {
+    let root = PathBuf::from(project_root);
+    if !root.is_absolute() { return Err("Campaign path must be absolute.".into()); }
+    campaign_wizard::write_campaign_settings(&root, &settings)?;
+    campaign_wizard::read_campaign_settings(&root)
+}

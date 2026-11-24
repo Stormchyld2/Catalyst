@@ -52,7 +52,7 @@
           onchange={(e) => ui.setShowSampleProject((e.target as HTMLInputElement).checked)}
           aria-describedby="show-sample-project-help"
         />
-        <label for="show-sample-project">Show The Glass Meridian sample on Home</label>
+        <label for="show-sample-project">Show The Hollow Crown demo on Home</label>
       </div>
       <p id="show-sample-project-help" class="ka-help">
         Hide the bundled sample from Home once you no longer need it. This does not delete the sample.

@@ -11,7 +11,6 @@ import ReferenceEditDialog from "./ReferenceEditDialog.svelte";
 import FieldRenderer from "./FieldRenderer.svelte";
 import Onboarding from "./Onboarding.svelte";
 import sampleSource from "../../../src-tauri/src/commands/sample_project.rs?raw";
-import sampleChapterOne from "../../../docs/projects/The Glass Meridian/Manuscript/Chapter 01 - The Missing Block.md?raw";
 
 vi.hoisted(() => {
   const values = new Map<string, string>();
@@ -201,17 +200,15 @@ describe("reference fixture rendering", () => {
       expect(onChange).toHaveBeenCalledWith('["observant","loyal"]');
     }
   );
-  it("aligns the onboarding sidebar with a seeded chapter", () => {
+  it("tours campaign navigation instead of a seeded manuscript chapter", () => {
     ui.startOnboarding();
     ui.goToStep("tour-sidebar");
     render(Onboarding);
-    expect(screen.queryByText("Chapter 1: The Beginning")).toBeNull();
-    // The first-run sample is the file-authoritative Glass Meridian project;
-    // the tour must show the chapter title that sample actually seeds.
-    expect(sampleSource).toContain("Manuscript/Chapter 01 - The Missing Block.md");
-    const seededTitle = sampleChapterOne.match(/^title: (.+)$/m)?.[1];
-    expect(seededTitle).toBe("Chapter 1 — The Missing Block");
-    expect(screen.getByText(seededTitle!)).toBeTruthy();
+    expect(screen.getByText("Campaign navigation")).toBeTruthy();
+    expect(screen.queryByText(/Chapter 1/)).toBeNull();
+    // The first-run sample is The Hollow Crown campaign, not the Glass Meridian manuscript.
+    expect(sampleSource).toContain("The Hollow Crown");
+    expect(sampleSource).not.toContain("Manuscript/Chapter 01 - The Missing Block.md");
   });
 });
 
