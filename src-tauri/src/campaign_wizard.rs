@@ -844,10 +844,16 @@ impl Seeder {
 
         let prose = prose.trim();
         let scaffold = template.body.trim();
-        let body = match (prose.is_empty(), scaffold.is_empty()) {
-            (true, _) => scaffold.to_string(),
-            (false, true) => prose.to_string(),
-            (false, false) => format!("{prose}\n\n{scaffold}"),
+        let body = if template_id == "campaign-overview" && !prose.is_empty() {
+            // The wizard has already filled the master-reference sections.
+            // Do not append a second blank scaffold or create duplicate facts.
+            prose.to_string()
+        } else {
+            match (prose.is_empty(), scaffold.is_empty()) {
+                (true, _) => scaffold.to_string(),
+                (false, true) => prose.to_string(),
+                (false, false) => format!("{prose}\n\n{scaffold}"),
+            }
         };
         let mut doc = create_document(
             root,
@@ -920,13 +926,42 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
     let b = &input.basics;
     let story = &input.story;
 
-    // The campaign title lives only in project.yaml.
+    // The campaign title and identity live in project.yaml. The overview is
+    // an editable narrative master reference, not a second rules/config store.
+    let w = &input.world;
+    let party_name = input.party.name.trim();
+    let players = input.party.players.iter()
+        .filter_map(|p| {
+            let name = p.character_name.trim();
+            if name.is_empty() { None } else { Some(format!("- {name}")) }
+        }).collect::<Vec<_>>();
+    let npc_names = input.npcs.iter().filter_map(|n| {
+        let name = n.name.trim();
+        if name.is_empty() { None } else { Some(format!("- {name}")) }
+    }).collect::<Vec<_>>();
+    let faction_names = input.factions.iter().filter_map(|n| {
+        let name = n.name.trim();
+        if name.is_empty() { None } else { Some(format!("- {name}")) }
+    }).collect::<Vec<_>>();
+    let overview_body = format!(
+        "## Campaign Summary\n\n{}\n\n## World and Setting\n\n{}\n\n{}\n\n## Party\n\n{}\n\n{}\n\n## Main Story Arc\n\n{}\n\n## Active Quests\n\n{}\n\n## Important NPCs and Factions\n\n### NPCs\n\n{}\n\n### Factions\n\n{}\n\n## Campaign Timeline\n\nUpdate after actual sessions; see Sessions/Session Logs and Sessions/Campaign State.\n\n## Player-Facing Pitch\n\n{}\n\n## GM-Only Notes\n\nAdd private GM notes here. Visibility metadata is descriptive and must not be treated as enforced sharing permissions.\n\n## Related Records\n\n- Worldbuilding/ (lore and locations)\n- Characters/ (PC placeholders and NPC profiles)\n- Adventures/ (scenes and quests)\n- Sessions/ (plans, logs and campaign state)\n- Rules & Mechanics/ (system references and house rules)\n\nEdit the source records rather than duplicating their content here.",
+        b.premise.trim(),
+        w.name.trim(),
+        w.notes.trim(),
+        if party_name.is_empty() { "Party not named" } else { party_name },
+        players.join("\n"),
+        story.central_conflict.trim(),
+        story.side_quests.join("\n"),
+        npc_names.join("\n"),
+        faction_names.join("\n"),
+        b.subtitle.trim()
+    );
     let overview = seeder.record(
         root,
         "Adventures/Main Campaign",
         "Campaign Overview",
         "campaign-overview",
-        &b.premise,
+        &overview_body,
         &[
             ("subtitle", s(&b.subtitle)),
             ("genre", s(&b.genre)),
@@ -934,6 +969,10 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             ("gm_name", s(&b.gm_name)),
             ("start_date", s(&b.start_date)),
             ("central_conflict", s(&story.central_conflict)),
+            ("world_name", s(&w.name)),
+            ("party_name", s(&input.party.name)),
+            ("ruleset_id", s(&input.rules.pack_id)),
+            ("edition_id", s(&input.rules.edition)),
             ("campaign_structure", s(&story.structure)),
             ("campaign_length", s(&story.length)),
             ("status", s("planning")),
