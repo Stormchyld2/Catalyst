@@ -1,7 +1,6 @@
 <script lang="ts">
   import catalystLogo from "../../assets/catalyst-logo.png";
   import { invoke } from "@tauri-apps/api/core";
-  import type { ImportType } from "../utils/import";
   import { open as openNative } from "../utils/nativeDialog";
   import {
     BookOpen,
@@ -20,12 +19,9 @@
 
   interface Props {
     recentProjects: Project[];
-    onImportLongform?: () => void;
-    onImportComplete?: (project: Project, type: ImportType) => void;
     onOpenQuickStart?: () => void;
     onNewProject?: () => void;
     onOpenProjectFolder?: () => void;
-    onOpenEditorial?: () => void;
     onProjectActivated?: () => void;
   }
 
