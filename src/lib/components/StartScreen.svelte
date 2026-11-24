@@ -129,11 +129,13 @@
   };
   type RpgResult = { imported: number; documents_created: number; copied_assets: number; destination: string; notes: string[] };
   const RPG_IMPORTS: { type: RpgFormat; label: string; hint: string; directory: boolean; filters?: { name: string; extensions: string[] }[] }[] = [
-    { type: "markdown", label: "Markdown", hint: "Single Markdown file", directory: false, filters: [{ name: "Markdown", extensions: ["md", "markdown"] }] },
+    { type: "markdown", label: "Markdown File", hint: "Single Markdown document", directory: false, filters: [{ name: "Markdown", extensions: ["md", "markdown"] }] },
+    { type: "markdown", label: "Markdown Folder", hint: "Import a folder of editable Markdown notes", directory: true },
     { type: "obsidian", label: "Obsidian Vault", hint: "Markdown vault folder", directory: true },
     { type: "assets", label: "Images / Maps / Tokens", hint: "Image folder (PNG, JPG, SVG, WebP, GIF)", directory: true },
-    { type: "foundry", label: "Foundry VTT", hint: "Exported JSON data / folder", directory: false, filters: [{ name: "Foundry JSON", extensions: ["json"] }] },
-    { type: "roll20", label: "Roll20", hint: "Supported JSON export (not a live campaign connection)", directory: false, filters: [{ name: "Roll20 JSON", extensions: ["json"] }] },
+    { type: "assets", label: "Single Image / Map / Token", hint: "Import one image asset", directory: false, filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "gif", "svg"] }] },
+    { type: "foundry", label: "Foundry VTT", hint: "Exported JSON data / folder", directory: false, filters: [{ name: "Foundry Export", extensions: ["json", "zip"] }] },
+    { type: "roll20", label: "Roll20", hint: "Supported JSON export (not a live campaign connection)", directory: false, filters: [{ name: "Roll20 Export", extensions: ["json", "zip"] }] },
     { type: "fantasy_grounds", label: "Fantasy Grounds", hint: ".mod module or exported XML", directory: false, filters: [{ name: "Fantasy Grounds", extensions: ["mod", "xml"] }] },
     { type: "pdf", label: "PDF Reference", hint: "Original PDF preserved offline; no OCR", directory: false, filters: [{ name: "PDF", extensions: ["pdf"] }] },
   ];
@@ -557,7 +559,7 @@
           </div>
         {:else}
           <ul class="import-list">
-            {#each RPG_IMPORTS as format (format.type)}
+            {#each RPG_IMPORTS as format (format.label)}
               <li><button type="button" class="ka-button ka-button--ghost import-format"
                 disabled={rpgImportBusy} onclick={() => selectRpgImport(format.type)}>
                 {format.label}<small>{format.hint}</small>
