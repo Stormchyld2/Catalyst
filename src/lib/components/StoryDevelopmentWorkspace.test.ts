@@ -894,3 +894,35 @@ describe("StoryDevelopmentWorkspace", () => {
     expect(screen.getByText("Invalid document YAML")).toBeTruthy();
   });
 });
+
+
+describe("Campaign Overview direct navigation", () => {
+  it("opens the canonical overview rather than the first adventure document", async () => {
+    mockStoryDevelopmentInvoke();
+    const original = vi.mocked(invoke).getMockImplementation()!;
+    const path = "Adventures/Main Campaign/Campaign Overview.md";
+    vi.mocked(invoke).mockImplementation(async (command, args) => {
+      if (command === "get_story_development_index") {
+        return { entries: [
+          { id: "note-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", entry_kind: "document", document_type: "note",
+            title: "A Different Adventure", relative_path: "Adventures/Main Campaign/A Different Adventure.md", section: "Adventures" },
+          { id: "note-bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", entry_kind: "document", document_type: "note",
+            title: "Campaign Overview", relative_path: path, section: "Adventures" },
+        ], issues: [] };
+      }
+      if (command === "get_story_development_folders") return ["Adventures", "Adventures/Main Campaign"];
+      if (command === "get_story_development_document") {
+        const relativePath = (args as { relativePath: string }).relativePath;
+        return { ...documentResponse(relativePath), id: "note-bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          title: relativePath === path ? "Campaign Overview" : "A Different Adventure", relative_path: relativePath };
+      }
+      return original(command, args);
+    });
+    render(StoryDevelopmentWorkspace, { props: { focusRoot: "Adventures", initialDocumentPath: path } });
+    await waitFor(() => {
+      expect(invoke).toHaveBeenCalledWith("get_story_development_document",
+        expect.objectContaining({ relativePath: path }));
+    });
+    expect(screen.getByRole("heading", { name: "Campaign Overview", level: 1 })).toBeTruthy();
+  });
+});
