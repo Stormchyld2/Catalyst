@@ -41,78 +41,31 @@
   let showAllProjects = $state(false);
   let showImportFormats = $state(false);
   let allProjects = $state<Project[] | null>(null);
-  interface ProjectDashboardMetrics {
-    word_count: number;
-    word_target: number | null;
-    chapter_count: number;
-    scene_count: number;
-  }
-
-  const EMPTY_DASHBOARD_METRICS: ProjectDashboardMetrics = {
-    word_count: 0,
-    word_target: 0,
-    chapter_count: 0,
-    scene_count: 0,
+  type HomeCampaignStats = {
+    ruleset: string; party_name: string | null; expected_players: string | null;
+    sessions_planned: number; sessions_logged: number; adventure_records: number;
+    encounters: number; npcs: number; world_entries: number;
   };
-
-  let dashboardMetrics = $state<ProjectDashboardMetrics>({ ...EMPTY_DASHBOARD_METRICS });
-  let dashboardMetricsProjectId = $state<string | null>(null);
-  let loadingDashboardMetrics = $state(false);
-  let dashboardMetricsRequestId = 0;
-
-  /** The start screen lists the latest few; "View all" appears only when there are more. */
   const RECENT_SHOWN = 3;
   const listedProjects = $derived(recentProjects.slice(0, RECENT_SHOWN));
   const hasMoreProjects = $derived(recentProjects.length > RECENT_SHOWN);
   const activeHomeProject = $derived(currentProject.value ?? recentProjects[0] ?? null);
-
-
-  async function loadDashboardMetrics(project: Project) {
-    if (dashboardMetricsProjectId === project.id && !loadingDashboardMetrics) return;
-    const requestId = ++dashboardMetricsRequestId;
-
-    dashboardMetricsProjectId = project.id;
-    dashboardMetrics = { ...EMPTY_DASHBOARD_METRICS };
-    loadingDashboardMetrics = true;
-
-    try {
-      const metrics = await invoke<ProjectDashboardMetrics>("get_project_dashboard_metrics", {
-        projectId: project.id,
-      });
-
-      if (requestId !== dashboardMetricsRequestId) return;
-      dashboardMetrics = {
-        word_count: metrics.word_count ?? 0,
-        word_target: metrics.word_target ?? 0,
-        chapter_count: metrics.chapter_count ?? 0,
-        scene_count: metrics.scene_count ?? 0,
-      };
-    } catch (e) {
-      if (requestId !== dashboardMetricsRequestId) return;
-      console.error("Failed to load dashboard metrics:", e);
-      dashboardMetrics = { ...EMPTY_DASHBOARD_METRICS };
-    } finally {
-      if (requestId === dashboardMetricsRequestId) loadingDashboardMetrics = false;
-    }
-  }
-
+  let homeCampaign = $state<HomeCampaignStats | null>(null);
+  let homeCampaignError = $state<string | null>(null);
+  let loadingDashboardMetrics = $state(false);
   $effect(() => {
     const latest = activeHomeProject;
-
-    if (!latest) {
-      dashboardMetrics = { ...EMPTY_DASHBOARD_METRICS };
-      dashboardMetricsProjectId = null;
-      return;
-    }
-
-    void loadDashboardMetrics(latest);
+    let cancelled = false;
+    homeCampaign = null;
+    homeCampaignError = null;
+    if (!latest || latest.project_type !== "campaign" || !latest.project_root) return;
+    loadingDashboardMetrics = true;
+    invoke<HomeCampaignStats>("get_campaign_dashboard_summary", { projectRoot: latest.project_root })
+      .then((data) => { if (!cancelled) homeCampaign = data; })
+      .catch((e) => { if (!cancelled) homeCampaignError = String(e); })
+      .finally(() => { if (!cancelled) loadingDashboardMetrics = false; });
+    return () => { cancelled = true; };
   });
-
-  const dashboardGoalProgress = $derived(
-    dashboardMetrics.word_target && dashboardMetrics.word_target > 0
-      ? Math.round((dashboardMetrics.word_count / dashboardMetrics.word_target) * 100)
-      : 0
-  );
   type RpgFormat = "markdown" | "obsidian" | "assets" | "foundry" | "roll20" | "fantasy_grounds" | "pdf";
   type RpgPreview = {
     format: RpgFormat;
@@ -443,51 +396,39 @@
         {@const latestModified = modifiedDate(latestProject.modified_at)}
         <section class="dashboard-card continue-card" aria-labelledby="continue-heading">
           <div class="continue-copy">
-            <span class="dashboard-eyebrow">Continue Writing</span>
+            <span class="dashboard-eyebrow">Continue Campaign</span>
             <h2 id="continue-heading">{latestProject.name}</h2>
             <p>Last worked {latestModified.short}</p>
           </div>
           <button
             type="button"
             class="ka-button continue-button"
-            onclick={() => openProject(latestProject, "write")}
+            onclick={() => openProject(latestProject, "dashboard")}
             disabled={openingProjectId !== null}
           >
             {openingProjectId === latestProject.id ? "Opening..." : "Continue"}
           </button>
         </section>
 
-        <section
-          class="dashboard-card metrics-card"
-          aria-labelledby="metrics-heading"
-          aria-busy={loadingDashboardMetrics || undefined}
-        >
+        <section class="dashboard-card metrics-card" aria-labelledby="metrics-heading"
+          aria-busy={loadingDashboardMetrics || undefined}>
           <div class="section-head">
-            <h2 id="metrics-heading" class="section-title">Project Overview</h2>
+            <h2 id="metrics-heading" class="section-title">Campaign Overview</h2>
           </div>
-
-          <div class="metrics-grid">
-            <div class="metric">
-              <span class="metric-label">Words</span>
-              <strong class="metric-value">{dashboardMetrics.word_count.toLocaleString()}</strong>
+          {#if homeCampaign}
+            <div class="metrics-grid">
+              <div class="metric"><span class="metric-label">Ruleset</span><strong class="metric-value">{homeCampaign.ruleset}</strong></div>
+              <div class="metric"><span class="metric-label">Party</span><strong class="metric-value">{homeCampaign.party_name || "Not named"}</strong></div>
+              <div class="metric"><span class="metric-label">Session Plans</span><strong class="metric-value">{homeCampaign.sessions_planned}</strong></div>
+              <div class="metric"><span class="metric-label">Adventure Documents</span><strong class="metric-value">{homeCampaign.adventure_records}</strong></div>
             </div>
-
-            <div class="metric">
-              <span class="metric-label">Goal</span>
-              <strong class="metric-value">{(dashboardMetrics.word_target ?? 0).toLocaleString()}</strong>
-              <span>{dashboardGoalProgress}% of goal</span>
-            </div>
-
-            <div class="metric">
-              <span class="metric-label">Chapters</span>
-              <strong class="metric-value">{dashboardMetrics.chapter_count.toLocaleString()}</strong>
-            </div>
-
-            <div class="metric">
-              <span class="metric-label">Scenes</span>
-              <strong class="metric-value">{dashboardMetrics.scene_count.toLocaleString()}</strong>
-            </div>
-          </div>
+          {:else if loadingDashboardMetrics}
+            <p>Reading saved campaign records…</p>
+          {:else if homeCampaignError}
+            <p role="alert">Could not load campaign summary: {homeCampaignError}</p>
+          {:else}
+            <p>Open a Catalyst campaign to view ruleset, party, sessions and adventure records.</p>
+          {/if}
         </section>
       {:else}
         <section class="dashboard-card empty-dashboard" aria-label="Projects">
@@ -605,7 +546,7 @@
 {#if projectToDelete}
   <ConfirmDialog
     title={`Remove "${projectToDelete.name}" from Catalyst?`}
-    message="This removes the book from your Catalyst project list only. Your manuscript, project folder, and all local files remain untouched. You can reopen the folder later."
+    message="This removes the campaign from your Catalyst recent-project list only. Your campaign folder and all local files remain untouched. You can reopen the folder later."
     confirmLabel="Remove from list"
     onConfirm={confirmDeleteProject}
     onCancel={cancelDeleteProject}
