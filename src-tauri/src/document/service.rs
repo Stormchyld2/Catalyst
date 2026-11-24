@@ -466,12 +466,24 @@ fn replace_staged_document(staged: &Path, destination: &Path) -> Result<(), Stri
         return fs::rename(staged, destination).map_err(|e| e.to_string());
     }
 
-    let backup = destination.with_file_name(recovery_file_name(destination, "bak"));
+    // Win32 ReplaceFileW is not automatically long-path aware even though
+    // Rust's std::fs can create deeply nested campaign staging files. In
+    // particular, two nested staging folders plus the recovery name can
+    // exceed MAX_PATH. canonicalize returns the extended-length \\?\\ form
+    // on Windows, so the three API arguments address the same files that
+    // std::fs has just verified. Never canonicalize the backup itself: the
+    // backup is a new file which does not exist yet.
+    let canonical_destination = fs::canonicalize(destination)
+        .map_err(|e| format!("Could not resolve destination for Windows replace: {e}"))?;
+    let canonical_staged = fs::canonicalize(staged)
+        .map_err(|e| format!("Could not resolve staged file for Windows replace: {e}"))?;
+    let backup = canonical_destination
+        .with_file_name(recovery_file_name(destination, "bak"));
     let wide = |path: &Path| -> Vec<u16> {
         path.as_os_str().encode_wide().chain(std::iter::once(0)).collect()
     };
-    let dest_wide = wide(destination);
-    let staged_wide = wide(staged);
+    let dest_wide = wide(&canonical_destination);
+    let staged_wide = wide(&canonical_staged);
     let backup_wide = wide(&backup);
     // SAFETY: Each pointer references a null-terminated UTF-16 path held alive
     // for the duration of this synchronous Windows API call.
@@ -955,6 +967,30 @@ mod tests {
         let raw = fs::read_to_string(temp.path().join(path)).unwrap();
         assert!(raw.contains("type: scene"));
         assert!(raw.contains("title: Opening"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn long_demo_staging_paths_can_update_documents_with_recovery_backup() {
+        // Reproduce the two nested staging folders used by the demo:
+        // a long parent plus an auto-generated .catalyst-save-...bak name.
+        let temp = root();
+        let deep = temp.path()
+            .join("Demo Campaigns")
+            .join(format!(".hollow-crown-demo-{}", "a".repeat(36)))
+            .join(format!(".catalyst-staging-{}", "b".repeat(36)))
+            .join("Adventures/Main Campaign");
+        fs::create_dir_all(&deep).unwrap();
+        let project = deep.parent().unwrap().parent().unwrap();
+        let relative = Path::new("Adventures/Main Campaign/Campaign Overview.md");
+        let mut doc = create_document(
+            project, relative, "note", Some("Campaign Overview"), "First draft."
+        ).unwrap();
+        doc.body = "Edited campaign overview.\n".into();
+        let result = save_document(project, &doc, Some(&doc.source_hash));
+        assert!(result.is_ok(), "long-path Windows replace failed: {result:?}");
+        let reopened = read_document(project, relative).unwrap();
+        assert!(reopened.body.contains("Edited campaign overview."));
     }
 
     #[test]
