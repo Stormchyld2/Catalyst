@@ -38,7 +38,7 @@ const ENTRIES: &[DemoEntry] = &[
         title: "START HERE - GM Guide",
         visibility: "gm-only",
         body: r#"# Welcome to The Hollow Crown
-This **original, system-neutral** one-shot introduces World Builder, quests, encounters, sessions, clues and reusable templates. Allow roughly 2–3 hours. It does **not** assume D&D or require an installed rules pack.
+This **original **Dungeons & Dragons 5th Edition (2014-style)** one-shot introduces World Builder, quests, encounters, sessions, clues and reusable templates. Allow roughly 2–3 hours. It is written for **four 3rd-level D&D 5e characters** (adjustable for three to five PCs). Players supply their own fifth-edition rules; no proprietary rules pack is bundled. This is an independent original adventure, not an official D&D product.
 
 ## Your opening
 The village of Briar Glen has lost its bell and three residents have begun sleepwalking toward Briarwatch Tower. The players are asked to investigate before sunset.
@@ -59,7 +59,7 @@ The village of Briar Glen has lost its bell and three residents have begun sleep
 The villagers' disappearances are an effect of the weakening ward, not intentional kidnappings. Kael Voss wants the Crown Seal because it will reveal a lost royal archive. The imprisoned Hollow King can lie but cannot cross the etched stone ring while the seal remains whole.
 
 ## Demo safety and mechanics
-Use descriptive obstacles, negotiations and simple opposed checks appropriate for the players' system. No mandatory combat statistics or rulebooks. All outcomes are suggestions, not hard-coded mechanics. The supplied map references are textual location diagrams, **not** finished Map Studio battle maps. No working VTT player connection, soundboard configuration, token or automatic encounter system is implied.
+Use D&D 5e ability checks, saving throws, initiative and the original monster statistics provided in this demo. Checks and attacks use a physical die or Catalyst Dice Roller; there is no automatic 5e combat adapter bundled. All outcomes are suggestions, not hard-coded mechanics. The supplied map references are textual location diagrams, **not** finished Map Studio battle maps. No working VTT player connection, soundboard configuration, token or automatic encounter system is implied.
 "#,
     },
     DemoEntry {
@@ -207,7 +207,7 @@ Old Jessa saw one of the sleepers carrying a bronze weight toward the tower. She
 Jessa (witness), Mira Fen (ally), player characters.
 
 ## Approaches
-Kindness, evidence, a promise of protection or a perceptive question will reveal the information. No specific game-system skill check is required.
+Kindness, evidence, a promise of protection or a perceptive question will reveal the information. Suggested checks: Charisma (Persuasion) DC 12 to gain Jessa's confidence, Wisdom (Insight) DC 11 to notice her fear, or Intelligence (Investigation) DC 12 to examine tracks. An honest promise of protection succeeds without a roll.
 
 ## Outcome
 The party learns the weight is hidden in the collapsed signal shed.
@@ -243,7 +243,7 @@ A wicker-and-root sentinel watches the vault entrance. It guards carved ward sym
 The party may bypass it by restoring a fallen symbol, speaking the old watchword "Hold the line", or taking a quieter route.
 
 ## If fighting
-Use creatures or stat blocks from the group's chosen ruleset. The demo provides no unlicensed combat statistics.
+Use creatures or stat blocks from the group's chosen ruleset. Use the original Thornbound Sentinel statistics in Creatures & Monsters/Custom Creatures/Thornbound Sentinel - 5e Stat Block.md. Its encounter is optional.
 
 ## Outcome
 The sentinel retreats once the ward is secure or its protected threshold is passed.
@@ -368,7 +368,7 @@ Use Catalyst dice when available, or physical dice. The Markdown table is not wi
         title: "Session 1 - The Silent Bell",
         visibility: "gm-only",
         body: r#"# Opening Session
-**Play time:** roughly 2–3 hours. **Rules:** system-neutral.
+**Play time:** roughly 2–3 hours. **Rules:** D&D 5e, four 3rd-level characters, 2014-style encounter assumptions.
 
 ## Strong Start
 The village bell is silent at sunset. Mira Fen asks the party to find the missing villagers.
@@ -386,6 +386,122 @@ Reach the vault, identify the cause of sleepwalking, and choose an outcome. Stop
 
 ## Session End
 Use the Session Log template after play. The demo intentionally contains no fabricated past session events.
+"#,
+    },
+    DemoEntry {
+        path: "Creatures & Monsters/Custom Creatures/Thornbound Sentinel - 5e Stat Block.md",
+        template: "creature-profile",
+        title: "Thornbound Sentinel - 5e Stat Block",
+        visibility: "gm-only",
+        body: r#"# Thornbound Sentinel
+*Medium plant construct, unaligned* — **Armor Class 13** (woven bark), **Hit Points 27** (5d8+5), **Speed 25 ft.**
+
+| STR | DEX | CON | INT | WIS | CHA |
+| --- | --- | --- | --- | --- | --- |
+| 14 (+2) | 10 (+0) | 12 (+1) | 3 (−4) | 11 (+0) | 5 (−3) |
+
+**Damage Vulnerabilities:** fire. **Condition Immunities:** charmed, frightened. **Senses:** passive Perception 10. **Languages:** understands the old watchword but cannot speak. **Challenge:** approximately CR 1/2 (100 XP), GM-adjustable; this is an original example creature, not a published D&D monster.
+
+## Traits
+**Warden's Purpose.** The sentinel attacks only creatures deliberately damaging the protective ward symbols. A creature can use an action and succeed on a DC 12 Intelligence (Arcana) or Wisdom (Religion) check to show the sentinel that it is repairing a ward. A player who correctly restores a fallen symbol succeeds automatically.
+
+## Actions
+**Thorn Strike.** Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8+2) piercing damage.
+
+## Encounter Scaling
+For a party of three level-3 characters, use 19 hit points; for five level-3 characters use 36. The sentinel can be bypassed without fighting. Do not treat the rough challenge estimate as an officially calculated CR.
+"#,
+    },
+    DemoEntry {
+        path: "Creatures & Monsters/Custom Creatures/Hollow Echo - 5e Stat Block.md",
+        template: "creature-profile",
+        title: "Hollow Echo - 5e Stat Block",
+        visibility: "gm-only",
+        body: r#"# Hollow Echo
+*Small undead manifestation, neutral* — **Armor Class 12**, **Hit Points 14** (4d6), **Speed 0 ft., fly 30 ft. (hover).**
+
+| STR | DEX | CON | INT | WIS | CHA |
+| --- | --- | --- | --- | --- | --- |
+| 4 (−3) | 14 (+2) | 10 (+0) | 8 (−1) | 12 (+1) | 11 (+0) |
+
+**Condition Immunities:** prone. **Senses:** darkvision 60 ft., passive Perception 11. **Languages:** understands Common; communicates with fragments of remembered words. **Challenge:** approximately CR 1/4 (50 XP), GM-adjustable; original example, not published material.
+
+## Actions
+**Echo Touch.** Melee Spell Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6+2) psychic damage.
+
+## Fractured Memory (Recharge 5–6)
+One creature within 30 feet must succeed on a DC 12 Wisdom saving throw or have disadvantage on its next ability check before the end of its next turn. This does not remove memories or control player characters.
+
+## Encounter Scaling
+Use one echo only for three level-3 PCs; two for four to five PCs if the party wants combat. The echo can also disperse automatically when the seal is restored.
+"#,
+    },
+    DemoEntry {
+        path: "Game Master/Screen References/D&D 5e Quick Rules for The Hollow Crown.md",
+        template: "gm-screen-reference",
+        title: "D&D 5e Quick Rules for The Hollow Crown",
+        visibility: "gm-only",
+        body: r#"# Adventure-Specific D&D 5e Checks
+Designed for four **3rd-level characters**, based on 2014-style fifth edition. The players should have access to their own D&D rules and character sheets.
+
+| Situation | Suggested check | DC | Success |
+| --- | --- | --- | --- |
+| Inspect bell frame | Intelligence (Investigation) | 12 | Notice the missing weight |
+| Follow sleepwalkers' tracks | Wisdom (Survival) | 12 | Find path to signal shed |
+| Calm Jessa | Charisma (Persuasion) | 12 | She reveals a witness account |
+| Recognize the old ward | Intelligence (Arcana) or Wisdom (Religion) | 13 | Learn the ward is protective |
+| Find hidden stair | Wisdom (Perception) | 13 | Discover mechanism |
+| Stabilize bell chimes | Dexterity using suitable tools | 12 | Avoid an echo encounter |
+| Align Crown Seal | Intelligence (Arcana) | 13 | Restore the ward |
+
+## Fail-Forward
+A failed check adds time, noise, a complication or a new bargain; it must never permanently block the main story. Strong in-fiction choices may succeed automatically.
+
+## Final Chamber
+The seal can be restored by solving the three-marks puzzle, repaired through an appropriate creative method, destroyed, or negotiated over. There is no compulsory boss fight.
+
+## Combat
+Use the original Thornbound Sentinel and Hollow Echo stat-block documents. All other NPCs are narrative unless the GM chooses to supply suitable legal 5e statistics. Do not assume automatic initiative, HP tracking or character integration in Catalyst.
+
+## Party Size
+For fewer PCs, reduce hostile creatures and hit points as noted. For five PCs, add an echo or an additional environmental complication, not a forced lethal encounter.
+"#,
+    },
+    DemoEntry {
+        path: "Items & Equipment/Treasure & Loot/5e Adventure Rewards.md",
+        template: "loot-treasure",
+        title: "5e Adventure Rewards",
+        visibility: "gm-only",
+        body: r#"# Optional D&D 5e Rewards
+Intended for four level-3 adventurers:
+- 60 gp from Mira Fen's village fund, split as the party chooses.
+- One potion of healing (standard fifth-edition common item) found in the tower's signal shed, subject to the GM's available rules source.
+- The Crown Shard, a **nonmagical** narrative artifact with a future plot hook.
+- Optional milestone advancement after a satisfactory resolution, at the GM's discretion.
+
+No reward is granted automatically by the Catalyst inventory system. Add items and currency in Character Studio when integrated, or track them on paper.
+"#,
+    },
+    DemoEntry {
+        path: "Sessions/Session Plans/D&D 5e Encounter and Session Timing.md",
+        template: "session-plan",
+        title: "D&D 5e Encounter and Session Timing",
+        visibility: "gm-only",
+        body: r#"# GM Session Clock (2–3 hours)
+- **0–25 minutes:** intro, hook and village witnesses.
+- **25–60 minutes:** road and tower exploration, find tuning-weight clue.
+- **60–100 minutes:** guardian negotiation or optional combat; enter vault.
+- **100–145 minutes:** puzzle, rival-faction scene and decisive bargain.
+- **145–180 minutes:** consequences, rewards and session log.
+
+## Expected Challenges
+One or two low-stakes social DC 12 checks, one short exploration sequence, one puzzle with multiple solutions, and at most one or two modest optional combats. Tune difficulty after seeing the characters' actual capabilities.
+
+## Character Options
+For a demonstration group, encourage diverse roles (frontline, investigator, healer/support and negotiator). Catalyst does not bundle pre-generated D&D character sheets.
+
+## Session Zero
+Explain sleepwalking, memory themes and player safety boundaries. Players may request alternatives without affecting success or rewards.
 "#,
     },
     DemoEntry {
@@ -426,19 +542,19 @@ fn input_for(root: &Path) -> Result<NewCampaignInput, String> {
         "name": DEMO_TITLE,
         "setup_mode": "guided",
         "basics": {
-            "subtitle": "An Introductory Catalyst Adventure",
+            "subtitle": "An Original D&D 5e Adventure for Four Level-3 Characters",
             "premise": "The bell of Briarwatch Tower has fallen silent, and villagers are walking in their sleep toward an ancient crown-shaped seal.",
             "genre": "Fantasy Mystery",
             "tone": "Mysterious, heroic, choice-driven",
             "gm_name": "Demo Game Master"
         },
-        "rules": { "pack_id": "system-neutral", "advancement": "GM-directed" },
+        "rules": { "pack_id": "custom-homebrew", "custom_system_name": "Dungeons & Dragons 5e (2014-style)", "edition": "5e (2014)", "progression_type": "level", "starting_level": "3", "advancement": "Milestone" },
         "world": {
             "mode": "new", "name": "The Briar Marches",
             "era": "Frontier Age", "origin": "original",
             "notes": "A misty borderland where forgotten royal wards protect small villages from echoes."
         },
-        "party": { "name": "The Bellward Company", "expected_players": "3–5" },
+        "party": { "name": "The Bellward Company", "expected_players": "4" },
         "npcs": [
             {"name":"Mira Fen","disposition":"ally","role":"Village steward","motivation":"Protect Briar Glen and the missing villagers","description":"Practical, plain-spoken steward who offers shelter and a reward. She knows the bell was used to keep night terrors away."},
             {"name":"Orin Hale","disposition":"neutral","role":"Village guard captain","motivation":"Keep the road safe and avoid panic","description":"Sleep-deprived captain who knows the bell's tuning weight disappeared."},
@@ -469,7 +585,7 @@ fn input_for(root: &Path) -> Result<NewCampaignInput, String> {
             ]
         },
         "session": {
-            "play_mode":"physical", "dice":"physical",
+            "play_mode":"physical", "dice":"digital",
             "first_session_title":"Session One - GM Preparation",
             "first_session_notes":"Use Sessions/Session Plans/Session 1 - The Silent Bell for the complete runnable adventure plan.",
             "gm_notes":"All secrets are GM-only by default. This is an untouched opening state; the demo does not pretend any players have already completed a session."
@@ -542,8 +658,8 @@ fn load_demo_project(root: &Path) -> Result<Project, String> {
         created_at: manifest.created_at.clone(),
         modified_at: manifest.modified_at.unwrap_or(manifest.created_at),
         author_pen_name: None,
-        genre: Some("System-Neutral Fantasy Mystery".into()),
-        description: Some("A playable, choice-driven fantasy adventure demonstrating Catalyst's campaign and GM templates.".into()),
+        genre: Some("D&D 5e Fantasy Mystery".into()),
+        description: Some("An original D&D 5e fantasy adventure for four level-3 characters, with NPCs, encounters, quests, clues, monsters and GM notes.".into()),
         word_target: None,
         reference_types: Project::default_reference_types(),
         project_type: manifest.project_type,
