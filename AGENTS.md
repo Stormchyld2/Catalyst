@@ -1,295 +1,94 @@
-# LithoMark Writer OS — Agent Instructions
+# Catalyst: Agent Instructions
 
-These instructions apply to the entire repository. Read them before modifying code.
+These instructions apply to the whole repository and to every coding agent (ChatGPT, Codex, Claude). Read this file and [`CODING-GUARDRAILS.md`](CODING-GUARDRAILS.md) before changing anything.
 
-## Mission
+**Coding style is mandatory.** `CODING-GUARDRAILS.md` governs how much code to write: edit existing files before adding new ones, no abstraction until it is used three times, no unrequested features or speculative config, small diffs, and honest reports. The architecture rules below are required. Do not add layers beyond them.
 
-LithoMark is a local-first Writer OS. It combines manuscript writing, structured story development, linked knowledge, review workflows, publishing/export, audio/TTS capabilities, Git integration, templates, and an extensible plugin architecture without making the application itself the only way a writer can access their work.
+## 1. What Catalyst is
 
-Preserving user ownership, portability, durable identity, and architectural boundaries is more important than implementing a feature quickly.
+- Catalyst is an **offline-first tabletop RPG campaign and Game Master studio** for Windows. It is built with Svelte 5, TypeScript, Vite and Tauri 2, with a Rust backend in `src-tauri/`.
+- It was forked from a snapshot of LithoMark, a writing app (see `docs/catalyst/MIGRATION-FROM-LITHOMARK.md`). Much of the code still uses LithoMark and Kindling names, and some writer-era features (manuscript, scenes, editorial review) are still present. Treat those as legacy: keep them working where they still run, but don't extend them or use them as defaults for new campaigns.
+- **Never touch LithoMark.** `Stormchyld2/LithoMark` is a separate product. Don't read from it, copy data from it, import its projects automatically or push to it.
+- The Character Builder lives in its own repo, `Stormchyld2/Catalyst-Character-Builder`, and connects to Catalyst through typed ports. Don't build a second character system here.
 
-## Non-Negotiable Storage Rules
+## 2. Authorities
 
-1. Ordinary files and folders are authoritative for user content.
-2. Do not introduce a proprietary project container.
-3. Do not make a database authoritative for user content.
-4. Prefer Markdown, YAML, JSON, and normal local folders wherever practical.
-5. Any cache, index, search database, or projection must be disposable and fully rebuildable from authoritative project files.
-6. SQLite may be used only for rebuildable infrastructure unless an architecture document explicitly states otherwise.
-7. A LithoMark project must remain understandable and recoverable without LithoMark.
-8. Projects/books are isolated. Never resolve ordinary project data across project boundaries.
-9. Runtime features must use actual project files. Do not add mock, demo, placeholder, or hard-coded project data as a production fallback.
-10. Synthetic fixtures are allowed in tests, QA, and explicit demo harnesses only.
+These decide disputes, in this order. Docs 020–026 live on the `docs/campaign-wizard-architecture` branch until it merges; read them there if they aren't on your branch.
 
-## Core Architecture
+1. `docs/architecture/020-CAMPAIGN-WIZARD-ARCHITECTURE.md`: new campaigns, the folder tree, `campaign.yaml`, templates and the GM starter library.
+2. `docs/architecture/023-…` and `024-…`: shared and module engines and who owns them. Check the code before declaring an engine done or starting a second copy (dice parser, rules evaluator, file service, search, renderer).
+3. `docs/architecture/025-CATALYST-DESIGN-SYSTEM.md`: UI colors and branding.
+4. `002-DOCUMENT-MODEL.md`, `003-STABLE-ID-SYSTEM.md` and `004-CANON-MODEL.md`: the file, ID and canon rules that still apply.
+5. `001-PROJECT-FILE-FORMAT.md` and `016-NEW-BOOK-FOUNDATION.md`: legacy book projects only.
 
-Target dependency direction:
+If the code and the docs disagree, investigate and report it. Don't silently pick one.
 
-```text
-LithoMark UI
-    -> LithoMark Domain API
-        -> Domain Models / Domain Services
-            -> Project Services
-                -> Authoritative Project Files
-                    -> Rebuildable Infrastructure
-```
+## 3. Storage and architecture rules
 
-Respect this direction.
+1. **Files are the source of truth.** User content lives in ordinary Markdown, YAML and JSON files in normal folders. No proprietary container, no authoritative database and no required cloud service, account or telemetry. A campaign must stay readable without Catalyst.
+2. **Caches are disposable.** Search indexes, backlinks and projections must be rebuildable from the files. Older Kindling code still uses SQLite (`kindling.db`). Don't add new SQLite dependencies; see `018-SQLITE-RETIREMENT-AUDIT.md`.
+3. **Projects are isolated.** Never resolve data across project boundaries.
+4. **No fake data in production.** No mock, demo or hard-coded project data as a runtime fallback. Fixtures belong in tests and explicit demo harnesses only.
+5. **Respect the layering:** UI → domain/project services → files on disk (through Rust commands). The UI must not become a second persistence layer or write project files directly. Don't create a competing store for anything that already has one.
+6. **IDs are identity.** Stable IDs (type prefix plus UUID v4) identify records. Paths, filenames and titles do not. Moves and renames keep IDs and references. Report duplicate IDs; never silently regenerate them.
+7. **Links:** `[[Name]]` and `[[Name|Label]]` resolve through the shared link resolver only, within the active project. Ambiguous matches go to the user; missing targets stay visibly unresolved. Don't rewrite authored Markdown just because a link resolved.
+8. **Preserve user data.** Keep unknown YAML and frontmatter fields, Markdown whitespace and existing file meaning. Never silently move, delete or rewrite user files. Migrations are explicit and non-destructive.
+9. **Safe paths.** Guard against path traversal. Keep generated file and folder names short (see the guardrails' pitfalls on Windows path limits).
+10. **Canon is what the GM wrote.** Never turn inference into canon, and never change canon to fix a continuity warning.
 
-- UI code must not become a second persistence layer.
-- UI components should call the appropriate command/domain/project service rather than manipulating authoritative files independently.
-- Plugins and external agents must use public, permission-controlled APIs.
-- Search indexes, backlinks, caches, projections, and derived views never become content authority.
-- Do not create competing stores for manuscript, entity, canon, timeline, relationship, review, or link data.
+## 4. Campaigns and templates
 
-## Stable Identity
+- New campaigns follow 020: a `project.yaml` with `project_type: campaign`, a `campaign.yaml`, and the approved campaign folder tree. No book or manuscript folders in new campaigns.
+- Every template follows the wiki template contract: an entity template registered in `src-tauri/src/entity_templates.rs` with an image field, `overview_fields` and a scaffold, so records render in the wiki's right-hand Overview panel.
+- Each campaign setting lives in exactly one file. Don't write the same value to both `project.yaml` and a campaign document.
 
-Stable IDs are durable identity.
+## 5. Design system
 
-- Paths are not identity.
-- Filenames are not identity.
-- Titles/display names are not identity.
-- Moves and renames must preserve stable IDs and references.
-- Structured references and machine-facing APIs should use stable IDs.
-- Detect duplicate IDs; never silently accept or regenerate around them.
-- Core IDs use the documented type prefix plus canonical UUID v4.
-- Do not invent a second ID scheme without an approved architecture change.
+- Theme: **Obsidian + Frost Blue.** Accent `#6EA9CF`, hover `#8CC0E1`, background `#111214`, panels `#202328` / `#2C3036`, text `#F0F1F3` / `#A3A9B2`, borders `#41464E`.
+- Use the existing design tokens under `src/styles/` (`src/styles/catalyst/catalyst-design-tokens.css` once the theme branch lands). Don't hard-code colors or invent a new palette.
+- Amber/gold is retired from app chrome. It may appear only as an optional dice or character-sheet skin.
+- Don't change the logo artwork.
+- Target WCAG 2.2 AA: keyboard access, visible focus, non-color state cues and reduced motion.
 
-Read `docs/architecture/003-STABLE-ID-SYSTEM.md` before changing identity behavior.
+## 6. Commands
 
-## Documents and Links
+Run commands from the repo root unless noted. Start with the narrowest command and broaden only as needed.
 
-Markdown/YAML documents remain authoritative.
+| Purpose | Command |
+|---|---|
+| One front-end test file | `npx vitest run src/path/file.test.ts` |
+| All front-end tests | `npm test` |
+| Svelte/TypeScript check | `npm run check` |
+| One Rust test or module | `cd src-tauri && cargo test <name>` |
+| All Rust tests | `npm run test:rust` |
+| Front-end build | `npm run build` |
+| Lint and format checks | `npm run check:all` |
+| Run the app | `npm run tauri dev` |
 
-Wikilink contract:
+Windows is the primary platform. Code behind `#[cfg(windows)]` counts as tested only when its tests actually run on Windows.
 
-- Human-authored forms include `[[Display Name]]` and `[[Display Name|Custom Label]]`.
-- Human-readable wikilink text is presentation/lookup text, not durable identity.
-- Exact stable ID resolution takes precedence when applicable.
-- Human-readable resolution uses documented title/name/alias rules within the active project.
-- Multiple matches are ambiguous. Surface candidates and require writer selection; never guess.
-- Missing targets remain visibly unresolved.
-- Rename/move does not change target identity.
-- Backlinks are derived from authoritative files and are rebuildable.
-- Do not silently rewrite authored Markdown merely because a link was resolved.
-- The shared project link resolver is the authority for link resolution. Do not implement separate resolver logic in Write, Story Development, Review, Search, or Context Panel.
+## 7. Git
 
-Read `docs/architecture/002-DOCUMENT-MODEL.md` and `docs/architecture/010-LITHOMARK-PROJECT-WORKSPACE-ARCHITECTURE.md` before changing link behavior.
+- Work on a feature branch with one task per branch and PR. Never commit to `main` directly or merge into it without the owner's approval. The LithoMark branch `migration/kindling-foundation` does not exist here.
+- Never force-push, rewrite published history or delete branches or tags unless asked.
+- Check `git status` before editing. Preserve unrelated changes, and don't edit files that another active branch owns.
+- Don't commit build output, temp files, secrets or local environment state.
 
-## Canon, Timeline, and Continuity
+## 8. Testing and reporting
 
-Canon, timeline, and continuity are connected but semantically distinct.
+- Every behavior change needs a test. Bugs get a regression test.
+- A failing test is a bug report: diagnose it and fix the cause. When a feature changes, rewrite its tests; never delete or weaken them to get green.
+- Never claim tests passed unless they ran and passed.
+- At the end of a task, report:
+  - the files changed and the behavior changed;
+  - the commands run, with their pass/fail results;
+  - what was **not** verified;
+  - remaining issues;
+  - the branch and commit, or whether the changes are uncommitted.
+- Don't assume the next agent remembers this conversation. Record lasting decisions in code, tests or docs.
 
-- Canon represents explicit writer-recorded facts. Do not make generative inference authoritative canon.
-- Timeline represents temporal/event structure.
-- Continuity evaluates explicit structured/project data.
-- Storing these under the unified Story Development hierarchy does not erase their semantic boundaries.
-- Never silently alter writer canon to repair a continuity conflict.
+## 9. When the rules conflict with the task
 
-Read `docs/architecture/004-CANON-MODEL.md` before changing canon behavior.
+Stop before building something that breaks these rules or an architecture doc. Describe the conflict, propose the smallest change that resolves it, and wait for approval.
 
-## Canonical Project Organization
-
-New content uses the canonical project hierarchy documented in `docs/architecture/001-PROJECT-FILE-FORMAT.md`.
-
-Top-level conceptual roots include:
-
-- `Manuscript/`
-- `Story Development/`
-- `Notes/`
-- `Templates/`
-- `Assets/`
-
-Story Development contains the unified planning/wiki domain, including Foundation, Planning & Outline, Characters, Worldbuilding & Settings, Timeline, Research, and Canon as documented.
-
-Legacy Kindling and early-LithoMark roots may remain readable for migration compatibility. Do not silently move, delete, or rewrite writer files. Migration must be explicit and non-destructive.
-
-## Manuscript Structure
-
-Manuscript Structure is a dedicated service/domain concern.
-
-- Chapters and scenes use stable IDs.
-- Chapter scene order is explicit.
-- Scene parent relationships are explicit.
-- Reorder/move operations preserve IDs.
-- Integrity problems such as missing, duplicate, orphaned, or mismatched records must be reported rather than silently repaired.
-- Mutations must flow through the authoritative document/project service.
-- Manuscript Structure must not be conflated with a plotting methodology.
-
-## New Book Foundation
-
-The guided sequence is:
-
-1. Project Basics
-2. Characters
-3. Locations
-4. Worldbuilding
-5. Style & Voice
-6. Themes / Core Ideas
-7. Brainstorming
-8. Synopsis
-9. Manuscript Structure
-10. Review & Create
-
-The Foundation workflow is a temporary project seeder. After creation, the ordinary files it creates are authoritative.
-
-Do not force a plotting methodology during Manuscript Structure. Beat sheets, master outlines, and plotting methodologies remain optional Story Development workflows.
-
-Read `docs/architecture/016-NEW-BOOK-FOUNDATION.md` before changing this workflow.
-
-## Story Development
-
-Story Development is one domain with multiple views/services, not multiple competing persistence systems.
-
-- Story Bible/wiki, planning/outline, timeline, research, worldbuilding, characters, and canon can have specialized UX while sharing the same file-authoritative foundation.
-- Story Development projections/indexes are rebuildable.
-- Invalid project files should be surfaced as issues without hiding valid files.
-- Shared assets may be read where documented, but assets do not automatically become independent domain authorities.
-
-## Legacy Kindling Boundary
-
-Legacy Kindling code is migration/compatibility input, not automatically target LithoMark architecture.
-
-In particular:
-
-- Legacy SQLite reference tables are not the LithoMark link graph authority.
-- Legacy scene-reference raw UUID records are not the new stable-ID relationship model.
-- Legacy cross-project reference-copy commands are not the target persistence model.
-- Do not revive or extend these systems as new LithoMark infrastructure merely because code already exists.
-
-When porting Kindling behavior, preserve useful behavior only after translating it through current LithoMark domain boundaries.
-
-Read `docs/architecture/012-LITHOMARK-WRITER-OS-INTEGRATION-ARCHITECTURE.md` before significant Kindling migrations.
-
-## Plugins
-
-LithoMark supports Core, first-party plugins, and future community plugins.
-
-- First-party status does not bypass permissions.
-- Plugins use the public Plugin API and declared permissions.
-- Plugin code must not bypass Domain Services to create an alternate persistence authority.
-- Plugin-defined document types must integrate with the documented stable identity system.
-- TTS Reader is Core; Audiobook Studio is an optional bundled first-party plugin consuming Core TTS/audio APIs.
-
-## Review and Reviewer Workflows
-
-Review, beta reading, and ARC workflows must preserve manuscript/project authority and integrity.
-
-A future free reviewer/viewer is expected so reviewers do not need the full LithoMark application. Do not architect review data so that only the full desktop application can interpret or recover it.
-
-## Context Panel
-
-The Context Panel is scene-aware first and chapter-aware second.
-
-- It consumes shared project services.
-- It may keep transient UI/navigation state.
-- It must not persist competing entity, canon, timeline, manuscript, backlink, or link-resolution data.
-- Whole-project exploration belongs primarily in Story Development.
-- Wikilink drill-in may present linked context without changing durable identity or creating duplicate content.
-
-## Git and Repository Safety
-
-The normal development branch is `migration/kindling-foundation` unless the user explicitly specifies another branch.
-
-- Never merge to `main` without explicit user approval.
-- Never force-push.
-- Never rewrite published history.
-- Never delete branches or tags unless explicitly requested.
-- Do not discard unrelated working-tree changes.
-- Inspect `git status` before broad edits.
-- Keep commits focused and descriptive.
-- Do not commit generated build output, temporary files, secrets, credentials, or local environment state.
-- Before a risky or broad refactor, inspect the relevant architecture and current implementation first.
-
-## Implementation Discipline
-
-Before coding:
-
-1. Inspect the relevant existing implementation.
-2. Read the architecture documents governing the subsystem.
-3. Identify the current domain/service boundary.
-4. Preserve established behavior unless the task explicitly changes it.
-5. Prefer the smallest coherent change that satisfies the requirement.
-
-While coding:
-
-- Do not duplicate an existing service just to make a UI feature easier.
-- Do not bypass validation or integrity checks.
-- Do not add silent fallback behavior that masks corrupt/invalid project data.
-- Do not weaken type safety without a concrete reason.
-- Preserve unknown YAML/frontmatter fields unless the documented operation explicitly removes them.
-- Preserve Markdown-significant whitespace and existing file semantics.
-- Protect against path traversal and unsafe project-relative paths.
-- Treat Windows behavior as first-class; LithoMark is actively developed and tested on Windows 11.
-
-## Testing
-
-Every behavioral change should have appropriate tests.
-
-For Rust changes, run the narrowest relevant tests first, then broader checks when warranted, such as:
-
-```powershell
-cargo test <relevant-module-or-test>
-cargo check
-```
-
-Run commands from the correct crate directory when required.
-
-For Svelte/TypeScript changes, run the focused Vitest file first, for example:
-
-```powershell
-npx vitest run <test-file>
-```
-
-Then broaden the test scope when the change warrants it.
-
-Rules:
-
-- Diagnose a failing test; do not simply weaken or delete it.
-- Do not change production behavior solely to satisfy a broken test assertion.
-- Distinguish infrastructure/worker startup failures from actual test failures.
-- Add regression tests for bugs.
-- Test ambiguous, unresolved, invalid, duplicate, and project-isolation cases where relevant.
-- Do not claim tests passed unless they were actually executed and passed.
-- Report commands run and their results.
-
-## Architectural Changes
-
-Do not make an architectural change casually.
-
-If a task appears to require violating these instructions or an architecture document:
-
-1. Stop before implementing the conflicting design.
-2. Identify the conflict clearly.
-3. Propose the smallest architecture change necessary.
-4. Wait for explicit approval before changing the governing architecture.
-
-Architecture documents are design authority, but implementation reality matters. If documentation and code disagree, investigate the discrepancy rather than silently choosing one.
-
-## Agent Handoff
-
-Work may alternate between Codex, ChatGPT/GitHub-assisted development, and the user.
-
-At the end of a meaningful task:
-
-- Summarize files changed.
-- Summarize behavior changed.
-- Report tests/checks actually run.
-- Report remaining failures or uncertainties.
-- State whether changes are committed or only present in the working tree.
-- Keep the repository in a state another developer/agent can inspect and continue.
-
-Do not assume another agent remembers prior conversation context. Leave important durable decisions in code, tests, or architecture documentation.
-
-## Current Product Boundary
-
-The initial public/core preview centers on:
-
-- Write
-- Story Development
-
-Other subsystems may have foundations in place, but do not expand scope merely because they are planned.
-
-## Governing Principle
-
-When implementation convenience conflicts with writer ownership, portability, stable identity, explicit integrity, or the documented domain boundary, preserve the architecture and surface the conflict.
+**Governing principle:** user ownership, portability, stable identity and simple, working code beat implementation convenience.
