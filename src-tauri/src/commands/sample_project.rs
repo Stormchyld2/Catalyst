@@ -1131,6 +1131,145 @@ Give one or two cards when a player asks around. No card is required to advance;
     },
 ];
 
+/// Additional encounter-facing NPC records, factions and player handouts.
+const SUPPORT_ENTRIES: &[DemoEntry] = &[
+    DemoEntry {
+        path: "Characters/Non-Player Characters/Jessa of the Well.md", template: "npc-profile", title: "Jessa of the Well",
+        visibility: "gm-only",
+        body: r###"# Jessa — Witness at the Well
+**Role:** village witness • **Disposition:** worried but helpful • **Appearance:** silver-streaked braid, worn wool coat, clay-stained hands.
+
+## Voice and mannerisms
+Slow, short statements. Looks down when afraid of being blamed. Softens when somebody speaks kindly.
+
+## Knows
+One of the sleepwalkers carried the bronze tuning weight toward the signal shed. She heard a low ringing from the watch road. She does not know who removed the weight or why.
+
+## Wants
+To keep the missing villagers safe and prove that she isn't inventing tales.
+
+## Roleplaying advice
+A sincere promise that she will not be blamed succeeds without a roll. A DC 10 Charisma (Persuasion) check also helps if needed. Threats make her withdraw, but Orin and the footprints still supply the clue.
+
+## Follow-up
+If the party succeeds, she brings warm soup and asks whether the old bell will ring again."###,
+    },
+    DemoEntry {
+        path: "Characters/Non-Player Characters/The Hollow King.md", template: "npc-profile", title: "The Hollow King",
+        visibility: "gm-only",
+        body: r###"# The Hollow King — Voice in the Crown Seal
+**Role:** imprisoned ancient memory • **Attitude:** inscrutable bargainer • **Body:** none within the demo.
+
+## The truth
+The Hollow King is an echo of a long-dead ruler, trapped by the Crown Seal. It can speak and offer information, but cannot leave the central stone ring while the ward stands. It is not responsible for the missing tuning weight or a physical kidnapper.
+
+## How to portray
+Use a calm voice with pauses. It rarely raises volume. It says truth and ambiguity together:
+- “My keepers feared what I remembered.”
+- “The archive tells the truth, though perhaps not the truth you seek.”
+- “You have come to bargain; I have time enough to listen.”
+
+## What it wants
+A voluntary promise or memory freely offered by a character, or destruction of the seal. It cannot rewrite a PC's history without that player's consent.
+
+## Game mechanics
+It has no combat stat block. Weapons do not damage the voice. A player can attack the seal as an object but the GM should telegraph consequences before an irreversible break.
+
+## Player agency
+Accept a creative bargain, a firm refusal or repair. It will not spring an unavoidable level-one boss encounter."###,
+    },
+    DemoEntry {
+        path: "Characters/Non-Player Characters/The Three Sleepwalkers.md", template: "npc-profile", title: "The Three Sleepwalkers",
+        visibility: "gm-only",
+        body: r###"# The Three Sleepwalkers
+Three villagers stand beyond the ring inside the Crown Vault. They are **alive, unharmed and breathing**; they are not monsters or enemies.
+
+## Missing villagers
+- **Tarin Bell**, age 19, mill apprentice, sibling waiting by the well.
+- **Lysa Moor**, age 42, orchard keeper, left her coat on a fence.
+- **Bram Dens**, age 68, retired bellwright, knows the old mechanism but cannot speak while entranced.
+
+## How they act
+Their eyes are closed, mouths murmur a fragment of the old bell song, and they do not attack. They can be moved gently, but fall back into the trance until a resolution occurs.
+
+## Reunion prompts
+Tarin asks if the mill is safe. Lysa reaches for a child's scarf. Bram hums the first notes of the restored bell.
+
+## GM safety
+Never require a player to attack or sacrifice the sleepers. Each of the three ending paths saves them all."###,
+    },
+    DemoEntry {
+        path: "Game Master/Handouts/The Bellwright's Repair Note.md", template: "handout", title: "The Bellwright's Repair Note",
+        visibility: "gm-only",
+        body: r###"# A torn note from Bram Dens
+> If the tower bell ever falls quiet, find the bronze weight first. The old signal shed keeps spares and repair tools.
+>
+> Do not strike the ward marks. Seed comes before fire, and fire is tended for the crown.
+
+This in-world handout can be found in the mill, village stores or beside the upper bell frame. Give it when players need an additional clue. GM: the note makes the main puzzle solvable without passing a check."###,
+    },
+    DemoEntry {
+        path: "Game Master/Handouts/A Page from the Royal Archive.md", template: "handout", title: "A Page from the Royal Archive",
+        visibility: "gm-only",
+        body: r###"# A recovered archive page
+> Third Year of the Briar March: The king commanded three bells to bind three echoes. Their keeper was to be the village, not the crown.
+>
+> The bells were made so a promise could be renewed, not forever hidden.
+
+## Distribution
+Use only if the party chooses to open the archive or makes a restoration bargain that grants limited access. The page suggests another bell site but does not force a sequel."###,
+    },
+    DemoEntry {
+        path: "Worldbuilding/Organizations & Factions/Ash Wardens - GM Profile.md", template: "faction-secret-society", title: "Ash Wardens - GM Profile",
+        visibility: "gm-only",
+        body: r###"# Ash Wardens
+A dwindling order that maintains protective bells and ward stones across the Briar Marches.
+
+**Local contact:** Elowen Thatch. **Public goal:** keep villagers safe. **Secret:** they quietly concealed the royal archive, fearful that it contained instructions to break the wards.
+
+## Party relationship
+Helpful to cautious PCs. Can ally with Kael if access is supervised and the seal remains intact. They have no special combat abilities assumed by this adventure.
+
+## Adventure use
+Explain protective markings, supply the seed/flame/crown order, reward repaired wards. If the party destroys the seal, their attitude becomes strained but not automatically hostile."###,
+    },
+    DemoEntry {
+        path: "Worldbuilding/Organizations & Factions/Gloam Seekers - GM Profile.md", template: "faction-secret-society", title: "Gloam Seekers - GM Profile",
+        visibility: "gm-only",
+        body: r###"# Gloam Seekers
+An informal circle of scholars and travelers searching for forgotten historical records.
+
+**Local agent:** Kael Voss. **Public goal:** recover knowledge. **Secret:** some members would accept danger to retrieve the archive; Kael himself prefers avoiding harm.
+
+## Party relationship
+Neutral initially, then cooperative if the party shares findings. They are a faction to negotiate with, not a necessary combat encounter.
+
+## Adventure use
+Argue the ethical case for opening the archive; offer a compromise whereby the ward is repaired and historical records copied under supervision."###,
+    },
+    DemoEntry {
+        path: "Game Master/GM Notes/Adventure Continuation - Optional Second Session.md", template: "gm-notes", title: "Adventure Continuation - Optional Second Session",
+        visibility: "gm-only",
+        body: r###"# After The Hollow Crown
+The beginner adventure has a complete ending after the villagers are saved. This document offers optional next steps without declaring any future content automatically canon.
+
+## If the seal was restored
+A ward bell farther up the valley rings at an impossible hour. Elowen asks whether the party might inspect it.
+
+## If the seal was broken
+The party can help design new protections for the village while Kael publishes the archive's history.
+
+## If a bargain was made
+The Hollow King sends a small request for a harmless object from the archive, offering a chance to discuss whether the promise still serves the party.
+
+## Level advancement
+The GM may advance the party to second level after the one-shot. Catalyst does not level up premade characters automatically; use valid D&D character sheets and the appropriate Character Studio functionality when integrated.
+
+## Do not prewrite results
+Leave actual session logs empty until the group plays."###,
+    },
+];
+
 const LOCATION_MAP: &str = r#"# Briarwatch Tower — schematic only
 This is a text diagram for the GM, **not** a generated Map Studio asset or a grid-accurate battle map.
 
@@ -1234,7 +1373,7 @@ fn seed_entry(root: &Path, entry: &DemoEntry) -> Result<(), String> {
 
 /// Versioned content additions only: preserve every existing user edit and ID.
 fn seed_expansion_if_missing(root: &Path) -> Result<(), String> {
-    for entry in EXPANDED_ENTRIES.iter().chain(PREMADE_ENTRIES.iter()) {
+    for entry in EXPANDED_ENTRIES.iter().chain(PREMADE_ENTRIES.iter()).chain(SUPPORT_ENTRIES.iter()) {
         let target = root.join(entry.path);
         if target.exists() {
             continue;
@@ -1400,7 +1539,7 @@ mod tests {
     #[test]
     fn all_demo_entries_use_registered_templates_and_unique_paths() {
         let mut paths = std::collections::BTreeSet::new();
-        for entry in ENTRIES.iter().chain(EXPANDED_ENTRIES.iter()).chain(PREMADE_ENTRIES.iter()) {
+        for entry in ENTRIES.iter().chain(EXPANDED_ENTRIES.iter()).chain(PREMADE_ENTRIES.iter()).chain(SUPPORT_ENTRIES.iter()) {
             assert!(paths.insert(entry.path));
             let template = built_in_template(entry.template).expect("registered template");
             assert!(!template.manifest.document_type.is_empty());
