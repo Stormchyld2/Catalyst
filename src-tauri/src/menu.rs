@@ -16,11 +16,10 @@ pub fn create_menu(app: &AppHandle<Wry>, bindings: &BTreeMap<String, String>) ->
         item.build(app)
     };
     let file_submenu = SubmenuBuilder::new(app, "File")
-        .item(&command("new_project", "New Project")?)
+        .item(&command("new_project", "New Campaign…")?)
         .item(&command("open_project_folder", "Open Project Folder…")?)
         .separator()
-        .separator()
-        .item(&command("close_project", "Close Project")?)
+        .item(&command("close_project", "Close Campaign")?)
         .separator()
         .item(&command("settings", "Settings...")?)
         .separator()
@@ -34,10 +33,6 @@ pub fn create_menu(app: &AppHandle<Wry>, bindings: &BTreeMap<String, String>) ->
         .copy()
         .paste()
         .select_all()
-        .separator()
-        .item(&command("find", "Find in Scene…")?)
-        .item(&command("find_replace", "Find and Replace…")?)
-        .item(&command("find_project", "Find and Replace in Project…")?)
         .build()?;
     // Close Project owns Mod+W; a second predefined Close Window item would
     // retain that accelerator after the user's Close Project binding changes.
@@ -48,10 +43,6 @@ pub fn create_menu(app: &AppHandle<Wry>, bindings: &BTreeMap<String, String>) ->
         .item(&command("recovery_manager", "Recovery Manager…")?)
         .build()?;
     let view_submenu = SubmenuBuilder::new(app, "View")
-        .item(&command("toggle_sidebar", "Toggle Sidebar")?)
-        .item(&command("toggle_references", "Toggle References Panel")?)
-        .item(&command("sync", "Sync from Source")?)
-        .separator()
         .item(&command("dice_roller", "Dice Roller")?)
         .build()?;
     let help_submenu = SubmenuBuilder::new(app, "Help")

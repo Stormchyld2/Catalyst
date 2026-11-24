@@ -1,42 +1,7 @@
 [
   {
-    "id": "find",
-    "label": "Find in scene",
-    "category": "Edit",
-    "requiresProject": true,
-    "keywords": [
-      "search",
-      "prose"
-    ],
-    "binding": "Mod+F"
-  },
-  {
-    "id": "find_replace",
-    "label": "Find and replace",
-    "category": "Edit",
-    "requiresProject": true,
-    "keywords": [
-      "search",
-      "replace",
-      "prose"
-    ],
-    "binding": "Mod+Alt+F"
-  },
-  {
-    "id": "find_project",
-    "label": "Find and replace in project",
-    "category": "Edit",
-    "requiresProject": true,
-    "keywords": [
-      "search",
-      "replace",
-      "all"
-    ],
-    "binding": "Mod+Shift+F"
-  },
-  {
     "id": "close_project",
-    "label": "Close project",
+    "label": "Close campaign",
     "category": "File",
     "requiresProject": true,
     "keywords": [
@@ -54,103 +19,6 @@
       "exit"
     ],
     "binding": "Mod+Q"
-  },
-  {
-    "id": "sync",
-    "label": "Sync from source",
-    "category": "Project",
-    "requiresProject": true,
-    "requiresSourcePath": true,
-    "keywords": [
-      "sync",
-      "reimport",
-      "refresh",
-      "reload"
-    ],
-    "binding": "Mod+Shift+S"
-  },
-  {
-    "id": "toggle_sidebar",
-    "label": "Toggle sidebar",
-    "category": "View",
-    "requiresProject": true,
-    "keywords": [
-      "sidebar",
-      "outline",
-      "collapse",
-      "expand"
-    ],
-    "binding": "Mod+Backslash"
-  },
-  {
-    "id": "toggle_references",
-    "label": "Toggle references panel",
-    "category": "View",
-    "requiresProject": true,
-    "keywords": [
-      "references",
-      "characters",
-      "panel",
-      "collapse",
-      "expand"
-    ],
-    "binding": "Mod+Shift+R"
-  },
-  {
-    "id": "toggle_discovery_notes",
-    "label": "Toggle discovery notes",
-    "category": "View",
-    "requiresProject": true,
-    "keywords": [
-      "discovery",
-      "notes",
-      "draft"
-    ],
-    "binding": "Mod+D"
-  },
-  {
-    "id": "toggle_editor_mode",
-    "label": "Toggle beat/page view",
-    "category": "View",
-    "requiresProject": true,
-    "keywords": [
-      "page",
-      "beat",
-      "view",
-      "mode",
-      "prose",
-      "editor"
-    ],
-    "binding": "Mod+Alt+V"
-  },
-  {
-    "id": "detect_references",
-    "label": "Detect references in scene",
-    "category": "Project",
-    "requiresProject": true,
-    "keywords": [
-      "detect",
-      "references",
-      "scan",
-      "suggest",
-      "smart"
-    ],
-    "binding": ""
-  },
-  {
-    "id": "detect_all_references",
-    "label": "Detect references in all scenes",
-    "category": "Project",
-    "requiresProject": true,
-    "keywords": [
-      "detect",
-      "all",
-      "references",
-      "scan",
-      "suggest",
-      "bulk"
-    ],
-    "binding": ""
   },
   {
     "id": "dice_roller",
@@ -201,8 +69,7 @@
       "settings",
       "catalyst",
       "preferences",
-      "author",
-      "project",
+      "campaign",
       "theme",
       "tags",
       "fields"

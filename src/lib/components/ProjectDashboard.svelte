@@ -27,6 +27,7 @@
     onOpenCampaignOverview: () => void;
   } = $props();
 
+  const isCampaign = $derived(project.project_type === "campaign" && !!project.project_root);
   let summary = $state<CampaignSummary | null>(null);
   let loading = $state(false);
   let error = $state<string | null>(null);
@@ -40,7 +41,7 @@
     summary = null;
     error = null;
     if (!root || project.project_type !== "campaign") {
-      error = "This project is not a file-backed RPG campaign. Open or create a campaign to use the campaign dashboard.";
+      error = "This is an older writing project, not a Catalyst campaign. Its files are kept unchanged, but campaign workspaces cannot open it. Create a new campaign or open a campaign folder from Home.";
       return;
     }
     loading = true;
@@ -59,6 +60,7 @@
       <h1 id="dashboard-title">{project.name}</h1>
       <p class="meta">{project.genre ?? "Tabletop RPG campaign"} · Updated {modifiedDate}</p>
     </div>
+    {#if isCampaign}
     <div class="hero-actions">
       <button class="primary" type="button" onclick={onOpenCampaignOverview}>
         Edit Campaign Overview <ArrowRight size={17} aria-hidden="true" />
@@ -67,6 +69,7 @@
         Open Campaign Notes <ArrowRight size={17} aria-hidden="true" />
       </button>
     </div>
+    {/if}
   </header>
 
   {#if loading}

@@ -67,6 +67,11 @@
   let initialEditorialLoaded = $state(false);
   let showGlobalHome = $state(false);
   let requestedAdventureDocument = $state<string | null>(null);
+  // A dashboard request opens one document once; later visits to Adventures
+  // (from the rail or elsewhere) return to the user's own selection.
+  $effect(() => {
+    if (workspace.active !== "outline") requestedAdventureDocument = null;
+  });
 
   $effect(() => {
     if (initialProjectsLoaded && initialEditorialLoaded) onReady?.();
@@ -167,8 +172,11 @@
 
   $effect(() => {
     const project = currentProject.value;
-    if (project && workspace.active === "story-development" && !project.project_root) {
-      workspace.setActive("write", true);
+    // Campaign workspaces need a project folder. Older database-only projects
+    // stay readable on disk but open on the dashboard, which explains this.
+    if (project && !project.project_root &&
+      ["story-development", "write", "outline"].includes(workspace.active)) {
+      workspace.setActive("home", true);
       showGlobalHome = false;
     }
   });
@@ -536,47 +544,8 @@
       case "send_feedback":
         showFeedbackDialog = true;
         break;
-      case "editorial_open":
-        void editorial?.openFile();
-        break;
-      case "editorial_project":
-        if (currentProject.value) void editorial?.openProject(currentProject.value.id);
-        break;
-      case "find":
-        openSearch("scene");
-        break;
-      case "find_replace":
-        openSearch("scene", true);
-        break;
-      case "find_project":
-        openSearch("project", true);
-        break;
-      case "export":
-        if (currentProject.value) showExportDialog = true;
-        break;
       case "close_project":
         closeProject();
-        break;
-      case "sync":
-        window.dispatchEvent(new CustomEvent("kindling:sync"));
-        break;
-      case "toggle_sidebar":
-        ui.toggleSidebar();
-        break;
-      case "toggle_references":
-        ui.toggleReferencesPanel();
-        break;
-      case "toggle_discovery_notes":
-        window.dispatchEvent(new CustomEvent("kindling:toggleDiscoveryNotes"));
-        break;
-      case "detect_references":
-        window.dispatchEvent(new CustomEvent("kindling:detectReferences"));
-        break;
-      case "detect_all_references":
-        window.dispatchEvent(new CustomEvent("kindling:detectAllReferences"));
-        break;
-      case "toggle_editor_mode":
-        window.dispatchEvent(new CustomEvent("kindling:toggleEditorMode"));
         break;
       case "quick_start":
         showQuickStart = true;

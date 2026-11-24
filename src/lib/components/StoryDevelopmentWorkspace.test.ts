@@ -923,6 +923,22 @@ describe("Campaign Overview direct navigation", () => {
       expect(invoke).toHaveBeenCalledWith("get_story_development_document",
         expect.objectContaining({ relativePath: path }));
     });
-    expect(screen.getByRole("heading", { name: "Campaign Overview", level: 1 })).toBeTruthy();
+    // The first adventure in the tree is never opened instead of the overview.
+    expect(invoke).not.toHaveBeenCalledWith("get_story_development_document",
+      expect.objectContaining({ relativePath: "Adventures/Main Campaign/A Different Adventure.md" }));
+    expect(await screen.findByRole("button", { name: "Close Campaign Overview" })).toBeTruthy();
+  });
+});
+
+describe("Campaign workspace labels", () => {
+  it.each([
+    [undefined, "World Builder"],
+    ["Adventures", "Adventures"],
+    ["Sessions", "Campaign Notes"],
+  ] as const)("labels the %s view as %s", async (focusRoot, label) => {
+    mockStoryDevelopmentInvoke();
+    render(StoryDevelopmentWorkspace, { props: focusRoot ? { focusRoot } : {} });
+    expect(await screen.findByText(label, { selector: ".eyebrow" })).toBeTruthy();
+    expect(screen.queryByText("Story Development", { selector: ".eyebrow" })).toBeNull();
   });
 });
