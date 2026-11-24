@@ -934,6 +934,203 @@ Each route can be traversed without locked progression or forced combat.
     },
 ];
 
+/// Editable player-reference cards for the beginner one-shot. These do not
+/// claim to be live Character Studio character sheets.
+const PREMADE_ENTRIES: &[DemoEntry] = &[
+    DemoEntry {
+        path: "Characters/Player Characters/Rowan Ash - Level 1 Premade.md",
+        template: "player-character-placeholder",
+        title: "Rowan Ash - Level 1 Premade",
+        visibility: "gm-only",
+        body: r###"# Rowan Ash — Level 1 Premade D&D 5e Character
+**Human Fighter • Level 1 • Background: custom narrative adventurer • Proficiency +2**
+
+## Fast stats
+Armor Class **16** (chain mail), Hit Points **12**, Speed **30 ft.**, Initiative **+1**, Proficiency **+2**.
+
+## Ability scores
+STR 16 (+3), DEX 12 (+1), CON 14 (+2), INT 8 (−1), WIS 10 (+0), CHA 13 (+1)
+
+## Saving throws
+Strength +5, Constitution +4
+
+## Skills
+Athletics +5, Perception +2, Survival +2, Persuasion +3
+
+## Attacks and spells
+Longsword: **+5 to hit**, 1d8+3 slashing (one-handed); light crossbow: **+3**, 1d8+1 piercing, ammunition/range per your 5e source.
+
+## Equipment
+Chain mail, shield, longsword, light crossbow and 20 bolts, backpack, rope, torch and rations. Shield is included in AC 18 **if equipped**; listed AC 16 assumes no shield equipped.
+
+## Features and resources
+**Fighting Style—Defense:** +1 AC while wearing armor (thus AC 17 with chain mail, AC 19 with shield). **Second Wind:** once per short or long rest, bonus action regain 1d10+1 HP. These are brief prompts; refer to your 5e rules for exact details.
+
+## Personality and adventure hook
+You learned that your family once maintained the road to Briarwatch. You want to protect the villagers without destroying the old tower.
+
+## Your first scene
+Ask Orin for an old key. You're the party member most likely to recognize the sentinel's stance as defensive.
+
+## How to play
+Describe what you want to do; when the GM calls for an ability check, roll d20 plus the listed relevant modifier. Your hit points are a small resource at level one—retreat or negotiate when sensible. Track ammunition, spells and other resources manually or on a compatible 5e sheet. These are **editable beginner reference cards**, not fully automated Character Studio sheets. Consult your own D&D 5e (2014-style) source for exact class features, spell rules, actions, conditions and races.
+"###,
+    },
+    DemoEntry {
+        path: "Characters/Player Characters/Nyra Vale - Level 1 Premade.md",
+        template: "player-character-placeholder",
+        title: "Nyra Vale - Level 1 Premade",
+        visibility: "gm-only",
+        body: r###"# Nyra Vale — Level 1 Premade D&D 5e Character
+**Halfling Rogue • Level 1 • Background: custom narrative adventurer • Proficiency +2**
+
+## Fast stats
+Armor Class **14** (leather armor), Hit Points **9**, Speed **25 ft.**, Initiative **+3**, Proficiency **+2**.
+
+## Ability scores
+STR 8 (−1), DEX 16 (+3), CON 12 (+1), INT 13 (+1), WIS 14 (+2), CHA 12 (+1)
+
+## Saving throws
+Dexterity +5, Intelligence +3
+
+## Skills
+Acrobatics +5, Sleight of Hand +5, Stealth +5, Investigation +3, Perception +4, Insight +4
+
+## Attacks and spells
+Shortbow: **+5 to hit**, 1d6+3 piercing; dagger: **+5 to hit**, 1d4+3 piercing. **Sneak Attack:** +1d6 damage once per turn when the standard 5e conditions apply.
+
+## Equipment
+Leather armor, shortbow and 20 arrows, two daggers, thieves' tools, rope, hooded lantern, rations.
+
+## Features and resources
+**Expertise:** Stealth and Perception (already reflected above). **Thieves' Cant** and halfling luck/bravery are narrative prompts; use your rules source for exact mechanics.
+
+## Personality and adventure hook
+You have heard rumors of an archive under the tower. Your curiosity is stronger than your fear.
+
+## Your first scene
+Examine bell scrapes (Investigation), reassure Jessa, and open the signal shed cupboard using thieves' tools.
+
+## How to play
+Describe what you want to do; when the GM calls for an ability check, roll d20 plus the listed relevant modifier. Your hit points are a small resource at level one—retreat or negotiate when sensible. Track ammunition, spells and other resources manually or on a compatible 5e sheet. These are **editable beginner reference cards**, not fully automated Character Studio sheets. Consult your own D&D 5e (2014-style) source for exact class features, spell rules, actions, conditions and races.
+"###,
+    },
+    DemoEntry {
+        path: "Characters/Player Characters/Sera Dawn - Level 1 Premade.md",
+        template: "player-character-placeholder",
+        title: "Sera Dawn - Level 1 Premade",
+        visibility: "gm-only",
+        body: r###"# Sera Dawn — Level 1 Premade D&D 5e Character
+**Dwarf Cleric • Level 1 • Background: custom narrative adventurer • Proficiency +2**
+
+## Fast stats
+Armor Class **16** (scale mail and shield), Hit Points **10**, Speed **25 ft.**, Initiative **+0**, Proficiency **+2**.
+
+## Ability scores
+STR 14 (+2), DEX 10 (+0), CON 14 (+2), INT 10 (+0), WIS 16 (+3), CHA 10 (+0)
+
+## Saving throws
+Wisdom +5, Charisma +2
+
+## Skills
+Insight +5, Medicine +5, Religion +2, History +2
+
+## Attacks and spells
+Mace: **+4 to hit**, 1d6+2 bludgeoning. Spell attack **+5**, spell save **DC 13**.
+
+## Equipment
+Scale mail, shield (included in AC 16), mace, holy symbol, healer's supplies, explorer's kit.
+
+## Features and resources
+**Channel features:** at level 1 use your selected domain's rules; no Channel Divinity until later levels in traditional 2014-style cleric. **Spell slots:** two 1st-level slots. Prepare four cleric spells (Wisdom modifier 3 + level 1) from your available rules, plus any appropriate domain spells. Suggested: *cure wounds*, *bless*, *guiding bolt*, *detect magic*. Suggested cantrips: *sacred flame*, *guidance*, *spare the dying*. Spell effects require a licensed/open reference; no proprietary spell text is bundled.
+
+## Personality and adventure hook
+You are drawn to forgotten ways of keeping people safe. The seed, flame and crown signs feel like a broken promise.
+
+## Your first scene
+Speak with Elowen, recognize a protective ward (Religion DC 11), and use healing cautiously at level one.
+
+## How to play
+Describe what you want to do; when the GM calls for an ability check, roll d20 plus the listed relevant modifier. Your hit points are a small resource at level one—retreat or negotiate when sensible. Track ammunition, spells and other resources manually or on a compatible 5e sheet. These are **editable beginner reference cards**, not fully automated Character Studio sheets. Consult your own D&D 5e (2014-style) source for exact class features, spell rules, actions, conditions and races.
+"###,
+    },
+    DemoEntry {
+        path: "Characters/Player Characters/Calder Reed - Level 1 Premade.md",
+        template: "player-character-placeholder",
+        title: "Calder Reed - Level 1 Premade",
+        visibility: "gm-only",
+        body: r###"# Calder Reed — Level 1 Premade D&D 5e Character
+**Human Wizard • Level 1 • Background: custom narrative adventurer • Proficiency +2**
+
+## Fast stats
+Armor Class **12** (no armor), Hit Points **7**, Speed **30 ft.**, Initiative **+2**, Proficiency **+2**.
+
+## Ability scores
+STR 8 (−1), DEX 14 (+2), CON 12 (+1), INT 16 (+3), WIS 13 (+1), CHA 10 (+0)
+
+## Saving throws
+Intelligence +5, Wisdom +3
+
+## Skills
+Arcana +5, Investigation +5, History +5, Insight +3
+
+## Attacks and spells
+Quarterstaff: **+1 to hit**, 1d6−1 bludgeoning. Spell attack **+5**, spell save **DC 13**.
+
+## Equipment
+Quarterstaff, spellbook, component pouch, scholar's pack, lantern and rations.
+
+## Features and resources
+**Spell slots:** two 1st-level slots. **Arcane Recovery:** once per day after a short rest recover one 1st-level slot under traditional 2014-style rules. Suggested cantrips: *mage hand*, *light*, *ray of frost*. Spellbook suggestions (6): *mage armor*, *magic missile*, *shield*, *detect magic*, *sleep*, *comprehend languages*. Prepare four of those; use your rules source for full effects.
+
+## Personality and adventure hook
+You are an apprentice scholar who distrusts secret archives and wants a chance to document them responsibly.
+
+## Your first scene
+Talk with Kael, interpret the crown markings (Arcana DC 11), and offer a creative repair of the bell.
+
+## How to play
+Describe what you want to do; when the GM calls for an ability check, roll d20 plus the listed relevant modifier. Your hit points are a small resource at level one—retreat or negotiate when sensible. Track ammunition, spells and other resources manually or on a compatible 5e sheet. These are **editable beginner reference cards**, not fully automated Character Studio sheets. Consult your own D&D 5e (2014-style) source for exact class features, spell rules, actions, conditions and races.
+"###,
+    },
+    DemoEntry {
+        path: "Game Master/Handouts/Player Quick Start - The Hollow Crown.md",
+        template: "handout",
+        title: "Player Quick Start - The Hollow Crown",
+        visibility: "gm-only",
+        body: r###"# Welcome to the adventure
+You are a new adventuring party arriving in **Briar Glen**, a small village with a silent bell. Three villagers have been seen wandering into the mist. You may explore, talk, fight, investigate or change your mind. The story reacts to your choices.
+
+## Starting character choices
+- Rowan Ash: hardy fighter, protects others.
+- Nyra Vale: quick rogue, notices clues.
+- Sera Dawn: cleric, healer and ward-lore guide.
+- Calder Reed: wizard, investigator of magic.
+
+## Your turn
+Say what you try. The GM may ask for a **d20 + ability modifier + proficiency bonus** check. You can suggest clever solutions instead of attacking. No single die roll should stop the adventure.
+
+## Character choices matter
+Try to save the villagers, but decide what happens to the ancient Crown Seal yourselves. Every ending is valid. Ask for breaks or changes to uncomfortable scenes.
+
+*This is an independent original D&D 5e-compatible demo, not an official Wizards of the Coast adventure.*"###,
+    },
+    DemoEntry {
+        path: "Game Master/Handouts/Player Rumor Cards.md",
+        template: "handout",
+        title: "Player Rumor Cards",
+        visibility: "gm-only",
+        body: r###"# Player Rumor Cards — cut into separate handouts
+1. **Village Bell:** “It always rings at dusk. Today it didn't.”
+2. **The Old Road:** “Footprints appear in the wet earth, but the people who made them don't remember walking.”
+3. **The Tower:** “The stone crown over its door is cracked.”
+4. **The Scholar:** “An outsider asked about the lost archive beneath the tower.”
+5. **The Shrine:** “Seed, flame, crown — some say they were the symbols of an old oath.”
+
+Give one or two cards when a player asks around. No card is required to advance; all clues have alternative routes. These cards do not reveal the hidden truth outright."###,
+    },
+];
+
 const LOCATION_MAP: &str = r#"# Briarwatch Tower — schematic only
 This is a text diagram for the GM, **not** a generated Map Studio asset or a grid-accurate battle map.
 
