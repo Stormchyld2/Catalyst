@@ -10,23 +10,10 @@ use crate::models::{
 
 use super::AppState;
 
-const BUNDLED_TEMPLATES: &[&str] = &[
-    include_str!("../../templates/save-the-cat.json"),
-    include_str!("../../templates/three-act-structure.json"),
-    include_str!("../../templates/heros-journey.json"),
-    include_str!("../../templates/story-circle.json"),
-    include_str!("../../templates/seven-point.json"),
-];
-
+// Novel-outline presets are not bundled in the Catalyst RPG application.
+// Retain this API for compatibility with saved user-authored outlines.
 fn load_bundled_templates() -> Vec<StoryTemplate> {
-    BUNDLED_TEMPLATES
-        .iter()
-        .filter_map(|json| {
-            let mut t: StoryTemplate = serde_json::from_str(json).ok()?;
-            t.bundled = true;
-            Some(t)
-        })
-        .collect()
+    Vec::new()
 }
 
 #[tauri::command]
@@ -536,5 +523,14 @@ mod tests {
                 t.name
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod retired_novel_presets_tests {
+    use super::*;
+    #[test]
+    fn no_novel_outlining_presets_ship_with_catalyst() {
+        assert!(load_bundled_templates().is_empty());
     }
 }
