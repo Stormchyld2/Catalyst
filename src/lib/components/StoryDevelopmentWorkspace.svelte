@@ -210,7 +210,7 @@
     const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Items", campaign: "Campaign", adventure: "Adventures", creature: "Creatures", general: "General" };
     const order = ["campaign", "character", "creature", "adventure", "location", "worldbuilding", "organization", "object", "general"];
     const grouped = new Map<string, EntityTemplateSummary[]>();
-    for (const template of entityTemplates.templates.filter((item) => !item.scope || item.scope === "story-development")) {
+    for (const template of entityTemplates.templates.filter((item) => !item.scope || ["story-development", "worldbuilding", "campaign", "adventure", "encounter", "session", "gm"].includes(item.scope))) {
       const key = template.category || "general";
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(template);
