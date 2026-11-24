@@ -201,7 +201,7 @@ fn write_note(root: &Path, title: &str, content: &str, subtype: &str) -> Result<
     let mut document = create_document(root, relative, "note", Some(title), content)?;
     document.metadata.insert("visibility".into(), serde_yaml::Value::String("gm-only".into()));
     document.metadata.insert("subtype".into(), serde_yaml::Value::String(subtype.into()));
-    save_document(root, &document, Some(&document.source_hash))
+    save_document(root, &document, Some(&document.source_hash)).map(|_| ())
 }
 
 fn copy_original(root: &Path, candidate: &Candidate, category: &str) -> Result<String, String> {
