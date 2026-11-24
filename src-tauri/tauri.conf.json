@@ -1,84 +1,50 @@
 {
-    "$schema":  "https://schema.tauri.app/config/2",
-    "productName":  "Catalyst",
-    "version":  "0.1.0",
-    "identifier":  "com.catalyst.writer",
-    "build":  {
-                  "beforeDevCommand":  "npm run dev",
-                  "devUrl":  "http://localhost:1420",
-                  "beforeBuildCommand":  "npm run build",
-                  "frontendDist":  "../dist"
-              },
-    "app":  {
-                "windows":  [
-                                {
-                                    "title":  "Catalyst",
-                                    "visible":  false,
-                                    "width":  1600,
-                                    "height":  1000,
-                                    "minWidth":  1360,
-                                    "minHeight":  800,
-                                    "resizable":  true,
-                                    "fullscreen":  false
-                                }
-                            ],
-                "security":  {
-                                 "csp":  "default-src \u0027self\u0027; script-src \u0027self\u0027 \u0027wasm-unsafe-eval\u0027; worker-src \u0027self\u0027 blob:; style-src \u0027self\u0027 \u0027unsafe-inline\u0027; img-src \u0027self\u0027 data: blob: asset: https://asset.localhost; media-src \u0027self\u0027 blob:; connect-src \u0027self\u0027 ipc: http://ipc.localhost https://github.com"
-                             }
-            },
-    "bundle":  {
-                   "active":  true,
-                   "targets":  "all",
-                   "createUpdaterArtifacts":  true,
-                   "macOS":  {
-                                 "signingIdentity":  null,
-                                 "entitlements":  "./Entitlements.plist",
-                                 "infoPlist":  "EditorialDocuments.plist"
-                             },
-                   "icon":  [
-                                "icons/32x32.png",
-                                "icons/128x128.png",
-                                "icons/128x128@2x.png",
-                                "icons/icon.icns",
-                                "icons/icon.ico"
-                            ],
-                   "category":  "Productivity",
-                   "shortDescription":  "Catalyst",
-                   "longDescription":  "A local-first writing and story development environment.",
-                   "fileAssociations":  [
-                                            {
-                                                "ext":  [
-                                                            "catalyst-review"
-                                                        ],
-                                                "name":  "Catalyst Review",
-                                                "description":  "Catalyst editorial review package",
-                                                "role":  "Editor",
-                                                "mimeType":  "application/x-catalyst-review",
-                                                "exportedType":  {
-                                                                     "identifier":  "com.catalyst.writer.catalyst-review",
-                                                                     "conformsTo":  [
-                                                                                        "public.json"
-                                                                                    ]
-                                                                 }
-                                            },
-                                            {
-                                                "ext":  [
-                                                            "catalyst-feedback"
-                                                        ],
-                                                "name":  "Catalyst Feedback",
-                                                "description":  "Catalyst editorial feedback",
-                                                "role":  "Editor",
-                                                "mimeType":  "application/x-catalyst-feedback",
-                                                "exportedType":  {
-                                                                     "identifier":  "com.catalyst.writer.catalyst-feedback",
-                                                                     "conformsTo":  [
-                                                                                        "public.json"
-                                                                                    ]
-                                                                 }
-                                            }
-                                        ]
-               },
-    "plugins":  {
-
-                }
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Catalyst",
+  "version": "0.1.0",
+  "identifier": "com.catalyst.writer",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Catalyst",
+        "visible": false,
+        "width": 1600,
+        "height": 1000,
+        "minWidth": 1360,
+        "minHeight": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: asset: https://asset.localhost; media-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost https://github.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "macOS": {
+      "signingIdentity": null,
+      "entitlements": "./Entitlements.plist",
+      "infoPlist": "EditorialDocuments.plist"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Productivity",
+    "shortDescription": "Catalyst",
+    "longDescription": "A local-first tabletop RPG campaign, worldbuilding and game master workspace."
+  },
+  "plugins": {}
 }

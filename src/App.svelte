@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IMPORT_FORMATS, importTypeForCommand, isImportType } from "./lib/importFormats";
+  import { IMPORT_FORMATS, importTypeForCommand } from "./lib/importFormats";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
   import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -15,7 +15,6 @@
   import ReferencesPanel from "./lib/components/ReferencesPanel.svelte";
   import FindReplaceDialog from "./lib/components/FindReplaceDialog.svelte";
   import ScenePanel from "./lib/components/ScenePanel.svelte";
-  import Sidebar from "./lib/components/Sidebar.svelte";
   import StartScreen from "./lib/components/StartScreen.svelte";
   import SettingsDialog from "./lib/components/SettingsDialog.svelte";
   import ExportDialog from "./lib/components/ExportDialog.svelte";
@@ -37,7 +36,6 @@
   import SoundboardWorkspace from "./lib/components/SoundboardWorkspace.svelte";
   import GmScreenWorkspace from "./lib/components/GmScreenWorkspace.svelte";
   import { soundboard } from "./lib/soundboardBoard.svelte";
-  import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
   import CampaignWizardDialog from "./lib/components/CampaignWizardDialog.svelte";
   import DiceTray from "./lib/dice/components/DiceTray.svelte";
@@ -74,6 +72,11 @@
   let initialEditorialLoaded = $state(false);
   let showGlobalHome = $state(false);
   let requestedAdventureDocument = $state<string | null>(null);
+  // A dashboard request opens one document once; later visits to Adventures
+  // (from the rail or elsewhere) return to the user's own selection.
+  $effect(() => {
+    if (workspace.active !== "outline") requestedAdventureDocument = null;
+  });
 
   $effect(() => {
     if (initialProjectsLoaded && initialEditorialLoaded) onReady?.();
@@ -84,7 +87,6 @@
   export function focusAfterStartup() {
     editorial?.focusIfOpen();
   }
-  let searchDialog: ReturnType<typeof FindReplaceDialog> | undefined = $state();
   let search = $state<{ projectId: string; scope: "scene" | "project"; replace: boolean } | null>(
     null
   );
@@ -94,12 +96,6 @@
     if (search && search.projectId !== currentProject.value?.id) search = null;
   });
 
-  function openSearch(scope: "scene" | "project", replace = false) {
-    const projectId = currentProject.value?.id;
-    if (!projectId) return;
-    if (search?.projectId === projectId) searchDialog?.configure(scope, replace);
-    search = { projectId, scope, replace };
-  }
 
   async function openSearchScene(doc: ProseDocument) {
     if (!currentProject.value) return;
@@ -174,8 +170,11 @@
 
   $effect(() => {
     const project = currentProject.value;
-    if (project && workspace.active === "story-development" && !project.project_root) {
-      workspace.setActive("write", true);
+    // Campaign workspaces need a project folder. Older database-only projects
+    // stay readable on disk but open on the dashboard, which explains this.
+    if (project && !project.project_root &&
+      ["story-development", "write", "outline"].includes(workspace.active)) {
+      workspace.setActive("home", true);
       showGlobalHome = false;
     }
   });
@@ -408,7 +407,24 @@
     }
   }
 
+  // Campaign documents (World Builder, Adventures, Campaign Notes) save
+  // through their own editor. Every quit path must wait for them: a failed or
+  // refused save keeps Catalyst open so no edit is lost.
+  async function flushCampaignDocuments(): Promise<boolean> {
+    const pendingDocumentSaves: Promise<boolean>[] = [];
+    window.dispatchEvent(new CustomEvent("catalyst:flush-documents-before-close", {
+      detail: { pendingDocumentSaves },
+    }));
+    const documentsSaved = await Promise.allSettled(pendingDocumentSaves);
+    if (documentsSaved.some((result) => result.status === "rejected" || !result.value)) {
+      ui.showError("Some documents could not be saved. Catalyst will remain open.");
+      return false;
+    }
+    return requestProjectChange();
+  }
+
   async function quit() {
+    if (!(await flushCampaignDocuments())) return;
     if (!(await flushBeforeClose())) return;
     try {
       await exit(0);
@@ -442,21 +458,9 @@
   onMount(() => {
     // Tauri awaits this handler before destroying the window.
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
-      // Collect asynchronous saves from file-backed workspaces before closing.
-      // A rejected/failed save must keep the window open.
-      const pendingDocumentSaves: Promise<boolean>[] = [];
-      window.dispatchEvent(new CustomEvent("catalyst:flush-documents-before-close", {
-        detail: { pendingDocumentSaves },
-      }));
       // Tauri destroys the window after this handler resolves unless it calls
       // preventDefault(), so only prevent the close when something blocks it.
-      const documentsSaved = await Promise.allSettled(pendingDocumentSaves);
-      if (documentsSaved.some((result) => result.status === "rejected" || !result.value)) {
-        event.preventDefault();
-        ui.showError("Some documents could not be saved. Catalyst will remain open.");
-        return;
-      }
-      if (!(await requestProjectChange()) || !(await flushBeforeClose())) {
+      if (!(await flushCampaignDocuments()) || !(await flushBeforeClose())) {
         event.preventDefault();
       }
     });
@@ -543,47 +547,8 @@
       case "send_feedback":
         showFeedbackDialog = true;
         break;
-      case "editorial_open":
-        void editorial?.openFile();
-        break;
-      case "editorial_project":
-        if (currentProject.value) void editorial?.openProject(currentProject.value.id);
-        break;
-      case "find":
-        openSearch("scene");
-        break;
-      case "find_replace":
-        openSearch("scene", true);
-        break;
-      case "find_project":
-        openSearch("project", true);
-        break;
-      case "export":
-        if (currentProject.value) showExportDialog = true;
-        break;
       case "close_project":
         closeProject();
-        break;
-      case "sync":
-        window.dispatchEvent(new CustomEvent("kindling:sync"));
-        break;
-      case "toggle_sidebar":
-        ui.toggleSidebar();
-        break;
-      case "toggle_references":
-        ui.toggleReferencesPanel();
-        break;
-      case "toggle_discovery_notes":
-        window.dispatchEvent(new CustomEvent("kindling:toggleDiscoveryNotes"));
-        break;
-      case "detect_references":
-        window.dispatchEvent(new CustomEvent("kindling:detectReferences"));
-        break;
-      case "detect_all_references":
-        window.dispatchEvent(new CustomEvent("kindling:detectAllReferences"));
-        break;
-      case "toggle_editor_mode":
-        window.dispatchEvent(new CustomEvent("kindling:toggleEditorMode"));
         break;
       case "quick_start":
         showQuickStart = true;
@@ -696,7 +661,6 @@
   {#if search && search.projectId === currentProject.value?.id}
     {#key search.projectId}
       <FindReplaceDialog
-        bind:this={searchDialog}
         projectId={search.projectId}
         sceneId={currentProject.currentScene?.id ?? null}
         initialScope={search.scope}

@@ -28,10 +28,13 @@ describe("COMMAND_DEFS", () => {
 
   it("contains expected commands", () => {
     const ids = COMMAND_DEFS.map((c) => c.id);
-    expect(ids).toContain("export");
-    expect(ids).toContain("toggle_sidebar");
+    expect(ids).toContain("new_project");
+    expect(ids).toContain("command_palette");
     expect(ids).toContain("quick_start");
-    expect(ids).toContain("sync");
+    // Retired manuscript commands stay out of the campaign palette.
+    for (const retired of ["export", "toggle_sidebar", "sync", "find", "detect_references"]) {
+      expect(ids).not.toContain(retired);
+    }
     expect(ids).toContain("quit");
     expect(ids).toContain("about");
   });

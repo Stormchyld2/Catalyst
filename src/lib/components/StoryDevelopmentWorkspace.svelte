@@ -41,7 +41,7 @@
     ArchiveRestore,
     Strikethrough,
   } from "lucide-svelte";
-  import { onDestroy, onMount, tick } from "svelte";
+  import { onDestroy, onMount, tick, untrack } from "svelte";
   import { currentProject } from "../stores/project.svelte";
   import { markdownHeadingId, renderMarkdown } from "../utils/markdownPreview";
   import EntityTemplateManager from "./EntityTemplateManager.svelte";
@@ -49,6 +49,7 @@
   // Reuse the file-authoritative wiki for Adventures and Campaign Notes,
   // selecting only their actual campaign folders rather than novel outlines.
   let { focusRoot = null, initialDocumentPath = null }: { focusRoot?: "Adventures" | "Sessions" | null; initialDocumentPath?: string | null } = $props();
+  const workspaceLabel = $derived(focusRoot === "Adventures" ? "Adventures" : focusRoot === "Sessions" ? "Campaign Notes" : "World Builder");
   const withinFocus = (relativePath: string) => !focusRoot || relativePath === focusRoot || relativePath.startsWith(focusRoot + "/");
   const sessionKey = (id: string) => id + ":" + (focusRoot ?? "world");
 
@@ -207,10 +208,19 @@
     document ? extractHeadings(bodyDraft) : []
   );
   const storyTemplateGroups = $derived.by(() => {
-    const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Items", campaign: "Campaign", adventure: "Adventures", creature: "Creatures", general: "General" };
-    const order = ["campaign", "character", "creature", "adventure", "location", "worldbuilding", "organization", "object", "general"];
+    const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Objects", item: "Items & Equipment", campaign: "Campaign", adventure: "Adventures", creature: "Creatures", session: "Sessions", gm: "Game Master", event: "Events", research: "Research", general: "General" };
+    const order = ["campaign", "adventure", "session", "gm", "character", "creature", "location", "worldbuilding", "organization", "item", "object", "event", "research", "general"];
+    // Adventures and Campaign Notes offer the templates that belong there; World
+    // Builder offers the whole catalog. Custom categories always appear.
+    const focusCategories: Record<string, string[]> = {
+      Adventures: ["adventure", "campaign", "gm", "creature", "location", "event"],
+      Sessions: ["session", "campaign", "gm"],
+    };
+    const known = new Set(order);
+    const allowed = focusRoot ? focusCategories[focusRoot] : null;
     const grouped = new Map<string, EntityTemplateSummary[]>();
-    for (const template of entityTemplates.templates.filter((item) => !item.scope || ["story-development", "worldbuilding", "campaign", "adventure", "encounter", "session", "gm"].includes(item.scope))) {
+    for (const template of entityTemplates.templates.filter((item) => (!item.scope || ["story-development", "worldbuilding", "campaign", "adventure", "encounter", "session", "gm"].includes(item.scope))
+      && (!allowed || allowed.includes(item.category || "general") || !known.has(item.category || "general")))) {
       const key = template.category || "general";
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(template);
@@ -304,11 +314,11 @@
   }
 
   let newDocumentOpen = $state(false);
-  let newDocumentFolder = $state(focusRoot ?? "Story Development");
+  let newDocumentFolder = $state(untrack(() => focusRoot) ?? "Story Development");
   let newDocumentMode = $state<"template" | "empty">("template");
   let folderDialogOpen = $state(false);
   let folderName = $state("");
-  let folderParent = $state(focusRoot ?? "Story Development");
+  let folderParent = $state(untrack(() => focusRoot) ?? "Story Development");
   let folderError = $state<string | null>(null);
   let creatingFolder = $state(false);
   let selectedFolder = $state<string | null>(null);
@@ -341,7 +351,9 @@
     try { await refreshStoryFolders(); } catch (cause) { newDocumentError = String(cause); return; }
     newDocumentFolder = selectedFolder && storyFolders.includes(selectedFolder) ? selectedFolder : storyFolders.find(withinFocus) ?? focusRoot ?? "Story Development";
     newDocumentMode = "template";
-    newDocumentTemplate = entityTemplates.templates.find(t => t.id === "character-profile")?.id
+    const preferredTemplate = focusRoot === "Adventures" ? "quest-adventure"
+      : focusRoot === "Sessions" ? "session-plan" : "character-profile";
+    newDocumentTemplate = entityTemplates.templates.find(t => t.id === preferredTemplate)?.id
       ?? entityTemplates.templates[0]?.id ?? "";
     newDocumentTitle = "";
     newDocumentFields = {};
@@ -416,9 +428,10 @@
     }
     // Book roots plus the campaign roots (see campaign_wizard.rs CAMPAIGN_ROOTS).
     const storyRoots = ["Story Development", "Characters", "Locations", "Worldbuilding",
-      "Campaign", "World", "Adventures", "Sessions", "Game Master", "Maps"];
+      "Campaign", "World", "Adventures", "Sessions", "Game Master", "Maps",
+      "Creatures & Monsters", "Encounters", "Items & Equipment", "Rules & Mechanics"];
     if (!storyRoots.some((root) => destinationPath.startsWith(`${root}/`))) {
-      relocateError = "Choose a path within the Story Development hierarchy.";
+      relocateError = "Choose a path inside one of the campaign folders.";
       return;
     }
     relocating = true;
@@ -1378,7 +1391,7 @@
   <aside class="story-development__nav">
     <header class="story-development__nav-header">
       <div>
-        <p class="eyebrow">Story Development</p>
+        <p class="eyebrow">{workspaceLabel}</p>
         <h2>{currentProject.value?.name ?? "Project"}</h2>
       </div>
       <button
@@ -1406,7 +1419,7 @@
       {#if loadingIndex && index.entries.length === 0}
         <div class="status"><span class="spin"><Loader2 size={18} aria-hidden="true" /></span> Loading files…</div>
       {:else if tree.length === 0}
-        <div class="empty">{normalizedSearch ? "No matching files." : "No Story Development files yet."}</div>
+        <div class="empty">{normalizedSearch ? "No matching files." : `No ${workspaceLabel} files yet.`}</div>
       {:else}
         {@render treeNodes(tree)}
       {/if}
@@ -1419,7 +1432,7 @@
       </div>
     {/if}
     <div class="story-development__create-footer">
-      <span title={selectedFolder ?? "Story Development"}>{selectedFolder ?? "Story Development"}</span>
+      <span title={selectedFolder ?? focusRoot ?? workspaceLabel}>{selectedFolder ?? focusRoot ?? workspaceLabel}</span>
       <button type="button" title="New file" aria-label="New file" onclick={startNewDocument}><FilePlus size={18}/></button>
       <button type="button" title="New folder" aria-label="New folder" onclick={startNewFolder}><FolderPlus size={18}/></button>
       <button type="button" title="Restore deleted documents" aria-label="Restore deleted documents" onclick={openTrash}><ArchiveRestore size={18}/></button>
@@ -1484,7 +1497,7 @@
 
     <header class="document-toolbar">
       <div class="document-title">
-        <span>{document?.title ?? selectedEntry?.title ?? selectedPath ?? "Story Development"}</span>
+        <span>{document?.title ?? selectedEntry?.title ?? selectedPath ?? workspaceLabel}</span>
         {#if loadingDocument}<span class="spin"><Loader2 size={14} aria-hidden="true" /></span>{/if}
       </div>
       {#if !selectedIsImage}
@@ -1714,7 +1727,7 @@
         </aside>
       </div>
     {:else}
-      <div class="empty-document">Select a Story Development file.</div>
+      <div class="empty-document">Select a {workspaceLabel} file.</div>
     {/if}
   </div>
 </section>

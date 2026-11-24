@@ -488,6 +488,15 @@ pub struct CampaignPartyManifest {
     pub origin: Option<String>,
 }
 
+/// Table-facing campaign details edited in Campaign Settings.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CampaignDetailsManifest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tone: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gm_name: Option<String>,
+}
+
 /// RPG-only campaign metadata. Identity (title, timestamps) stays in
 /// project.yaml; campaign.yaml repeats only project_id so the pair can be
 /// validated as belonging together.
@@ -501,7 +510,14 @@ pub struct CampaignManifest {
     pub play: CampaignPlayManifest,
     #[serde(default)]
     pub party: CampaignPartyManifest,
+    /// Optional, so campaign.yaml files written before it was added still load.
+    #[serde(default, skip_serializing_if = "details_is_empty")]
+    pub details: CampaignDetailsManifest,
     pub starting_session_id: Option<String>,
+}
+
+fn details_is_empty(details: &CampaignDetailsManifest) -> bool {
+    details == &CampaignDetailsManifest::default()
 }
 
 /// Read campaign.yaml and verify it belongs to the project.yaml beside it.
@@ -528,6 +544,127 @@ pub fn read_campaign_manifest(root: &Path) -> Result<CampaignManifest, String> {
         return Err(format!("Unknown rules pack '{}'.", manifest.rules.pack_id));
     }
     Ok(manifest)
+}
+
+// ── Campaign Settings ───────────────────────────────────────────────────────
+
+/// Editable campaign configuration. Title lives in project.yaml; everything
+/// else lives in campaign.yaml. Empty strings mean "not set".
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CampaignSettings {
+    pub title: String,
+    pub tone: String,
+    pub gm_name: String,
+    pub ruleset_name: String,
+    pub edition: String,
+    pub starting_level: String,
+    pub advancement: String,
+    pub play_mode: String,
+    pub schedule: String,
+    pub session_length: String,
+    pub party_name: String,
+    pub expected_players: String,
+}
+
+pub fn read_campaign_settings(root: &Path) -> Result<CampaignSettings, String> {
+    let project = read_project_manifest(root)?;
+    let campaign = read_campaign_manifest(root)?;
+    let text = |value: &Option<String>| value.clone().unwrap_or_default();
+    Ok(CampaignSettings {
+        title: project.title,
+        tone: text(&campaign.details.tone),
+        gm_name: text(&campaign.details.gm_name),
+        ruleset_name: text(&campaign.rules.custom_system_name),
+        edition: text(&campaign.rules.edition),
+        starting_level: text(&campaign.rules.starting_level),
+        advancement: text(&campaign.rules.advancement),
+        play_mode: campaign.play.mode,
+        schedule: text(&campaign.play.schedule),
+        session_length: text(&campaign.play.session_length),
+        party_name: text(&campaign.party.name),
+        expected_players: text(&campaign.party.expected_players),
+    })
+}
+
+/// Update only the settings keys. Any other campaign.yaml values, including
+/// keys this version does not know, are kept as they are.
+pub fn write_campaign_settings(root: &Path, settings: &CampaignSettings) -> Result<(), String> {
+    let title = settings.title.trim();
+    if title.is_empty() {
+        return Err("Campaign name cannot be empty.".into());
+    }
+    if !matches!(settings.play_mode.trim(), "physical" | "hybrid" | "digital") {
+        return Err("Choose a play mode: in person, hybrid or online.".into());
+    }
+    read_campaign_manifest(root)?;
+    let path = root.join(CAMPAIGN_MANIFEST_FILENAME);
+    let raw = fs::read_to_string(&path)
+        .map_err(|e| format!("Could not read '{}': {e}", path.display()))?;
+    let mut yaml: serde_yaml::Value =
+        serde_yaml::from_str(&raw).map_err(|e| format!("Invalid campaign.yaml: {e}"))?;
+    let set = |yaml: &mut serde_yaml::Value, section: &str, key: &str, value: &str| -> Result<(), String> {
+        let root_map = yaml.as_mapping_mut().ok_or("campaign.yaml is not a mapping.")?;
+        let section_value = root_map
+            .entry(serde_yaml::Value::String(section.into()))
+            .or_insert_with(|| serde_yaml::Value::Mapping(Default::default()));
+        let map = section_value
+            .as_mapping_mut()
+            .ok_or_else(|| format!("campaign.yaml '{section}' is not a mapping."))?;
+        let value = value.trim();
+        let key = serde_yaml::Value::String(key.into());
+        if value.is_empty() {
+            map.remove(&key);
+        } else {
+            map.insert(key, serde_yaml::Value::String(value.into()));
+        }
+        Ok(())
+    };
+    set(&mut yaml, "rules", "custom_system_name", &settings.ruleset_name)?;
+    set(&mut yaml, "rules", "edition", &settings.edition)?;
+    set(&mut yaml, "rules", "starting_level", &settings.starting_level)?;
+    set(&mut yaml, "rules", "advancement", &settings.advancement)?;
+    set(&mut yaml, "play", "mode", &settings.play_mode)?;
+    set(&mut yaml, "play", "schedule", &settings.schedule)?;
+    set(&mut yaml, "play", "session_length", &settings.session_length)?;
+    set(&mut yaml, "party", "name", &settings.party_name)?;
+    set(&mut yaml, "party", "expected_players", &settings.expected_players)?;
+    set(&mut yaml, "details", "tone", &settings.tone)?;
+    set(&mut yaml, "details", "gm_name", &settings.gm_name)?;
+    // Validate the result with the same schema used for reading.
+    serde_yaml::from_value::<CampaignManifest>(yaml.clone())
+        .map_err(|e| format!("Campaign settings would make campaign.yaml invalid: {e}"))?;
+    let serialized = serde_yaml::to_string(&yaml)
+        .map_err(|e| format!("Could not serialize campaign.yaml: {e}"))?;
+
+    // Same-directory staged write, then replace, so a failed write never
+    // leaves a truncated campaign.yaml.
+    let staged = root.join(format!(".campaign.yaml.{}.tmp", Uuid::new_v4().simple()));
+    {
+        use std::io::Write;
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&staged)
+            .map_err(|e| format!("Could not stage campaign.yaml: {e}"))?;
+        if let Err(e) = file.write_all(serialized.as_bytes()).and_then(|_| file.sync_all()) {
+            drop(file);
+            let _ = fs::remove_file(&staged);
+            return Err(format!("Could not write campaign.yaml: {e}"));
+        }
+    }
+    if let Err(e) = fs::rename(&staged, &path) {
+        let _ = fs::remove_file(&staged);
+        return Err(format!("Could not save campaign.yaml: {e}"));
+    }
+
+    let mut project = read_project_manifest(root)?;
+    if project.title != title {
+        let id = Uuid::parse_str(&project.project_id)
+            .map_err(|e| format!("Invalid campaign identity: {e}"))?;
+        project.title = title.into();
+        crate::project_root::save_project_manifest(root, id, &project)?;
+    }
+    Ok(())
 }
 
 // ── Output ──────────────────────────────────────────────────────────────────
@@ -691,7 +828,9 @@ fn build_in_staging(
     staging: &Path,
     input: &NewCampaignInput,
 ) -> Result<(ProjectManifest, CampaignManifest, String), String> {
-    let manifest = ProjectManifest::new(input.name.trim(), CAMPAIGN_PROJECT_TYPE);
+    let mut manifest = ProjectManifest::new(input.name.trim(), CAMPAIGN_PROJECT_TYPE);
+    // Genre is project identity (edited in Campaign Settings), not overview text.
+    manifest.genre = non_empty(&input.basics.genre);
     initialize_project_root_with_directories(staging, &manifest, CAMPAIGN_DIRECTORIES)?;
     seed_player_characters_placeholder(staging)?;
 
@@ -751,6 +890,10 @@ fn build_in_staging(
                 .collect(),
             expected_players: non_empty(&input.party.expected_players),
             origin: non_empty(&input.party.origin),
+        },
+        details: CampaignDetailsManifest {
+            tone: non_empty(&input.basics.tone),
+            gm_name: non_empty(&input.basics.gm_name),
         },
         starting_session_id: seeded.first_session_id,
     };
@@ -944,7 +1087,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
         if name.is_empty() { None } else { Some(format!("- [[{name}]]")) }
     }).collect::<Vec<_>>();
     let overview_body = format!(
-        "## Campaign Summary\n\n{}\n\n## World and Setting\n\n{}\n\n{}\n\n## Party\n\n{}\n\n{}\n\n## Main Story Arc\n\n{}\n\n## Active Quests\n\n{}\n\n## Important NPCs and Factions\n\n### NPCs\n\n{}\n\n### Factions\n\n{}\n\n## Campaign Timeline\n\nUpdate after actual sessions; see Sessions/Session Logs and Sessions/Campaign State.\n\n## Player-Facing Pitch\n\n{}\n\n## GM-Only Notes\n\nAdd private GM notes here. Visibility metadata is descriptive and must not be treated as enforced sharing permissions.\n\n## Related Records\n\n- Worldbuilding/ (lore and locations)\n- Characters/ (PC placeholders and NPC profiles)\n- Adventures/ (scenes and quests)\n- Sessions/ (plans, logs and campaign state)\n- Rules & Mechanics/ (system references and house rules)\n\nEdit the source records rather than duplicating their content here.",
+        "## Campaign Summary\n\n{}\n\n## World and Setting\n\n{}\n\n{}\n\n## Party\n\n{}\n\n{}\n\n## Main Story Arc\n\n{}\n\n## Active Quests\n\n{}\n\n## Important NPCs and Factions\n\n### NPCs\n\n{}\n\n### Factions\n\n{}\n\n## Campaign Timeline\n\nUpdate after actual sessions; see Sessions/Session Logs and Sessions/Campaign State.\n\n## Player-Facing Pitch\n\n{}\n\n## GM-Only Notes\n\nAdd private GM notes here. Visibility metadata is descriptive and must not be treated as enforced sharing permissions.\n\n## Related Records\n\nRuleset, party size, play mode, schedule, genre, tone and Game Master are kept in Campaign Settings.\n\n- Worldbuilding/ (lore and locations)\n- Characters/ (PC placeholders and NPC profiles)\n- Adventures/ (scenes and quests)\n- Sessions/ (plans, logs and campaign state)\n- Rules & Mechanics/ (system references and house rules)\n\nEdit the source records rather than duplicating their content here.",
         b.premise.trim(),
         if w.name.trim().is_empty() { String::new() } else { format!("[[{}]]", w.name.trim()) },
         w.notes.trim(),
@@ -963,16 +1106,12 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
         "campaign-overview",
         &overview_body,
         &[
+            // Genre, tone, GM, ruleset, party and play settings live in
+            // project.yaml and campaign.yaml (Campaign Settings). The overview
+            // keeps only narrative fields so there is one source of truth.
             ("subtitle", s(&b.subtitle)),
-            ("genre", s(&b.genre)),
-            ("tone", s(&b.tone)),
-            ("gm_name", s(&b.gm_name)),
             ("start_date", s(&b.start_date)),
             ("central_conflict", s(&story.central_conflict)),
-            ("world_name", s(&w.name)),
-            ("party_name", s(&input.party.name)),
-            ("ruleset_id", s(&input.rules.pack_id)),
-            ("edition_id", s(&input.rules.edition)),
             ("campaign_structure", s(&story.structure)),
             ("campaign_length", s(&story.length)),
             ("status", s("planning")),
@@ -1463,9 +1602,15 @@ mod tests {
         let root = parent.path().join("The Drowned Crown");
         create_campaign(&guided(&root)).unwrap();
         let overview = read_document(&root, Path::new(OVERVIEW_PATH)).unwrap();
-        assert_eq!(overview.metadata.get("world_name").and_then(Value::as_str), Some("The Shattered Isles"));
-        assert_eq!(overview.metadata.get("party_name").and_then(Value::as_str), Some("The Gullwings"));
-        assert_eq!(overview.metadata.get("ruleset_id").and_then(Value::as_str), Some("custom-homebrew"));
+        // Configuration has one home: project.yaml / campaign.yaml.
+        for key in ["genre", "tone", "gm_name", "world_name", "party_name", "ruleset_id", "edition_id"] {
+            assert!(!overview.metadata.contains_key(key), "overview duplicates {key}");
+        }
+        let campaign = read_campaign_manifest(&root).unwrap();
+        assert_eq!(campaign.party.name.as_deref(), Some("The Gullwings"));
+        assert_eq!(campaign.details.tone.as_deref(), Some("Swashbuckling"));
+        assert_eq!(campaign.details.gm_name.as_deref(), Some("GM"));
+        assert_eq!(read_project_manifest(&root).unwrap().genre.as_deref(), Some("Nautical fantasy"));
         assert!(overview.body.contains("Pirates hunt a sunken throne."));
         assert!(overview.body.contains("The Shattered Isles"));
         assert!(overview.body.contains("Kestrel"));
@@ -1481,6 +1626,45 @@ mod tests {
         assert_eq!(overview.body.matches("## Campaign Summary").count(), 1);
         assert!(!overview.body.contains("Flanking grants advantage"));
         assert!(root.join("Rules & Mechanics/House Rules/House Rules.md").is_file());
+    }
+
+    #[test]
+    fn campaign_settings_round_trip_and_keep_unknown_campaign_yaml_keys() {
+        let parent = tempfile::tempdir().unwrap();
+        let root = parent.path().join("The Drowned Crown");
+        create_campaign(&guided(&root)).unwrap();
+        let path = root.join(CAMPAIGN_MANIFEST_FILENAME);
+        let mut raw = fs::read_to_string(&path).unwrap();
+        raw.push_str("future_key: keep me\n");
+        fs::write(&path, raw).unwrap();
+        let before = read_campaign_manifest(&root).unwrap();
+
+        let mut settings = read_campaign_settings(&root).unwrap();
+        assert_eq!(settings.party_name, "The Gullwings");
+        settings.title = "The Drowned Crown, Revised".into();
+        settings.tone = "Grim".into();
+        settings.schedule = "Every two weeks".into();
+        settings.party_name = String::new();
+        write_campaign_settings(&root, &settings).unwrap();
+
+        let after = read_campaign_manifest(&root).unwrap();
+        assert_eq!(after.details.tone.as_deref(), Some("Grim"));
+        assert_eq!(after.play.schedule.as_deref(), Some("Every two weeks"));
+        assert_eq!(after.party.name, None);
+        assert_eq!(after.project_id, before.project_id);
+        assert_eq!(after.rules.pack_id, before.rules.pack_id);
+        assert_eq!(after.starting_session_id, before.starting_session_id);
+        assert!(fs::read_to_string(&path).unwrap().contains("future_key: keep me"));
+        assert_eq!(read_project_manifest(&root).unwrap().title, "The Drowned Crown, Revised");
+        let residue: Vec<_> = fs::read_dir(&root).unwrap().filter_map(Result::ok)
+            .filter(|e| e.file_name().to_string_lossy().ends_with(".tmp")).collect();
+        assert!(residue.is_empty());
+
+        settings.play_mode = "vr".into();
+        assert!(write_campaign_settings(&root, &settings).is_err());
+        settings.play_mode = "hybrid".into();
+        settings.title = "  ".into();
+        assert!(write_campaign_settings(&root, &settings).is_err());
     }
 
     #[test]

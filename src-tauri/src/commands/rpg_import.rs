@@ -39,6 +39,8 @@ pub struct RpgImportPreview {
 #[derive(Debug, Clone, Serialize)]
 pub struct RpgImportResult {
     pub imported: usize,
+    /// Files that could not be imported, with the reason. Other files continue.
+    pub skipped: Vec<String>,
     pub documents_created: usize,
     pub copied_assets: usize,
     pub destination: String,
@@ -50,7 +52,9 @@ struct Candidate { path: PathBuf, relative: PathBuf, size: u64 }
 
 fn acceptable_extension(format: &RpgFormat, extension: &str) -> bool {
     match format {
-        RpgFormat::Markdown | RpgFormat::Obsidian => matches!(extension, "md" | "markdown"),
+        RpgFormat::Markdown => matches!(extension, "md" | "markdown"),
+        // Vault attachments (images, PDFs) are copied alongside the notes.
+        RpgFormat::Obsidian => matches!(extension, "md" | "markdown" | "png" | "jpg" | "jpeg" | "webp" | "gif" | "svg" | "pdf"),
         RpgFormat::Assets => matches!(extension, "png" | "jpg" | "jpeg" | "webp" | "gif" | "svg"),
         RpgFormat::Foundry | RpgFormat::Roll20 => matches!(extension, "json" | "zip"),
         RpgFormat::FantasyGrounds => matches!(extension, "mod" | "xml"),
@@ -119,7 +123,8 @@ fn inspect_source(source_path: &str, format: &RpgFormat) -> Result<(PathBuf, Vec
 
 fn behavior(format: &RpgFormat) -> &'static str {
     match format {
-        RpgFormat::Markdown | RpgFormat::Obsidian => "Create editable Markdown records in Worldbuilding/Imported, retaining original Markdown. Obsidian wikilinks remain text until reference resolution is supported.",
+        RpgFormat::Markdown => "Create editable records in Worldbuilding/Imported, keeping the source folder structure. Source frontmatter is kept as metadata, and an untouched copy of each original file is saved in Assets/Imports/Markdown Sources.",
+        RpgFormat::Obsidian => "Create editable records in Worldbuilding/Imported, keeping the vault's folders. [[Wikilinks]] work when a note with that title exists. Images and PDFs are copied to Assets/Imports/Obsidian Attachments; ![[embeds]] stay as text. Originals are kept in Assets/Imports/Markdown Sources.",
         RpgFormat::Assets => "Copy images, maps and tokens to Assets/Imports. Files are not converted to VTT scenes.",
         RpgFormat::Foundry => "Preserve Foundry JSON or ZIP exports in Assets/Imports, with a readable source index. Scene walls, actor mechanics and compendium relationships are not converted.",
         RpgFormat::Roll20 => "Preserve available Roll20 JSON or ZIP exports and create a source index. There is no universal Roll20 campaign export schema.",
@@ -136,7 +141,7 @@ pub async fn preview_rpg_content_import(source_path: String, format: RpgFormat) 
         RpgFormat::Roll20 => vec!["Roll20 does not provide one universal campaign JSON export; third-party exports may be unsupported.".into()],
         RpgFormat::FantasyGrounds => vec!["Fantasy Grounds .mod is a ZIP/XML module. Proprietary module contents are kept intact; Catalyst does not bypass DRM.".into()],
         RpgFormat::Pdf => vec!["PDFs are copied as-is. Scanned pages and embedded text are not indexed yet.".into()],
-        RpgFormat::Obsidian => vec!["Obsidian wikilinks, embeds and plugins are not automatically remapped.".into()],
+        RpgFormat::Obsidian => vec!["Embeds, plugin data and aliases are not converted. Wikilinks resolve by note title.".into()],
         _ => vec![],
     };
     Ok(RpgImportPreview {
@@ -195,19 +200,82 @@ fn text_from_source(path: &Path) -> Result<String, String> {
 }
 
 fn write_note(root: &Path, title: &str, content: &str, subtype: &str) -> Result<(), String> {
+    write_note_in(root, Path::new("Worldbuilding/Imported"), title, content, subtype, None, None)
+}
+
+fn write_note_in(
+    root: &Path,
+    folder: &Path,
+    title: &str,
+    content: &str,
+    subtype: &str,
+    source_frontmatter: Option<serde_yaml::Value>,
+    original: Option<&str>,
+) -> Result<(), String> {
     let stem = safe_name(title);
-    let dest = unique_path(root, Path::new("Worldbuilding/Imported"), &stem, "md")?;
+    let dest = unique_path(root, folder, &stem, "md")?;
     let relative = dest.strip_prefix(root).map_err(|e| e.to_string())?;
     let mut document = create_document(root, relative, "note", Some(title), content)?;
     document.metadata.insert("visibility".into(), serde_yaml::Value::String("gm-only".into()));
     document.metadata.insert("subtype".into(), serde_yaml::Value::String(subtype.into()));
+    if let Some(frontmatter) = source_frontmatter {
+        document.metadata.insert("source_frontmatter".into(), frontmatter);
+    }
+    if let Some(original) = original {
+        document.metadata.insert("source_file".into(), serde_yaml::Value::String(original.into()));
+    }
     save_document(root, &document, Some(&document.source_hash)).map(|_| ())
 }
 
+/// Split a leading YAML frontmatter block. Invalid YAML is left in the body
+/// untouched rather than dropped.
+fn split_source_frontmatter(raw: &str) -> (Option<serde_yaml::Value>, &str) {
+    let text = raw.trim_start_matches('\u{feff}');
+    let Some(rest) = text.strip_prefix("---\n").or_else(|| text.strip_prefix("---\r\n")) else {
+        return (None, raw);
+    };
+    let mut offset = 0;
+    for line in rest.split_inclusive('\n') {
+        if line.trim_end() == "---" {
+            let yaml = &rest[..offset];
+            let body = &rest[offset + line.len()..];
+            return match serde_yaml::from_str::<serde_yaml::Value>(yaml) {
+                Ok(value @ serde_yaml::Value::Mapping(_)) => (Some(value), body),
+                _ => (None, raw),
+            };
+        }
+        offset += line.len();
+    }
+    (None, raw)
+}
+
+/// Sanitized parent folders of a source-relative path (the file name excluded).
+fn safe_dirs(relative: &Path) -> PathBuf {
+    let mut out = PathBuf::new();
+    if let Some(parent) = relative.parent() {
+        for part in parent.components() {
+            if let std::path::Component::Normal(name) = part {
+                out.push(safe_name(&name.to_string_lossy()));
+            }
+        }
+    }
+    out
+}
+
+struct ImportContext {
+    /// Sanitized name of the selected folder or file, so separate imports
+    /// do not mix in one folder.
+    source_folder: PathBuf,
+}
+
 fn copy_original(root: &Path, candidate: &Candidate, category: &str) -> Result<String, String> {
+    copy_original_to(root, candidate, &Path::new("Assets/Imports").join(category))
+}
+
+fn copy_original_to(root: &Path, candidate: &Candidate, folder: &Path) -> Result<String, String> {
     let stem = safe_name(candidate.relative.file_stem().and_then(|x| x.to_str()).unwrap_or("source"));
     let ext = extension(&candidate.path);
-    let dest = unique_path(root, Path::new("Assets/Imports").join(category).as_path(), &stem, &ext)?;
+    let dest = unique_path(root, folder, &stem, &ext)?;
     // create_new avoids clobbering user assets even if another importer runs.
     let mut input = fs::File::open(&candidate.path).map_err(|e| e.to_string())?;
     let mut output = fs::OpenOptions::new().write(true).create_new(true).open(&dest).map_err(|e| e.to_string())?;
@@ -238,15 +306,28 @@ fn json_record(path: &Path) -> Result<(String, String), String> {
     Ok((title, summary))
 }
 
-fn copy_one(root: &Path, candidate: &Candidate, format: &RpgFormat, notes: &mut Vec<String>) -> Result<(usize, usize), String> {
+fn copy_one(root: &Path, candidate: &Candidate, format: &RpgFormat, context: &ImportContext, notes: &mut Vec<String>) -> Result<(usize, usize), String> {
     match format {
         RpgFormat::Markdown | RpgFormat::Obsidian => {
+            let ext = extension(&candidate.path);
+            if ext != "md" && ext != "markdown" {
+                // Obsidian attachment: copy it, keeping the vault's folders.
+                if ext != "pdf" { validate_image_file(&candidate.path)?; }
+                let folder = Path::new("Assets/Imports/Obsidian Attachments").join(&context.source_folder).join(safe_dirs(&candidate.relative));
+                copy_original_to(root, candidate, &folder)?;
+                return Ok((0, 1));
+            }
             let raw = text_from_source(&candidate.path)?;
             let stem = candidate.relative.file_stem().and_then(|s| s.to_str()).unwrap_or("Imported note");
-            let title = safe_name(stem);
-            // Preserve the Markdown prose and frontmatter as-is in the body.
-            write_note(root, &title, &raw, "imported-markdown")?;
-            Ok((1,0))
+            // The title keeps the source name so [[wikilinks]] still resolve.
+            let title = stem.trim().to_string();
+            let (frontmatter, body) = split_source_frontmatter(&raw);
+            let folder = Path::new("Worldbuilding/Imported").join(&context.source_folder).join(safe_dirs(&candidate.relative));
+            let original = copy_original_to(root, candidate,
+                &Path::new("Assets/Imports/Markdown Sources").join(&context.source_folder).join(safe_dirs(&candidate.relative)))?;
+            let subtype = if matches!(format, RpgFormat::Obsidian) { "imported-obsidian" } else { "imported-markdown" };
+            write_note_in(root, &folder, if title.is_empty() { "Imported note" } else { &title }, body, subtype, frontmatter, Some(&original))?;
+            Ok((1,1))
         }
         RpgFormat::Assets => {
             validate_image_file(&candidate.path)?;
@@ -285,8 +366,14 @@ fn copy_one(root: &Path, candidate: &Candidate, format: &RpgFormat, notes: &mut 
                 let archive = zip::ZipArchive::new(file).map_err(|_| "Not a valid .mod ZIP archive.".to_string())?;
                 if archive.len() > MAX_FILES { return Err("Fantasy Grounds module has too many entries.".into()); }
             } else {
-                let text = text_from_source(&candidate.path)?;
-                if !text.contains('<') { return Err("XML export is invalid.".into()); }
+                // db.xml exports are often many megabytes; check the header only.
+                let mut head = [0u8; 512];
+                let read = fs::File::open(&candidate.path).map_err(|e| e.to_string())?
+                    .read(&mut head).map_err(|e| e.to_string())?;
+                let text = String::from_utf8_lossy(&head[..read]);
+                if !text.trim_start_matches('\u{feff}').trim_start().starts_with('<') {
+                    return Err("XML export is invalid.".into());
+                }
             }
             let stored = copy_original(root, candidate, "Fantasy Grounds")?;
             let title = safe_name(candidate.relative.file_stem().and_then(|s| s.to_str()).unwrap_or("FG Module"));
@@ -305,17 +392,37 @@ pub async fn apply_rpg_content_import(source_path: String, destination_root: Str
     if canonical_source.starts_with(&canonical_root) {
         return Err("Cannot import a campaign into itself. Select a source outside the destination.".into());
     }
+    if canonical_root.starts_with(&canonical_source) {
+        return Err("The selected folder contains this campaign. Choose a folder that does not include the destination campaign.".into());
+    }
+    let source_name = if source.is_dir() {
+        source.file_name()
+    } else {
+        source.file_stem()
+    }
+    .map(|name| safe_name(&name.to_string_lossy()))
+    .unwrap_or_else(|| "Import".into());
+    let context = ImportContext { source_folder: PathBuf::from(source_name) };
     let mut documents = 0usize;
     let mut assets = 0usize;
+    let mut imported = 0usize;
     let mut notes = Vec::new();
+    let mut skipped = Vec::new();
+    // One bad file is reported and skipped; it never aborts the whole import
+    // or leaves the user guessing which files arrived.
     for c in &list {
-        let (d,a) = copy_one(&root,c,&format,&mut notes)?;
-        documents += d; assets += a;
+        match copy_one(&root, c, &format, &context, &mut notes) {
+            Ok((d, a)) => { documents += d; assets += a; imported += 1; }
+            Err(error) => skipped.push(format!("{}: {error}", c.relative.display())),
+        }
     }
     notes.sort();
     notes.dedup();
+    if imported == 0 {
+        return Err(format!("Nothing was imported. {}", skipped.join("; ")));
+    }
     Ok(RpgImportResult {
-        imported: list.len(), documents_created: documents, copied_assets: assets,
+        imported, skipped, documents_created: documents, copied_assets: assets,
         destination: root.to_string_lossy().into_owned(), notes,
     })
 }
@@ -335,6 +442,89 @@ mod tests {
         assert!(acceptable_extension(&RpgFormat::FantasyGrounds, "mod"));
         assert!(!acceptable_extension(&RpgFormat::Pdf, "png"));
     }
+    fn campaign() -> (tempfile::TempDir, PathBuf) {
+        let parent = tempfile::tempdir().unwrap();
+        let root = parent.path().join("Campaign");
+        let input: crate::campaign_wizard::NewCampaignInput = serde_json::from_value(serde_json::json!({
+            "project_root": root.to_string_lossy(), "name": "Campaign", "setup_mode": "quick-start",
+            "basics": { "premise": "Test." },
+        })).unwrap();
+        crate::campaign_wizard::create_campaign(&input).unwrap();
+        (parent, root)
+    }
+
+    #[tokio::test]
+    async fn obsidian_import_keeps_folders_frontmatter_originals_and_attachments() {
+        let (_parent, root) = campaign();
+        let vault_parent = tempfile::tempdir().unwrap();
+        let vault = vault_parent.path().join("My Vault");
+        fs::create_dir_all(vault.join("NPCs")).unwrap();
+        fs::write(vault.join("NPCs/Mira Fen.md"), "---\ntags: [npc]\nrole: steward\n---\nMira knows [[Briar Glen]].\n").unwrap();
+        fs::write(vault.join("Briar Glen.md"), "A village.").unwrap();
+        fs::write(vault.join("NPCs/map.png"), b"\x89PNG\r\n\x1a\nrest").unwrap();
+        fs::write(vault.join("NPCs/broken.png"), b"not a png").unwrap();
+
+        let result = apply_rpg_content_import(
+            vault.to_string_lossy().into_owned(), root.to_string_lossy().into_owned(), RpgFormat::Obsidian,
+        ).await.unwrap();
+        assert_eq!(result.documents_created, 2);
+        assert_eq!(result.skipped.len(), 1, "{:?}", result.skipped);
+        assert!(result.skipped[0].contains("broken.png"));
+
+        let mira = crate::document::service::read_document(&root, Path::new("Worldbuilding/Imported/My Vault/NPCs/Mira Fen.md")).unwrap();
+        assert_eq!(mira.title.as_deref(), Some("Mira Fen"));
+        assert!(mira.body.starts_with("Mira knows [[Briar Glen]]."), "{}", mira.body);
+        assert!(!mira.body.contains("role: steward"));
+        let fm = mira.metadata.get("source_frontmatter").unwrap();
+        assert_eq!(fm.get("role").and_then(|v| v.as_str()), Some("steward"));
+        let original = root.join("Assets/Imports/Markdown Sources/My Vault/NPCs/Mira Fen.md");
+        assert_eq!(fs::read_to_string(original).unwrap(), fs::read_to_string(vault.join("NPCs/Mira Fen.md")).unwrap());
+        assert!(root.join("Assets/Imports/Obsidian Attachments/My Vault/NPCs/map.png").is_file());
+        // Source files are never modified.
+        assert!(vault.join("NPCs/broken.png").is_file());
+
+        // Importing again never overwrites; it adds numbered copies.
+        apply_rpg_content_import(vault.to_string_lossy().into_owned(), root.to_string_lossy().into_owned(), RpgFormat::Obsidian).await.unwrap();
+        assert!(root.join("Worldbuilding/Imported/My Vault/NPCs/Mira Fen-1.md").is_file());
+        assert_eq!(crate::document::service::read_document(&root, Path::new("Worldbuilding/Imported/My Vault/NPCs/Mira Fen.md")).unwrap().identity, mira.identity);
+    }
+
+    #[tokio::test]
+    async fn refuses_a_source_folder_that_contains_the_campaign() {
+        let (parent, root) = campaign();
+        fs::write(parent.path().join("note.md"), "x").unwrap();
+        let error = apply_rpg_content_import(
+            parent.path().to_string_lossy().into_owned(), root.to_string_lossy().into_owned(), RpgFormat::Markdown,
+        ).await.unwrap_err();
+        assert!(error.contains("contains this campaign"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn large_fantasy_grounds_xml_is_preserved() {
+        let (_parent, root) = campaign();
+        let source = tempfile::tempdir().unwrap();
+        let xml = source.path().join("db.xml");
+        let mut content = String::from("<?xml version=\"1.0\"?><root>");
+        content.push_str(&"<entry>monster</entry>".repeat(40_000));
+        content.push_str("</root>");
+        fs::write(&xml, &content).unwrap();
+        let result = apply_rpg_content_import(
+            xml.to_string_lossy().into_owned(), root.to_string_lossy().into_owned(), RpgFormat::FantasyGrounds,
+        ).await.unwrap();
+        assert_eq!(result.copied_assets, 1);
+        assert!(root.join("Assets/Imports/Fantasy Grounds/db.xml").is_file());
+    }
+
+    #[test]
+    fn frontmatter_split_keeps_invalid_yaml_in_body() {
+        let (fm, body) = split_source_frontmatter("---\na: [\n---\nText");
+        assert!(fm.is_none());
+        assert!(body.starts_with("---"));
+        let (fm, body) = split_source_frontmatter("No frontmatter");
+        assert!(fm.is_none());
+        assert_eq!(body, "No frontmatter");
+    }
+
     #[test]
     fn discovers_markdown_without_following_links() {
         let dir = tempfile::tempdir().unwrap();

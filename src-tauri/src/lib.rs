@@ -287,6 +287,8 @@ pub fn run() {
             commands::create_new_book_foundation,
             commands::create_new_campaign,
             commands::get_campaign_dashboard_summary,
+            commands::get_campaign_settings,
+            commands::update_campaign_settings,
             commands::get_git_workspace_status,
             commands::git_initialize,
             commands::git_set_origin,

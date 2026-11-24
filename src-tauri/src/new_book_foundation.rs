@@ -455,7 +455,7 @@ mod tests {
             },
             brainstorming: "Initial ideas.".into(),
             synopsis: "Synthetic synopsis.".into(),
-            manuscript_template_id: "bundled-three-act".into(),
+            manuscript_template_id: "decide-later".into(),
         }
     }
 
@@ -476,9 +476,8 @@ mod tests {
         assert!(root.join("Story Development/Worldbuilding & Settings/Overview.md").is_file());
         assert!(root.join("Story Development/Characters/Main Cast/Test Character.md").is_file());
         assert!(root.join("Story Development/Worldbuilding & Settings/Locations/Test Location.md").is_file());
-        assert!(root.join("Manuscript/Act I — Setup").is_dir());
-        assert!(root.join("Manuscript/Act II — Confrontation").is_dir());
-        assert!(root.join("Manuscript/Act III — Resolution").is_dir());
+        // No novel outline preset is applied any more; the folder starts empty.
+        assert!(root.join("Manuscript").is_dir());
         assert!(root.join("Story Development/Planning & Outline/Master Outline").is_dir());
         assert!(root.join("Story Development/Planning & Outline/Beat Sheets").is_dir());
         assert!(root.join("Story Development/Characters/Relationships").is_dir());
@@ -659,17 +658,14 @@ mod tests {
     }
 
     #[test]
-    fn selected_manuscript_template_controls_manuscript_folders() {
+    fn retired_novel_outline_presets_are_refused() {
         let parent = tempfile::tempdir().unwrap();
         let root = parent.path().join("Test Novel");
         let mut request = input(&root);
         request.manuscript_template_id = "bundled-story-circle".into();
 
-        create_new_book(&request).unwrap();
-
-        assert!(root.join("Manuscript/Act I — You - Need - Go - Search").is_dir());
-        assert!(root.join("Manuscript/Act II — Find - Take - Return - Change").is_dir());
-        assert!(!root.join("Manuscript/Act III — Resolution").exists());
+        let error = create_new_book(&request).unwrap_err();
+        assert!(error.contains("retired"), "{error}");
     }
 
 }

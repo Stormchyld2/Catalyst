@@ -13,9 +13,9 @@
   const current = $derived(tour[position]);
   function next() {
     if (position === tour.length - 1) ui.completeOnboarding();
-    else ui.nextOnboardingStep();
+    else ui.nextStep();
   }
-  function previous() { ui.previousOnboardingStep(); }
+  function previous() { ui.previousStep(); }
 </script>
 
 {#if ui.showOnboarding}

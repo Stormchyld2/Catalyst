@@ -509,13 +509,59 @@ fn replace_staged_document(staged: &Path, destination: &Path) -> Result<(), Stri
     Ok(())
 }
 
-// Encode the original filename as UTF-8 bytes in hex. Unlike a delimiter-based
-// name, this round-trips spaces, punctuation, and Unicode without ambiguity.
-// Legacy UUID-only artifacts remain discoverable but have no known destination.
-fn recovery_file_name(destination: &Path, extension: &str) -> String {
+// Recovery artifacts use a short, fixed-length name: the prefix plus a UUID.
+// Earlier builds hex-encoded the destination filename into the artifact name,
+// which doubled its length. Any filename longer than about 99 bytes then
+// exceeded the 255-character component limit on every platform, and nested
+// campaign folders pushed full paths past Windows MAX_PATH. The original
+// document is now identified from the staged file's stable identity instead
+// (see `match_recovery_destination`). Hex-named artifacts written by earlier
+// builds are still decoded.
+fn recovery_file_name(_destination: &Path, extension: &str) -> String {
+    format!("{TEMP_PREFIX}{}.{}", Uuid::new_v4(), extension)
+}
+
+#[cfg(test)]
+fn legacy_hex_recovery_file_name(destination: &Path, extension: &str) -> String {
     let name = destination.file_name().expect("Document has a filename").to_string_lossy();
     let encoded: String = name.as_bytes().iter().map(|byte| format!("{byte:02x}")).collect();
     format!("{TEMP_PREFIX}{encoded}-{}.{}", Uuid::new_v4(), extension)
+}
+
+/// True for the current short artifact form `.catalyst-save-<uuid>.tmp|bak`.
+fn is_compact_recovery_name(artifact: &Path) -> bool {
+    artifact
+        .file_name()
+        .and_then(|name| name.to_str())
+        .and_then(|name| name.strip_prefix(TEMP_PREFIX))
+        .and_then(|rest| rest.strip_suffix(".tmp").or_else(|| rest.strip_suffix(".bak")))
+        .map(|uuid| uuid.len() == 36 && Uuid::parse_str(uuid).is_ok())
+        .unwrap_or(false)
+}
+
+/// For a compact artifact, find the one sibling Markdown document with the same
+/// stable identity. Returns None when no sibling, or more than one, matches.
+fn match_recovery_destination(artifact: &Path, identity: &DocumentIdentity) -> Option<String> {
+    let directory = artifact.parent()?;
+    let mut matches = Vec::new();
+    for entry in fs::read_dir(directory).ok()? {
+        let entry = entry.ok()?;
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if name.starts_with('.') || !name.to_ascii_lowercase().ends_with(".md") {
+            continue;
+        }
+        if !entry.file_type().map(|kind| kind.is_file()).unwrap_or(false) {
+            continue;
+        }
+        let Ok(raw) = fs::read_to_string(&path) else { continue };
+        if let Ok(document) = parse_document(Path::new(&name), &raw) {
+            if &document.identity == identity {
+                matches.push(name);
+            }
+        }
+    }
+    if matches.len() == 1 { matches.pop() } else { None }
 }
 
 fn decode_recovery_destination(artifact: &Path) -> Option<String> {
@@ -591,11 +637,19 @@ pub fn discover_recovery_artifacts(project_root: &Path) -> Result<Vec<RecoveryAr
             let relative_path = path.strip_prefix(project_root)
                 .map_err(|e| format!("Could not locate recovery artifact: {e}"))?
                 .to_path_buf();
-            let valid_document = fs::read_to_string(&path)
+            let parsed = fs::read_to_string(&path)
                 .ok()
-                .and_then(|raw| parse_document(&relative_path, &raw).ok())
-                .is_some();
+                .and_then(|raw| parse_document(&relative_path, &raw).ok());
+            let valid_document = parsed.is_some();
             let original_relative_path = decode_recovery_destination(&path)
+                .or_else(|| {
+                    if !is_compact_recovery_name(&path) {
+                        return None;
+                    }
+                    parsed
+                        .as_ref()
+                        .and_then(|document| match_recovery_destination(&path, &document.identity))
+                })
                 .and_then(|file_name| {
                     let destination = path.with_file_name(file_name);
                     destination.strip_prefix(project_root).ok().map(Path::to_path_buf)
@@ -1051,7 +1105,7 @@ mod tests {
     #[test]
     fn recovery_filename_round_trips_unicode_and_rejects_legacy_uuid_names() {
         let name = Path::new("Characters/Éloïse — 海.md");
-        let staged = recovery_file_name(name, "tmp");
+        let staged = legacy_hex_recovery_file_name(name, "tmp");
         assert_eq!(
             decode_recovery_destination(Path::new(&staged)).as_deref(),
             Some("Éloïse — 海.md")
@@ -1139,7 +1193,7 @@ mod tests {
         let original = create_document(temp.path(), path, "character", Some("Mara"), "First.").unwrap();
         let other = create_document(temp.path(), Path::new("Characters/Other.md"), "character", Some("Other"), "Other.").unwrap();
         let bytes = fs::read(temp.path().join("Characters/Other.md")).unwrap();
-        let artifact = Path::new("Characters").join(recovery_file_name(path, "tmp"));
+        let artifact = Path::new("Characters").join(legacy_hex_recovery_file_name(path, "tmp"));
         fs::write(temp.path().join(&artifact), &bytes).unwrap();
         let error = restore_recovery_artifact(temp.path(), &artifact, &sha256_hex(&bytes), &original.source_hash).unwrap_err();
         assert!(error.contains("identity"));
@@ -1149,6 +1203,39 @@ mod tests {
         fs::write(temp.path().join(legacy), fs::read(temp.path().join(path)).unwrap()).unwrap();
         let error = restore_recovery_artifact(temp.path(), legacy, &original.source_hash, &original.source_hash).unwrap_err();
         assert!(error.contains("known original"));
+    }
+
+    #[test]
+    fn long_filenames_save_because_recovery_names_stay_short() {
+        let temp = root();
+        // 150-byte stem: the old hex-encoded staging name was ~360 characters
+        // and failed with "File name too long" on every platform.
+        let stem = "A".repeat(150);
+        let relative = PathBuf::from(format!("Adventures/{stem}.md"));
+        let mut doc = create_document(temp.path(), &relative, "note", Some("Long"), "First.").unwrap();
+        doc.body = "Second.".into();
+        save_document(temp.path(), &doc, Some(&doc.source_hash)).unwrap();
+        assert!(read_document(temp.path(), &relative).unwrap().body.contains("Second."));
+        let name = recovery_file_name(&relative, "tmp");
+        assert!(name.len() <= 60, "{name}");
+        assert!(is_compact_recovery_name(Path::new(&name)));
+    }
+
+    #[test]
+    fn compact_artifacts_match_only_a_unique_sibling_identity() {
+        let temp = root();
+        let path = Path::new("Characters/Mara.md");
+        create_document(temp.path(), path, "character", Some("Mara"), "Body.").unwrap();
+        let bytes = fs::read(temp.path().join(path)).unwrap();
+        let artifact = temp.path().join("Characters").join(recovery_file_name(path, "tmp"));
+        fs::write(&artifact, &bytes).unwrap();
+        let found = discover_recovery_artifacts(temp.path()).unwrap();
+        assert_eq!(found[0].original_relative_path, Some(path.to_path_buf()));
+
+        // A copied file with the same ID makes the destination ambiguous.
+        fs::write(temp.path().join("Characters/Mara copy.md"), &bytes).unwrap();
+        let found = discover_recovery_artifacts(temp.path()).unwrap();
+        assert_eq!(found[0].original_relative_path, None);
     }
 
     #[test]

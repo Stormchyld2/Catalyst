@@ -31,10 +31,18 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      # Fast checks first so type errors fail in a minute or two, before the long build.
+      - name: Svelte and TypeScript check
+        run: npm run check
+
+      - name: Cargo check
+        working-directory: src-tauri
+        run: cargo check --no-default-features --all-targets
+
       # Release builds use --no-default-features so the unlicensed QA (mcp) plugin is not compiled in.
-      # Updater artifacts need a signing key, so they are turned off here.
+      # Updater artifacts need a signing key, so tauri.build-check.conf.json turns them off.
       - name: Build portable exe
-        run: npx tauri build --no-bundle -c '{"bundle":{"createUpdaterArtifacts":false}}' -- --no-default-features
+        run: npx tauri build --no-bundle -c src-tauri/tauri.build-check.conf.json -- --no-default-features
         shell: bash
 
       - name: Upload Catalyst.exe
@@ -43,3 +51,9 @@ jobs:
           name: Catalyst-windows-x64-${{ github.sha }}
           path: src-tauri/target/release/catalyst.exe
           if-no-files-found: error
+
+      # Windows-only file behavior (ReplaceFileW, long paths, demo staging) is
+      # covered by #[cfg(windows)] tests that only run here.
+      - name: Windows document, demo and campaign tests
+        working-directory: src-tauri
+        run: cargo test --no-default-features --lib -- "document::" sample_project campaign_wizard rpg_import

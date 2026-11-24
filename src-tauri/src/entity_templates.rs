@@ -1461,9 +1461,11 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             "campaign",
             "note",
             Some("campaign-overview"),
-            "Editable campaign master reference: story, setting, party, factions, timeline and GM-only notes. Rules configuration remains in campaign.yaml.",
-            &["subtitle", "genre", "tone", "central_conflict", "gm_name", "status", "world_name", "party_name"],
-            &[("image","Image","image"),("subtitle","Subtitle","text"),("genre","Genre","text"),("tone","Tone / Theme","text"),("central_conflict","Central Conflict","multiline"),("start_date","Campaign Start Date","text"),("gm_name","Game Master","text"),("status","Status","text"),VIS,("ruleset_id","Rules Pack ID","text"),("edition_id","Edition ID","text"),("world_ref","World Reference ID","text"),("party_ref","Party Reference ID","text"),("world_name","World / Setting","text"),("party_name","Party Name","text"),("campaign_structure","Adventure Structure","text"),("campaign_length","Campaign Length","text"),("tags","Tags","list")],
+            "Editable campaign master reference: story, setting, party, factions, timeline and GM-only notes. Configuration stays in Campaign Settings.",
+            // Genre, tone, GM, ruleset, party and play settings are edited in
+            // Campaign Settings (project.yaml / campaign.yaml), not duplicated here.
+            &["subtitle", "central_conflict", "start_date", "status", "campaign_structure", "campaign_length"],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("central_conflict","Central Conflict","multiline"),("start_date","Campaign Start Date","text"),("status","Status","text"),VIS,("world_ref","World Reference ID","text"),("party_ref","Party Reference ID","text"),("campaign_structure","Adventure Structure","text"),("campaign_length","Campaign Length","text"),("tags","Tags","list")],
             "## Campaign Summary\n\n## World and Setting\n\n## Party\n\n## Main Story Arc\n\n## Active Quests\n\n## Important NPCs and Factions\n\n## Campaign Timeline\n\n## Player-Facing Pitch\n\n## GM-Only Notes\n\n## Related Records\n\nLink to the existing World Builder, Adventures and Session documents rather than copying their content here.",
         ),
         built_in(
