@@ -169,33 +169,15 @@ pub fn create_new_book(input: &NewBookFoundationInput) -> Result<NewBookProject,
     Ok(NewBookProject { manifest, paths })
 }
 
-fn seed_manuscript_structure(root: &Path, template_id: &str) -> Result<(), String> {
-    let template_id = template_id.trim();
-    if template_id.is_empty() || template_id == "decide-later" {
-        return Ok(());
+// Legacy book creation remains readable for older files, but Catalyst no
+// longer ships the five novel outlining presets. Do not include removed JSON.
+fn seed_manuscript_structure(_root: &Path, template_id: &str) -> Result<(), String> {
+    match template_id.trim() {
+        "" | "decide-later" => Ok(()),
+        retired => Err(format!(
+            "Novel outline preset '{retired}' was retired from Catalyst; choose an RPG campaign template instead."
+        )),
     }
-
-    const BUNDLED_TEMPLATES: &[&str] = &[
-        include_str!("../templates/save-the-cat.json"),
-        include_str!("../templates/three-act-structure.json"),
-        include_str!("../templates/heros-journey.json"),
-        include_str!("../templates/story-circle.json"),
-        include_str!("../templates/seven-point.json"),
-    ];
-
-    let template = BUNDLED_TEMPLATES
-        .iter()
-        .filter_map(|raw| serde_json::from_str::<crate::models::StoryTemplate>(raw).ok())
-        .find(|template| template.id == template_id)
-        .ok_or_else(|| format!("Unknown manuscript structure template '{template_id}'."))?;
-
-    for part in &template.structure {
-        let folder = safe_filename(&part.title);
-        std::fs::create_dir_all(root.join("Manuscript").join(folder))
-            .map_err(|e| format!("Could not create manuscript structure for '{}': {e}", template.name))?;
-    }
-
-    Ok(())
 }
 
 fn validate_entities(
