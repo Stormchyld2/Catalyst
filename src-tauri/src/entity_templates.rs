@@ -1453,7 +1453,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("campaign-overview"),
             "The campaign's premise, tone and central conflict at a glance.",
             &["subtitle", "genre", "tone", "central_conflict", "start_date", "gm_name", "status"],
-            &[("image","Image","image"),("subtitle","Subtitle","text"),("genre","Genre","text"),("tone","Tone / Theme","text"),("central_conflict","Central Conflict","multiline"),("start_date","Campaign Start Date","text"),("gm_name","Game Master","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("genre","Genre","text"),("tone","Tone / Theme","text"),("central_conflict","Central Conflict","multiline"),("start_date","Campaign Start Date","text"),("gm_name","Game Master","text"),("status","Status","text"),VIS,("ruleset_id","Rules Pack ID","text"),("edition_id","Edition ID","text"),("world_ref","World Reference ID","text"),("party_ref","Party Reference ID","text"),("tags","Tags","list")],
             "## Premise\n\n## Tone & Expectations\n\n## Central Conflict\n\n## Major Threads\n\n## Player-Facing Pitch\n\n## GM Notes",
         ),
         built_in(
@@ -1464,7 +1464,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("npc"),
             "Non-player character: role, disposition, motivation and secrets. No combat statistics required.",
             &["subtitle", "disposition", "role", "affiliation", "motivation", "current_location", "status", "visibility"],
-            &[("image","Image","image"),("subtitle","Subtitle","text"),("disposition","Disposition","text"),("role","Role","text"),("affiliation","Affiliation","text"),("motivation","Motivation","multiline"),("current_location","Current Location","text"),("status","Status","text"),("aliases","Aliases","list"),("relationships","Relationships","list"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("disposition","Disposition","text"),("role","Role","text"),("affiliation","Affiliation","text"),("motivation","Motivation","multiline"),("current_location","Current Location","text"),("status","Status","text"),("aliases","Aliases","list"),("relationships","Relationships","list"),VIS,("character_record_id","Character Studio Record ID","text"),("portrait_asset_id","Portrait Asset ID","text"),("token_asset_id","Token Asset ID","text"),("faction_refs","Faction IDs","list"),("tags","Tags","list")],
             "## Appearance\n\n## Personality & Mannerisms\n\n## Wants & Motivation\n\n## Secrets\n\n## Relationships\n\n## Voice & Quotes\n\n## Statistics Reference\n\n## Session History",
         ),
         built_in(
@@ -1473,9 +1473,9 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             "character",
             "character",
             Some("player-character"),
-            "Minimal placeholder for a player character until Character Studio is available. Not a character sheet.",
+            "Temporary link or placeholder pending Character Studio; never a second character sheet.",
             &["player", "status", "character_record"],
-            &[("image","Image","image"),("player","Player","text"),("status","Status","text"),("character_record","Character Record","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("player","Player","text"),("status","Status","text"),("character_record","Character Record","text"),VIS,("character_record_id","Character Studio Record ID","text"),("ruleset_id","Rules Pack ID","text"),("player_id","Player ID","text"),("tags","Tags","list")],
             "## Concept\n\n## Background Hooks\n\n## Party Ties\n\n## GM Notes",
         ),
         built_in(
@@ -1486,7 +1486,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("creature"),
             "Monster or creature profile with habitat, behaviour and encounter notes; rules statistics stay optional.",
             &["subtitle", "creature_type", "habitat", "threat", "status", "visibility"],
-            &[("image","Image","image"),("subtitle","Subtitle","text"),("creature_type","Creature Type","text"),("habitat","Habitat","text"),("threat","Threat / Challenge","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("creature_type","Creature Type","text"),("habitat","Habitat","text"),("threat","Threat / Challenge","text"),("status","Status","text"),VIS,("ruleset_ref","Ruleset Stat Block ID","text"),("encounter_refs","Encounter IDs","list"),("loot_refs","Loot IDs","list"),("tags","Tags","list")],
             "## Description\n\n## Behaviour & Tactics\n\n## Habitat & Ecology\n\n## Lore\n\n## Statistics Reference\n\n## Loot & Rewards",
         ),
         built_in(
@@ -1497,7 +1497,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("quest"),
             "Adventure, story arc or quest with objectives, branches, rewards and consequences.",
             &["subtitle", "quest_type", "status", "patron", "objective", "reward", "visibility"],
-            &[("image","Image","image"),("subtitle","Subtitle","text"),("quest_type","Quest Type","text"),("status","Status","text"),("patron","Patron / Quest Giver","text"),("objective","Objective","multiline"),("reward","Reward","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("quest_type","Quest Type","text"),("status","Status","text"),("patron","Patron / Quest Giver","text"),("objective","Objective","multiline"),("reward","Reward","text"),VIS,("prerequisites","Prerequisite Quest IDs","list"),("location_refs","Location IDs","list"),("npc_refs","NPC IDs","list"),("consequence_refs","Consequence Reference IDs","list"),("tags","Tags","list")],
             "## Hook\n\n## Objectives\n\n## Key Locations\n\n## Key NPCs\n\n## Branches & Choices\n\n## Complications\n\n## Rewards\n\n## Consequences",
         ),
         built_in(
@@ -1508,7 +1508,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("encounter"),
             "Combat, social or exploration encounter linked to characters, creatures, maps and rewards.",
             &["subtitle", "encounter_type", "location", "difficulty", "status", "visibility"],
-            &[("image","Image","image"),("subtitle","Subtitle","text"),("encounter_type","Encounter Type","text"),("location","Location","text"),("difficulty","Difficulty","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("encounter_type","Encounter Type","text"),("location","Location","text"),("difficulty","Difficulty","text"),("status","Status","text"),VIS,("map_ref","Map Asset ID","text"),("participant_refs","Participant IDs","list"),("reward_refs","Reward IDs","list"),("ruleset_ref","Rules Pack Reference","text"),("tags","Tags","list")],
             "## Setup\n\n## Participants\n\n## Terrain & Features\n\n## Tactics or Goals\n\n## Scaling\n\n## Outcome & Rewards",
         ),
         built_in(
@@ -1519,7 +1519,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("session-plan"),
             "Prep sheet for an upcoming game session.",
             &["session_number", "session_date", "status", "visibility"],
-            &[("image","Image","image"),("session_number","Session Number","number"),("session_date","Session Date","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("session_number","Session Number","number"),("session_date","Session Date","text"),("status","Status","text"),VIS,("location_refs","Location IDs","list"),("encounter_refs","Encounter IDs","list"),("clue_refs","Clue IDs","list"),("tags","Tags","list")],
             "## Recap\n\n## Strong Start\n\n## Potential Scenes\n\n## Secrets & Clues\n\n## NPCs\n\n## Locations\n\n## Encounters\n\n## Rewards",
         ),
         built_in(
@@ -1530,7 +1530,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("session-log"),
             "Chronological record of what happened at the table.",
             &["session_number", "session_date", "attendance", "visibility"],
-            &[("image","Image","image"),("session_number","Session Number","number"),("session_date","Session Date","text"),("attendance","Attendance","list"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("session_number","Session Number","number"),("session_date","Session Date","text"),("attendance","Attendance","list"),VIS,("world_change_refs","World Change IDs","list"),("quest_refs","Quest IDs","list"),("loot_refs","Loot IDs","list"),("tags","Tags","list")],
             "## Summary\n\n## Key Events\n\n## Player Discoveries\n\n## Loot & Rewards\n\n## Campaign State Changes\n\n## Open Threads",
         ),
         built_in(
@@ -1541,7 +1541,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("house-rules"),
             "Table rules, variants and rulings for this campaign.",
             &["rules_system", "status"],
-            &[("image","Image","image"),("rules_system","Rules System","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("rules_system","Rules System","text"),("status","Status","text"),VIS,("ruleset_id","Rules Pack ID","text"),("ruleset_version","Rules Pack Version","text"),("rule_refs","Affected Rule IDs","list"),("tags","Tags","list")],
             "## Rules Variants\n\n## Character Creation\n\n## Rests, Death & Downtime\n\n## Rulings Log",
         ),
         built_in(
@@ -1552,7 +1552,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("gm-notes"),
             "Private Game Master notes, secrets and reminders.",
             &["status", "visibility"],
-            &[("image","Image","image"),("status","Status","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("status","Status","text"),VIS,("related_entry_refs","Related Entry IDs","list"),("tags","Tags","list")],
             "## Notes\n\n## Secrets & Clues\n\n## Reminders",
         ),
         built_in(
@@ -1563,7 +1563,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("map-reference"),
             "References to existing map files. Map Studio does not generate these yet.",
             &["map_scale", "status"],
-            &[("image","Image","image"),("map_scale","Scale","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("map_scale","Scale","text"),("status","Status","text"),VIS,("map_asset_id","Map Asset ID","text"),("map_type","Map Type","text"),("grid_type","Grid Type","text"),("location_ref","Location ID","text"),("tags","Tags","list")],
             "## Map Files\n\n## Key\n\n## Notes",
         ),
         built_in(
@@ -1574,7 +1574,7 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             Some("gm-guide"),
             "Offline Game Master advice. Catalyst's starter guides are original and editable.",
             &["guide_topic", "source", "license"],
-            &[("image","Image","image"),("guide_topic","Topic","text"),("source","Source","text"),("license","License","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("guide_topic","Topic","text"),("source","Source","text"),("license","License","text"),VIS,("guide_version","Guide Version","text"),("ruleset_ref","Rules Pack Reference","text"),("tags","Tags","list")],
             "",
         ),
         built_in(
@@ -1583,9 +1583,9 @@ fn campaign_templates() -> Vec<EntityTemplate> {
             "campaign",
             "note",
             Some("random-table"),
-            "A rollable table. Roll the listed die and read the matching row.",
+            "Structured GM roll table. Numbered results are stored as list entries; automatic dice integration requires a separate engine adapter.",
             &["die", "table_category", "source"],
-            &[("image","Image","image"),("die","Die","text"),("table_category","Category","text"),("source","Source","text"),("license","License","text"),VIS,("tags","Tags","list")],
+            &[("image","Image","image"),("die","Die","text"),("table_category","Category","text"),("source","Source","text"),("license","License","text"),VIS,("dice_expression","Dice Expression","text"),("entries","Numbered Results (one per entry)","list"),("ruleset_ref","Rules Pack Reference","text"),("tags","Tags","list")],
             "",
         ),
     ]
