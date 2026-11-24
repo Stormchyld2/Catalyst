@@ -228,7 +228,7 @@ Listen for repeated notes, block the wind, inspect the etched markings or climb 
 Find the hidden stair down to the Crown Seal.
 
 ## Complication
-A Hollow Echo manifests if the chimes are violently smashed; adapt the severity to the selected ruleset.
+A Hollow Echo manifests if the chimes are violently smashed; use the single low-powered 5e Hollow Echo; allow avoidance or retreat.
 "#,
     },
     DemoEntry {
@@ -243,7 +243,7 @@ A wicker-and-root sentinel watches the vault entrance. It guards carved ward sym
 The party may bypass it by restoring a fallen symbol, speaking the old watchword "Hold the line", or taking a quieter route.
 
 ## If fighting
-Use creatures or stat blocks from the group's chosen ruleset. Use the original Thornbound Sentinel statistics in Creatures & Monsters/Custom Creatures/Thornbound Sentinel - 5e Stat Block.md. Its encounter is optional.
+Use the original Thornbound Sentinel statistics in Creatures & Monsters/Custom Creatures/Thornbound Sentinel - 5e Stat Block.md. Its encounter is optional.
 
 ## Outcome
 The sentinel retreats once the ward is secure or its protected threshold is passed.
@@ -433,7 +433,7 @@ For a party of three level-1 characters, use 8 hit points; for five level-1 char
 One creature within 30 feet must succeed on a DC 10 Wisdom saving throw or have disadvantage on its next ability check before the end of its next turn. This does not remove memories or control player characters.
 
 ## Encounter Scaling
-Use at most one echo at a time for a 1st-level party; avoid running it immediately after the sentinel. The echo disperses when the seal is restored. The echo can also disperse automatically when the seal is restored.
+Use at most one echo at a time for a 1st-level party; avoid running it immediately after the sentinel. The echo disperses automatically when the seal is restored.
 "#,
     },
     DemoEntry {
@@ -629,8 +629,13 @@ fn ensure_demo(root: &Path) -> Result<(), String> {
         for entry in ENTRIES {
             seed_entry(&staging, entry)?;
         }
-        let map = staging.join("Maps/Dungeons/Briarwatch Tower - Text Map.md");
-        fs::write(&map, LOCATION_MAP).map_err(|e| format!("Could not write sample map: {e}"))?;
+        seed_entry(&staging, &DemoEntry {
+            path: "Maps/Dungeons/Briarwatch Tower - Text Map.md",
+            template: "map-reference",
+            title: "Briarwatch Tower - Text Map",
+            body: LOCATION_MAP,
+            visibility: "gm-only",
+        })?;
         let _ = campaign_wizard::read_campaign_manifest(&staging)?;
         if root.exists() {
             return Err("Demo folder was created by another process. Nothing was overwritten.".into());
