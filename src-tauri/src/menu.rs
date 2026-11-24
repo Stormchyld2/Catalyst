@@ -19,7 +19,6 @@ pub fn create_menu(app: &AppHandle<Wry>, bindings: &BTreeMap<String, String>) ->
         .item(&command("new_project", "New Project")?)
         .item(&command("open_project_folder", "Open Project Folder…")?)
         .separator()
-        .item(&command("export", "Export...")?)
         .separator()
         .item(&command("close_project", "Close Project")?)
         .separator()
