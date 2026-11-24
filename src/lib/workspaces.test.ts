@@ -60,7 +60,7 @@ describe("Catalyst workspace registry", () => {
 
   it("marks the active Core Preview workspaces", () => {
     expect(WORKSPACES.filter((workspace) => isPreviewWorkspace(workspace.id)).map((w) => w.id))
-      .toEqual(["home", "story-development", "outline", "write", "git"]);
+      .toEqual(["home", "story-development", "outline", "write", "listen", "git"]);
   });
 
   it("removes the Terminal and book-only workspaces from the campaign rail", () => {

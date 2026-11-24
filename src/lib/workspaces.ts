@@ -86,7 +86,7 @@ export const WORKSPACES: readonly WorkspaceDefinition[] = [
     id: "listen",
     label: "Soundboard",
     requiresProject: true,
-    stage: "later-core",
+    stage: "core-preview",
     group: "table",
     description: "Campaign soundboard: offline ambience, music, and sound-effect pads for live play.",
   },
