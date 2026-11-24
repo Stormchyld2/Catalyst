@@ -59,7 +59,7 @@ The village of Briar Glen has lost its bell and three residents have begun sleep
 The villagers' disappearances are an effect of the weakening ward, not intentional kidnappings. Kael Voss wants the Crown Seal because it will reveal a lost royal archive. The imprisoned Hollow King can lie but cannot cross the etched stone ring while the seal remains whole.
 
 ## Demo safety and mechanics
-Use D&D 5e ability checks, saving throws, initiative and the original monster statistics provided in this demo. Checks and attacks use a physical die or Catalyst Dice Roller; there is no automatic 5e combat adapter bundled. All outcomes are suggestions, not hard-coded mechanics. The supplied map references are textual location diagrams, **not** finished Map Studio battle maps. No working VTT player connection, soundboard configuration, token or automatic encounter system is implied.
+Use D&D 5e ability checks, saving throws, initiative and the original monster statistics provided in this demo. Checks and attacks use a physical die or Catalyst Dice Roller; there is no automatic 5e combat adapter bundled. All outcomes are suggestions, not hard-coded mechanics. The demo includes original printable SVG scene maps and keyed diagrams, but these are **not** automatically imported into Map Studio as interactive battle maps. No working VTT player connection, soundboard configuration, token or automatic encounter system is implied.
 "#,
     },
     DemoEntry {
@@ -335,7 +335,7 @@ Awarded to the party if appropriate.
 5. Crown Vault — sleepers, seal and final choice.
 
 ## Map
-See Maps/Dungeons/Briarwatch Tower - Text Map.md. It is an original schematic, not a battle-map image.
+See Maps/Dungeons/Briarwatch Tower - Keyed Map.md and Assets/Images/briarwatch-tower.svg. The original printable diagram is not a VTT scene.
 
 ## Encounter options
 Roleplay, exploration, or combat; scale to the table's chosen system.
@@ -566,7 +566,7 @@ Read the corresponding ending card. Award **20 gp total**, optional potion if no
 Never place more than one starter creature in front of the party at once. Use an optional sentinel **or** an optional echo; after any fight, skip additional hostile creatures. Enemies hesitate, telegraph attacks, and can be pacified or fled. Adapt if the party is weaker, wounded or new to the rules.
 
 ## Where to go next
-All supporting material is stored in normal Catalyst campaign folders, with reusable RPG templates and editable Markdown. Maps are simple **labeled schematic diagrams**, not VTT-calibrated tactical artwork. No internet, D&D proprietary content, automatic encounter tracking or player sync is required.
+All supporting material is stored in normal Catalyst campaign folders, with reusable RPG templates and editable Markdown. Open the **three original printable visual SVG maps** in Assets/Images alongside the keyed map guides in Maps/Settlements and Maps/Dungeons. These are offline scene-reference maps, not calibrated VTT battle maps. No internet, D&D proprietary content, automatic encounter tracking or player sync is required.
 "###,
     },
     DemoEntry {
@@ -779,7 +779,7 @@ Let players ask rules questions without shame. Keep descriptions brief; ask each
         visibility: "gm-only",
         body: r###"# Before players arrive
 - [ ] Read Complete Adventure and three GM scene dossiers
-- [ ] Open village, tower and vault schematic maps
+- [ ] Open the three printable SVG maps in Assets/Images and keyed diagrams in Maps
 - [ ] Print or share premade level-one characters if needed
 - [ ] Open NPC guide, clue/GM decision tree, and optional encounters
 - [ ] Review ending cards and rewards
@@ -1530,6 +1530,10 @@ mod tests {
         assert!(root.join("Assets/Images/crown-vault.svg").exists());
         assert!(root.join("Assets/Images/briarwatch-tower.svg").exists());
         assert!(root.join("Assets/Images/briar-glen-village.svg").exists());
+        for map in ["briar-glen-village.svg", "briarwatch-tower.svg", "crown-vault.svg"] {
+            let content = fs::read_to_string(root.join("Assets/Images").join(map)).unwrap();
+            assert!(content.contains("<svg") && content.contains("</svg>"));
+        }
         assert!(!root.join("Manuscript").exists());
         let notes = root.join("Sessions/Session Logs/Actual play.md");
         fs::write(&notes, "The party chose to restore the seal.").unwrap();
