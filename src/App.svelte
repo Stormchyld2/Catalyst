@@ -832,6 +832,7 @@
         onOpenStoryDevelopment={() => {
           if (canOpenStoryDevelopment()) workspace.setActive("story-development", true);
         }}
+        onOpenAdventures={() => workspace.setActive("outline", true)}
       />
     {:else if workspace.active === "git"}
       <GitWorkspace project={currentProject.value} />
