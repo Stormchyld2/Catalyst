@@ -365,16 +365,7 @@ ortLongform ?? importLongform;
             <span>Import RPG Content <small>Markdown, Obsidian, maps, VTT exports and PDFs</small></span>
           </button>
 
-          {#if onOpenEditorial}
-            <button
-              type="button"
-              onclick={onOpenEditorial}
-              class="ka-button ka-button--secondary start-action"
-            >
-              <FileText class="w-5 h-5" aria-hidden="true" />
-              <span>Import Review <small>Import reviewer feedback or a review package</small></span>
-            </button>
-          {/if}
+
         </div>
       </section>
     </div>
