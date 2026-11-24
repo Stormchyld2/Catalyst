@@ -72,6 +72,8 @@ describe("StartScreen", () => {
 
     render(StartScreen, { recentProjects: [], onNewProject: vi.fn() });
 
+    expect(screen.getByRole("button", { name: /The Hollow Crown — D&D 5e Demo/ })).toBeTruthy();
+    expect(screen.getByText(/level-1 D&D 5e adventure/)).toBeTruthy();
     await fireEvent.click(screen.getByRole("button", { name: /The Hollow Crown/ }));
     await waitFor(() => expect(currentProject.value?.name).toBe("The Hollow Crown"));
 
