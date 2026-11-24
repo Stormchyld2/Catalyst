@@ -25,6 +25,7 @@
   } = $props();
   // The parent keys this form by project id; drafts survive section navigation.
   const initial = untrack(() => project);
+  const isCampaign = initial.project_type === "campaign";
   let baseline = $state("");
   let saved = $state(false);
   let referenceTypes = $state(
@@ -46,6 +47,7 @@
   let dailyGoal = $state<number | undefined>(undefined);
   let goalLoaded = $state(false);
   onMount(async () => {
+    if (isCampaign) return;
     try {
       const stats = await invoke<WritingStats>("get_writing_stats", { projectId });
       dailyGoal = stats.daily_goal;
@@ -87,7 +89,7 @@
     error = null;
 
     try {
-      const parsedWordTarget = String(wordTarget ?? "").trim().length
+      const parsedWordTarget = isCampaign ? project.word_target : String(wordTarget ?? "").trim().length
         ? Number(String(wordTarget ?? "").trim())
         : null;
       if (
@@ -118,14 +120,14 @@
 
       // Convert empty strings to null for optional fields
       const settings = {
-        author_pen_name: authorPenName.trim() || null,
+        author_pen_name: isCampaign ? project.author_pen_name : authorPenName.trim() || null,
         genre: genre.trim() || null,
         description: description.trim() || null,
-        word_target: parsedWordTarget,
+        word_target: isCampaign ? project.word_target : parsedWordTarget,
         reference_types: referenceTypes,
         // This command replaces nullable metadata; preserve the screenplay target.
         target_page_count: project.target_page_count,
-        ...(goalLoaded ? { daily_writing_goal: dailyGoal } : {}),
+        ...(!isCampaign && goalLoaded ? { daily_writing_goal: dailyGoal } : {}),
       };
 
       const updatedProject = await invoke<Project>("update_project_settings", {
@@ -133,7 +135,7 @@
         settings,
       });
 
-      void writing.refresh(projectId);
+      if (!isCampaign) void writing.refresh(projectId);
       baseline = snapshot;
       savedGoal = dailyGoal;
       saved = true;
@@ -157,6 +159,7 @@
     {/if}
   </p>
   <div hidden={section !== "details"} class="settings-fields">
+    {#if !isCampaign}
     <!-- Pen Name -->
     <div class="ka-field od-field">
       <label for="author-pen-name">
@@ -174,19 +177,20 @@
       </p>
     </div>
 
+    {/if}
     <!-- Genre -->
     <div class="ka-field od-field">
       <label for="genre">
-        Genre <span class="ka-optional">(optional)</span>
+        {isCampaign ? "Campaign Genre" : "Genre"} <span class="ka-optional">(optional)</span>
       </label>
       <input
         id="genre"
         type="text"
         bind:value={genre}
-        placeholder="e.g., Literary Fiction, Science Fiction, Mystery"
+        placeholder={isCampaign ? "e.g., Fantasy, Horror, Science Fiction" : "e.g., Literary Fiction, Science Fiction, Mystery"}
         disabled={saving}
       />
-      <p class="ka-help">Genre will be displayed on manuscript title pages.</p>
+      <p class="ka-help">{isCampaign ? "Genre describes the tabletop campaign. Game system, party and play schedule are recorded in campaign.yaml." : "Genre will be displayed on manuscript title pages."}</p>
     </div>
 
     <!-- Description -->
@@ -203,6 +207,7 @@
       ></textarea>
     </div>
 
+    {#if !isCampaign}
     <div class="ka-field od-field">
       <label for="daily-writing-goal">Daily writing goal</label>
       <input
@@ -236,6 +241,7 @@
         disabled={saving}
       />
     </div>
+    {/if}
   </div>
   <div hidden={section !== "references"} class="settings-fields">
     <p class="ka-help">
