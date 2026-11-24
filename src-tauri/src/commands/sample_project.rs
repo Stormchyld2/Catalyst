@@ -295,7 +295,7 @@ The party can bargain from a position of safety if they keep the ring intact.
         path: "Game Master/Handouts/Fragment from the Bell.md",
         template: "handout",
         title: "Fragment from the Bell",
-        visibility: "public",
+        visibility: "gm-only",
         body: r#"# A fragment of old bronze
 > When the crown falls silent, three shall walk.
 > Let seed wake flame; let flame remember duty.
