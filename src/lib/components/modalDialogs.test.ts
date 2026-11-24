@@ -263,10 +263,10 @@ describe("nested dialogs", () => {
     const onClose = vi.fn();
     render(NewProjectDialog, { props: { onClose } });
     await fireEvent.click(screen.getByRole("button", { name: /template/i }));
-    const browser = await screen.findByRole("dialog", { name: "Story structure templates" });
+    const browser = await screen.findByRole("dialog", { name: "Saved outline templates" });
     await waitFor(() => expect(browser.contains(document.activeElement)).toBe(true));
     await fireEvent.keyDown(document.activeElement!, { key: "Escape" });
-    expect(screen.queryByRole("dialog", { name: "Story structure templates" })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Saved outline templates" })).toBeNull();
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog", { name: "New project" })).toBeTruthy();
   });

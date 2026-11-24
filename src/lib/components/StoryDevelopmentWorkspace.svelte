@@ -41,7 +41,7 @@
     ArchiveRestore,
     Strikethrough,
   } from "lucide-svelte";
-  import { onDestroy, onMount, tick } from "svelte";
+  import { onDestroy, onMount, tick, untrack } from "svelte";
   import { currentProject } from "../stores/project.svelte";
   import { markdownHeadingId, renderMarkdown } from "../utils/markdownPreview";
   import EntityTemplateManager from "./EntityTemplateManager.svelte";
@@ -314,11 +314,11 @@
   }
 
   let newDocumentOpen = $state(false);
-  let newDocumentFolder = $state(focusRoot ?? "Story Development");
+  let newDocumentFolder = $state(untrack(() => focusRoot) ?? "Story Development");
   let newDocumentMode = $state<"template" | "empty">("template");
   let folderDialogOpen = $state(false);
   let folderName = $state("");
-  let folderParent = $state(focusRoot ?? "Story Development");
+  let folderParent = $state(untrack(() => focusRoot) ?? "Story Development");
   let folderError = $state<string | null>(null);
   let creatingFolder = $state(false);
   let selectedFolder = $state<string | null>(null);

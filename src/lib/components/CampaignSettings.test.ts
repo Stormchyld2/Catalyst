@@ -6,7 +6,7 @@ import { mockProject } from "../../dev/mock-data";
 
 const campaignProject = {
   ...mockProject,
-  project_type: "campaign",
+  project_type: "campaign" as const,
   project_root: "/campaigns/The Hollow Crown",
   word_target: null,
   author_pen_name: null,

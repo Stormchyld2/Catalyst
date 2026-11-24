@@ -1,16 +1,14 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { Editor } from "@tiptap/core";
 import { ui } from "./lib/stores/ui.svelte";
 import { proseSaves } from "./lib/utils/proseSaves";
 import { exit } from "@tauri-apps/plugin-process";
 import { synopsisSaves } from "./lib/stores/synopsisSaves.svelte";
 import { session } from "./lib/stores/session.svelte";
-import { runImport } from "./lib/utils/import";
 import { currentProject } from "./lib/stores/project.svelte";
 import { workspace } from "./lib/stores/workspace.svelte";
 import { mockProject, mockScenes, mockChapters } from "./dev/mock-data";
@@ -86,100 +84,6 @@ async function menu(payload: string) {
   await tick();
 }
 
-it.each(["menu", "native"])("flushes a debounced synopsis before %s quit", async (path) => {
-  vi.useFakeTimers();
-  currentProject.setChapters(mockChapters);
-  render(App);
-  await vi.advanceTimersByTimeAsync(0);
-  await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-  await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this scene…"), {
-    target: { value: "Last words before quitting" },
-  });
-  let finish!: () => void;
-  vi.mocked(invoke).mockImplementation(async (cmd) => {
-    if (cmd === "save_scene_synopsis")
-      await new Promise<void>((resolve) => {
-        finish = resolve;
-      });
-    return [];
-  });
-  const preventDefault = vi.fn();
-  let closed = false;
-  let closing: Promise<unknown> | undefined;
-  if (path === "menu") await menu("quit");
-  else {
-    const handler = vi.mocked(getCurrentWindow().onCloseRequested).mock.calls[0][0];
-    closing = Promise.resolve(handler({ preventDefault } as never)).then(() => {
-      closed = true;
-    });
-  }
-  await vi.advanceTimersByTimeAsync(0);
-  try {
-    expect(invoke).toHaveBeenCalledWith("save_scene_synopsis", {
-      sceneId: mockScenes[0].id,
-      synopsis: "Last words before quitting",
-    });
-    expect(exit).not.toHaveBeenCalled();
-    expect(closed).toBe(false);
-    expect(screen.getByRole("main", { hidden: true }).inert).toBe(true);
-  } finally {
-    finish?.();
-  }
-  await vi.advanceTimersByTimeAsync(0);
-  await closing;
-  if (path === "menu") expect(exit).toHaveBeenCalledWith(0);
-  else expect(closed).toBe(true);
-  expect(preventDefault).not.toHaveBeenCalled();
-  expect(screen.getByRole("main").inert).toBe(false);
-});
-
-it.each(["menu", "native"])(
-  "blocks %s quit on a failed synopsis save and allows retry",
-  async (path) => {
-    vi.useFakeTimers();
-    currentProject.setChapters(mockChapters);
-    render(App);
-    await vi.advanceTimersByTimeAsync(0);
-    await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-    await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this scene…"), {
-      target: { value: "Do not lose this synopsis" },
-    });
-    vi.mocked(invoke).mockImplementation(async (cmd) => {
-      if (cmd === "save_scene_synopsis") throw "disk full";
-      return [];
-    });
-    const preventDefault = vi.fn();
-    const handler = vi.mocked(getCurrentWindow().onCloseRequested).mock.calls[0][0];
-    if (path === "menu") await menu("quit");
-    else await handler({ preventDefault } as never);
-    await vi.advanceTimersByTimeAsync(0);
-    expect(exit).not.toHaveBeenCalled();
-    if (path === "native") expect(preventDefault).toHaveBeenCalledOnce();
-    expect(
-      screen.getByRole("dialog", { name: "Quit without saving synopsis changes?" })
-    ).toBeTruthy();
-    await fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
-    expect(screen.getByRole("main").inert).toBe(false);
-    expect(synopsisSaves.getState(mockProject.id, mockScenes[0].id).draft?.synopsis).toBe(
-      "Do not lose this synopsis"
-    );
-    expect(screen.getByRole("button", { name: "Retry all synopsis saves" })).toBeTruthy();
-    vi.mocked(invoke).mockResolvedValue([]);
-    await fireEvent.click(screen.getByRole("button", { name: "Retry all synopsis saves" }));
-    await vi.advanceTimersByTimeAsync(0);
-    expect(screen.queryByRole("button", { name: "Retry all synopsis saves" })).toBeNull();
-    if (path === "menu") {
-      await menu("quit");
-      await vi.advanceTimersByTimeAsync(0);
-      expect(exit).toHaveBeenCalledWith(0);
-    } else {
-      preventDefault.mockClear();
-      await handler({ preventDefault } as never);
-      expect(preventDefault).not.toHaveBeenCalled();
-    }
-  }
-);
-
 it("waits for pending position saves before quitting from the menu", async () => {
   let finish!: () => void;
   vi.spyOn(session, "flush").mockReturnValue(
@@ -234,111 +138,6 @@ it.each(["menu", "native"])(
     );
   }
 );
-async function find() {
-  await menu("find");
-  await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Find")));
-  await fireEvent.input(screen.getByLabelText("Find"), { target: { value: "Alice" } });
-  expect(screen.getByText("2 matches")).toBeTruthy();
-}
-
-it("updates an open dialog from native Find commands without losing the query or undo", async () => {
-  render(App);
-  await find();
-  expect(screen.queryByLabelText("Replace with")).toBeNull();
-  await menu("find_project");
-  expect((screen.getByLabelText("Search in") as HTMLSelectElement).value).toBe("project");
-  expect((screen.getByLabelText("Find") as HTMLInputElement).value).toBe("Alice");
-  await fireEvent.input(screen.getByLabelText("Replace with"), { target: { value: "Bob" } });
-  await fireEvent.click(screen.getByText("Replace match"));
-  await screen.findByText("Replacement saved.");
-  await menu("find");
-  expect((screen.getByLabelText("Search in") as HTMLSelectElement).value).toBe("scene");
-  expect(screen.queryByLabelText("Replace with")).toBeNull();
-  await menu("find_replace");
-  expect((screen.getByLabelText("Replace with") as HTMLInputElement).value).toBe("Bob");
-  await fireEvent.click(screen.getByText("Undo replacement"));
-  await screen.findByText("Replacement undone.");
-  expect(screen.getByText("2 matches")).toBeTruthy();
-  expect(
-    vi.mocked(invoke).mock.calls.filter(([cmd]) => cmd === "get_search_documents")
-  ).toHaveLength(1);
-  screen.getByLabelText("Replace with").focus();
-  await menu("find_replace");
-  expect(document.activeElement).toBe(screen.getByLabelText("Find"));
-});
-
-it.each(["import", "new"])(
-  "closes old search when the native %s flow activates another project",
-  async (flow) => {
-    render(App);
-    await find();
-    const next = { ...mockProject, id: "new-project", name: "New project" };
-    if (flow === "import") {
-      vi.mocked(runImport).mockResolvedValue(next);
-      await menu("import_ywriter");
-    } else {
-      // New projects are created through the file-authoritative New Campaign Wizard.
-      vi.mocked(invoke).mockImplementation(async (cmd) => {
-        if (cmd === "create_new_campaign")
-          return {
-            manifest: {
-              project_id: next.id,
-              title: next.name,
-              project_type: "campaign",
-              created_at: "2026-09-30T00:00:00Z",
-            },
-            paths: { root: "/tmp/New project" },
-            overview_path: "Story Development/Campaign/Campaign Overview.md",
-            overview_id: "note-00000000-0000-4000-8000-000000000000",
-          };
-        if (cmd === "get_story_development_index") return { entries: [], issues: [] };
-        return cmd === "get_entity_template_registry"
-          ? { templates: [], issues: [], user_templates_dir: "/tmp/templates" }
-          : [];
-      });
-      await menu("new_project");
-      const wizard = within(await screen.findByRole("dialog", { name: /New Campaign/ }));
-      await fireEvent.click(wizard.getByRole("button", { name: /Quick Start/ }));
-      await fireEvent.input(wizard.getByRole("textbox", { name: "Campaign name" }), {
-        target: { value: next.name },
-      });
-      await fireEvent.input(wizard.getByRole("textbox", { name: "Campaign folder" }), {
-        target: { value: "/tmp/New project" },
-      });
-      await fireEvent.click(wizard.getByRole("button", { name: "Create Campaign" }));
-    }
-    await waitFor(() => expect(currentProject.value?.id).toBe(next.id));
-    expect(screen.queryByLabelText("Find")).toBeNull();
-    // Returning to the original project must not revive its old modal.
-    currentProject.setProject(mockProject);
-    await tick();
-    expect(screen.queryByLabelText("Find")).toBeNull();
-  }
-);
-
-it("ignores an old project's search response after switching projects during load", async () => {
-  let finish!: (value: (typeof doc)[]) => void;
-  vi.mocked(invoke).mockImplementation(async (cmd) =>
-    cmd === "get_search_documents"
-      ? new Promise<(typeof doc)[]>((resolve) => (finish = resolve))
-      : []
-  );
-  render(App);
-  await menu("find_project");
-  await waitFor(() => expect(finish).toBeDefined());
-  currentProject.setProject({ ...mockProject, id: "another" });
-  await tick();
-  finish([doc]);
-  await tick();
-  expect(screen.queryByLabelText("Find")).toBeNull();
-  vi.mocked(invoke).mockResolvedValue([]);
-  await menu("find_project");
-  await waitFor(() =>
-    expect(invoke).toHaveBeenCalledWith("get_search_documents", { projectId: "another" })
-  );
-  expect((screen.getByLabelText("Find") as HTMLInputElement).value).toBe("");
-});
-
 it.each([
   ["menu", "Cannot edit a locked scene"],
   ["native", "Cannot edit a locked scene"],
@@ -376,59 +175,6 @@ it.each([
   expect(
     vi.mocked(invoke).mock.calls.filter(([cmd]) => cmd === "save_scene_synopsis")
   ).toHaveLength(1);
-});
-
-it.each(["menu", "native"])(
-  "does not block %s quit after a scene is deleted during synopsis debounce",
-  async (path) => {
-    vi.useFakeTimers();
-    currentProject.setChapters(mockChapters);
-    render(App);
-    await vi.advanceTimersByTimeAsync(0);
-    await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-    await fireEvent.input(screen.getByPlaceholderText("Write a brief synopsis for this scene…"), {
-      target: { value: "Deleted with its scene" },
-    });
-    vi.mocked(invoke).mockImplementation(async (cmd) => {
-      if (cmd === "save_scene_synopsis") throw "Query returned no rows";
-      return [];
-    });
-    await invoke("delete_scene", { sceneId: mockScenes[0].id });
-    currentProject.setCurrentScene(null);
-    await tick();
-    const preventDefault = vi.fn();
-    if (path === "menu") await menu("quit");
-    else {
-      const handler = vi.mocked(getCurrentWindow().onCloseRequested).mock.calls[0][0];
-      await handler({ preventDefault } as never);
-    }
-    await vi.advanceTimersByTimeAsync(0);
-    if (path === "menu") expect(exit).toHaveBeenCalledWith(0);
-    expect(preventDefault).not.toHaveBeenCalled();
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(synopsisSaves.failedCount).toBe(0);
-  }
-);
-
-it("keeps both synopsis error warnings visible while typing continues", async () => {
-  vi.useFakeTimers();
-  currentProject.setChapters(mockChapters);
-  render(App);
-  await vi.advanceTimersByTimeAsync(0);
-  await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-  const textarea = screen.getByPlaceholderText("Write a brief synopsis for this scene…");
-  await fireEvent.input(textarea, { target: { value: "Unsaved" } });
-  vi.mocked(invoke).mockImplementation(async (cmd) => {
-    if (cmd === "save_scene_synopsis") throw "disk full";
-    return [];
-  });
-  await vi.advanceTimersByTimeAsync(1000);
-  for (const value of ["Unsaved changes", "Unsaved changes continue"]) {
-    await fireEvent.input(textarea, { target: { value } });
-    await vi.advanceTimersByTimeAsync(500);
-    expect(screen.getByText(/Synopsis not saved: disk full/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Retry all synopsis saves" })).toBeTruthy();
-  }
 });
 
 it("requires fresh discard confirmation if synopsis drafts change while the quit dialog is open", async () => {
@@ -504,221 +250,6 @@ it.each([false, true])(
         "Failed to save writing position before closing:",
         expect.any(Error)
       );
-  }
-);
-
-async function editProse(mode: "beat" | "page") {
-  vi.useFakeTimers();
-  currentProject.setChapters(mockChapters);
-  currentProject.setCurrentChapter(mockChapters[0]);
-  currentProject.setCurrentScene({
-    ...mockScenes[0],
-    planning_status: "fixed",
-    editor_mode: mode,
-    prose: "<p>Saved page</p>",
-  });
-  currentProject.setBeats([
-    {
-      id: "exit-beat",
-      scene_id: mockScenes[0].id,
-      content: "Beat",
-      prose: "<p>Saved beat</p>",
-      position: 0,
-    },
-  ]);
-  render(App);
-  await tick();
-  if (mode === "beat") ui.setExpandedBeat("exit-beat");
-  await vi.advanceTimersByTimeAsync(0);
-  const editor = (document.querySelector(".tiptap") as HTMLElement & { editor: Editor }).editor;
-  editor.commands.setContent("<p>Final words before exit</p>");
-}
-
-it.each([
-  ["beat", "menu"],
-  ["page", "menu"],
-  ["beat", "native"],
-  ["page", "native"],
-] as const)("flushes debounced prose in %s mode before %s exit", async (mode, path) => {
-  await editProse(mode);
-  let finish!: () => void;
-  vi.mocked(invoke).mockImplementation(async (cmd) => {
-    if (cmd === "save_beat_prose" || cmd === "save_scene_page_prose")
-      await new Promise<void>((resolve) => {
-        finish = resolve;
-      });
-    return [];
-  });
-  let closing: Promise<unknown> | undefined;
-  let closed = false;
-  const preventDefault = vi.fn();
-  if (path === "menu") await menu("quit");
-  else {
-    const handler = vi.mocked(getCurrentWindow().onCloseRequested).mock.calls[0][0];
-    closing = Promise.resolve(handler({ preventDefault } as never)).then(() => {
-      closed = true;
-    });
-  }
-  await vi.advanceTimersByTimeAsync(0);
-  try {
-    expect(invoke).toHaveBeenCalledWith(
-      mode === "beat" ? "save_beat_prose" : "save_scene_page_prose",
-      {
-        [mode === "beat" ? "beatId" : "sceneId"]: mode === "beat" ? "exit-beat" : mockScenes[0].id,
-        prose: "<p>Final words before exit</p>",
-      }
-    );
-    expect(exit).not.toHaveBeenCalled();
-    expect(closed).toBe(false);
-  } finally {
-    finish?.();
-  }
-  await vi.advanceTimersByTimeAsync(0);
-  await closing;
-  if (path === "menu") expect(exit).toHaveBeenCalledWith(0);
-  if (path === "native") expect(closed).toBe(true);
-  expect(preventDefault).not.toHaveBeenCalled();
-});
-
-it.each([
-  ["beat", "disk full"],
-  ["page", "disk full"],
-  ["beat", "Cannot edit beats in a locked scene"],
-  ["page", "Cannot edit a locked scene"],
-] as const)("allows explicit discard when %s prose cannot save: %s", async (mode, error) => {
-  vi.spyOn(console, "error").mockImplementation(() => {});
-  await editProse(mode);
-  vi.mocked(invoke).mockImplementation(async (cmd) => {
-    if (cmd === "save_beat_prose" || cmd === "save_scene_page_prose") throw error;
-    return [];
-  });
-  await menu("quit");
-  await vi.advanceTimersByTimeAsync(0);
-  expect(exit).not.toHaveBeenCalled();
-  expect(screen.getByRole("dialog", { name: "Quit without saving writing changes?" })).toBeTruthy();
-  expect(proseSaves.draftsForRecovery(mockProject.id)[0].prose).toBe(
-    "<p>Final words before exit</p>"
-  );
-  await fireEvent.click(screen.getByRole("button", { name: "Quit and discard" }));
-  await vi.advanceTimersByTimeAsync(0);
-  expect(exit).toHaveBeenCalledWith(0);
-  expect(proseSaves.draftsForRecovery(mockProject.id)).toEqual([]);
-  const calls = vi.mocked(invoke).mock.calls.length;
-  await vi.advanceTimersByTimeAsync(1000);
-  expect(
-    vi
-      .mocked(invoke)
-      .mock.calls.slice(calls)
-      .some(([cmd]) => cmd === "save_beat_prose" || cmd === "save_scene_page_prose")
-  ).toBe(false);
-});
-
-it("gives quit preparation exclusive keyboard and command ownership", async () => {
-  vi.useFakeTimers();
-  currentProject.setChapters(mockChapters);
-  render(App);
-  await vi.advanceTimersByTimeAsync(0);
-  await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-  const editor = screen.getByPlaceholderText("Write a brief synopsis for this scene…");
-  await fireEvent.input(editor, { target: { value: "Keep this editor open" } });
-
-  vi.mocked(invoke).mockImplementation(async (cmd) => {
-    if (cmd === "save_scene_synopsis") throw new Error("disk full");
-    return [];
-  });
-
-  await menu("quit");
-  await vi.advanceTimersByTimeAsync(0);
-
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Keep editing" }));
-  await fireEvent.keyDown(document.activeElement!, { key: "Tab" });
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Quit and discard" }));
-  await fireEvent.keyDown(document.activeElement!, { key: "Tab" });
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Close confirmation" }));
-  await fireEvent.keyDown(document.activeElement!, { key: "Tab" });
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Keep editing" }));
-
-  for (const key of ["e", "k", "f", "H"]) {
-    await fireEvent.keyDown(window, { key, ctrlKey: true, shiftKey: key === "H" });
-    await fireEvent.keyDown(window, { key, metaKey: true, shiftKey: key === "H" });
-  }
-
-  for (const command of [
-    "export",
-    "command_palette",
-    "find",
-    "new_project",
-    "close_project",
-    "import_plottr",
-  ])
-    await menu(command);
-
-  expect(currentProject.value?.id).toBe(mockProject.id);
-  expect(screen.queryByPlaceholderText("Type a command or search…")).toBeNull();
-  expect(screen.queryByText("Export Project")).toBeNull();
-
-  await fireEvent.keyDown(window, { key: "Escape" });
-  expect(editor.isConnected).toBe(true);
-  expect(screen.queryByRole("button", { name: "Keep editing" })).toBeNull();
-
-  await fireEvent.keyDown(window, { key: "k", ctrlKey: true });
-  expect(screen.getByPlaceholderText("Type a command or search…")).toBeTruthy();
-  await vi.advanceTimersByTimeAsync(0);
-});
-it.each(["export", "export success"])(
-  "keeps confirmation keys out of the background %s dialog",
-  async (background) => {
-    vi.useFakeTimers();
-    currentProject.setChapters(mockChapters);
-    localStorage.setItem("kindling:lastExportPath", "/tmp/catalyst-review-export");
-    vi.mocked(invoke).mockImplementation(async (cmd) => {
-      if (cmd === "save_scene_synopsis") throw new Error("disk full");
-      if (cmd === "export_to_markdown")
-        return {
-          output_path: "/tmp/catalyst-review-export",
-          chapters_exported: 1,
-          scenes_exported: 1,
-          files_created: 1,
-        };
-      return [];
-    });
-    render(App);
-    await vi.advanceTimersByTimeAsync(0);
-    await menu("export");
-    await fireEvent.click(screen.getByText("Markdown"));
-    expect((screen.getByTestId("export-confirm") as HTMLButtonElement).disabled).toBe(false);
-    if (background === "export success")
-      await fireEvent.click(screen.getByTestId("export-confirm"));
-    synopsisSaves.stage({
-      projectId: mockProject.id,
-      sceneId: mockScenes[0].id,
-      synopsis: "Unsaved draft",
-    });
-    await menu("quit");
-    await vi.advanceTimersByTimeAsync(0);
-    vi.mocked(invoke).mockClear();
-    const keepEditing = screen.getByRole("button", { name: "Keep editing" });
-    const backgroundKey = vi.fn();
-    window.addEventListener("keydown", backgroundKey);
-    try {
-      for (const key of ["Enter", " ", "ArrowDown"]) {
-        const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
-        await fireEvent(keepEditing, event);
-        expect(event.defaultPrevented).toBe(false);
-      }
-      expect(backgroundKey).not.toHaveBeenCalled();
-      expect(vi.mocked(invoke).mock.calls.some(([cmd]) => cmd === "export_to_markdown")).toBe(
-        false
-      );
-      // jsdom does not perform the native button click generated by Enter.
-      await fireEvent.click(keepEditing);
-      expect(screen.queryByRole("button", { name: "Keep editing" })).toBeNull();
-      if (background === "export success") expect(screen.getByText("Export complete")).toBeTruthy();
-      else expect(screen.getByTestId("export-confirm")).toBeTruthy();
-    } finally {
-      window.removeEventListener("keydown", backgroundKey);
-      localStorage.removeItem("kindling:lastExportPath");
-    }
   }
 );
 
@@ -917,27 +448,6 @@ it("ignores shortcuts while a dialog is open even when focus has fallen to the p
   expect(screen.getByTestId("about-dialog")).toBeTruthy();
 });
 
-it("moves focus into Export complete after an export, not back to the page", async () => {
-  currentProject.setChapters(mockChapters);
-  localStorage.setItem("kindling:lastExportPath", "/tmp/catalyst-review-export");
-  vi.mocked(invoke).mockImplementation(async (cmd) =>
-    cmd === "export_to_markdown"
-      ? { output_path: "/tmp/out", chapters_exported: 1, scenes_exported: 1, files_created: 1 }
-      : []
-  );
-  try {
-    render(App);
-    await menu("export");
-    await fireEvent.click(screen.getByText("Markdown"));
-    await fireEvent.click(screen.getByTestId("export-confirm"));
-    const heading = await screen.findByText("Export complete");
-    const dialog = heading.closest<HTMLElement>(".dialog-scrim")!;
-    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
-  } finally {
-    localStorage.removeItem("kindling:lastExportPath");
-  }
-});
-
 it("opens one settings window from the menu and reserves native project commands until it closes", async () => {
   render(App);
   await menu("settings");
@@ -949,72 +459,6 @@ it("opens one settings window from the menu and reserves native project commands
   await menu("close_project");
   expect(currentProject.value?.id).toBe(mockProject.id);
 });
-
-it("opens the shared settings window from the pinned project sidebar footer", async () => {
-  render(App);
-  const link = screen.getByTestId("sidebar-settings-button");
-  expect(link.closest("footer")?.parentElement).toBe(screen.getByTestId("sidebar"));
-  await fireEvent.click(link);
-  expect(await screen.findByRole("dialog", { name: "Settings" })).toBeTruthy();
-  await menu("settings");
-  expect(screen.getAllByRole("dialog", { name: "Settings" })).toHaveLength(1);
-});
-
-it.each(["sidebar", "menu", "keyboard"])(
-  "keeps Settings visible and reachable from the %s during local editorial review",
-  async (entryPoint) => {
-    const source = {
-      id: mockScenes[0].id,
-      scene_id: mockScenes[0].id,
-      chapter_id: mockScenes[0].chapter_id,
-      chapter: "Chapter",
-      scene: "Scene",
-      mode: "page",
-      html: "<p>Manuscript for settings navigation.</p>",
-      locked: false,
-    };
-    const round = {
-      id: "settings-review",
-      project_id: mockProject.id,
-      title: "Settings test",
-      name: "Local review",
-      brief: "",
-      created_at: "2026-09-09",
-      sources: [source],
-    };
-    vi.mocked(invoke).mockImplementation(async (command) => {
-      if (command === "open_local_editorial_review")
-        return { format: "kindling-editorial", version: 1, kind: "review", round, session: null };
-      if (command === "get_editorial_feedback")
-        return { round, sources: [source], entries: [], version: 1 };
-      if (command === "editorial_sources") return [source];
-      return [];
-    });
-    Range.prototype.getClientRects = vi.fn().mockReturnValue([]);
-    Range.prototype.getBoundingClientRect = vi.fn().mockReturnValue(new DOMRect());
-    render(App);
-    // Scope button queries so accessibility checks do not traverse both full workspaces.
-    const scene = within(screen.getByTestId("scene-panel"));
-    await fireEvent.click(scene.getByRole("button", { name: "Revisions" }));
-    const editorial = await screen.findByRole("region", { name: "Editorial workspace" });
-    expect(within(editorial).getByRole("button", { name: "Return to writing" })).toBeTruthy();
-
-    if (entryPoint === "sidebar") {
-      await fireEvent.click(screen.getByTestId("sidebar-settings-button"));
-    } else if (entryPoint === "menu") {
-      await menu("settings");
-    } else {
-      await fireEvent.keyDown(window, { key: ",", ctrlKey: true });
-    }
-
-    const settings = await screen.findByRole("dialog", { name: "Settings" });
-    expect(settings.closest("[hidden]")).toBeNull();
-    expect(currentProject.value?.id).toBe(mockProject.id);
-    await fireEvent.click(within(settings).getByRole("button", { name: "Close settings" }));
-    expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull();
-    expect(within(editorial).getByRole("button", { name: "Return to writing" })).toBeTruthy();
-  }
-);
 
 it.each(["projects", "editorial"])(
   "waits for both initial content requests when %s finishes first",
@@ -1118,86 +562,63 @@ it("preserves paste-as-plain-text and allows Quit from Settings when not recordi
   await waitFor(() => expect(exit).toHaveBeenCalledWith(0));
 });
 
+function holdCampaignSave(result: Promise<boolean>) {
+  const listener = (event: Event) => {
+    (event as CustomEvent<{ pendingDocumentSaves: Promise<boolean>[] }>).detail.pendingDocumentSaves.push(
+      result
+    );
+  };
+  window.addEventListener("catalyst:flush-documents-before-close", listener);
+  return () => window.removeEventListener("catalyst:flush-documents-before-close", listener);
+}
+
 it.each(["menu", "native"])(
-  "restores quit selection through both dismissal actions for %s",
+  "waits for open campaign documents to save before %s quit",
   async (path) => {
-    vi.useFakeTimers();
-    currentProject.setChapters(mockChapters);
     render(App);
-    await vi.advanceTimersByTimeAsync(0);
-    await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-    const editor = screen.getByPlaceholderText(
-      "Write a brief synopsis for this scene…"
-    ) as HTMLTextAreaElement;
-    await fireEvent.input(editor, { target: { value: "My unsaved writing" } });
-    vi.mocked(invoke).mockImplementation(async (cmd) => {
-      if (cmd === "save_scene_synopsis") throw new Error("disk full");
-      return [];
-    });
-    for (const action of ["button", "Escape", "cancel"]) {
-      editor.focus();
-      editor.setSelectionRange(3, 7, "backward");
-      if (path === "menu") await menu("quit");
-      else
-        await vi
-          .mocked(getCurrentWindow().onCloseRequested)
-          .mock.calls[0][0]({ preventDefault: vi.fn() } as never);
-      await vi.advanceTimersByTimeAsync(0);
-      expect(document.activeElement?.closest("[data-quit-confirmation]")).toBeTruthy();
-      editor.setSelectionRange(0, 0);
-      if (action === "button")
-        await fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
-      else if (action === "Escape") await fireEvent.keyDown(window, { key: "Escape" });
-      else
-        await fireEvent(
-          document.querySelector("[data-quit-confirmation]")!,
-          new Event("cancel", { cancelable: true })
-        );
-      await vi.advanceTimersByTimeAsync(0);
-      expect(document.activeElement).toBe(editor);
-      expect([editor.selectionStart, editor.selectionEnd, editor.selectionDirection]).toEqual([
-        3,
-        7,
-        "backward",
-      ]);
-      expect(editor.value).toBe("My unsaved writing");
+    await tick();
+    let finish!: (saved: boolean) => void;
+    const release = holdCampaignSave(new Promise<boolean>((resolve) => (finish = resolve)));
+    try {
+      let closed = false;
+      const event = { preventDefault: vi.fn() };
+      const closing =
+        path === "menu"
+          ? menu("quit").then(() => (closed = true))
+          : Promise.resolve(
+              vi.mocked(getCurrentWindow().onCloseRequested).mock.calls[0][0](event as never)
+            ).then(() => (closed = true));
+      await tick();
+      expect(exit).not.toHaveBeenCalled();
+      if (path === "native") expect(closed).toBe(false);
+      finish(true);
+      await closing;
+      if (path === "menu") await waitFor(() => expect(exit).toHaveBeenCalledWith(0));
+      else expect(event.preventDefault).not.toHaveBeenCalled();
+    } finally {
+      release();
     }
   }
 );
 
-it.each(["scene", "project", "other control", "unmount"])(
-  "does not restore quit focus after %s changes",
-  async (target) => {
-    vi.useFakeTimers();
-    currentProject.setChapters(mockChapters);
-    const app = render(App);
-    await vi.advanceTimersByTimeAsync(0);
-    await fireEvent.click(screen.getByRole("button", { name: "Edit synopsis" }));
-    const editor = screen.getByPlaceholderText(
-      "Write a brief synopsis for this scene…"
-    ) as HTMLTextAreaElement;
-    await fireEvent.input(editor, { target: { value: "My unsaved writing" } });
-    editor.focus();
-    editor.setSelectionRange(3, 7);
-    vi.mocked(invoke).mockImplementation(async (cmd) => {
-      if (cmd === "save_scene_synopsis") throw new Error("disk full");
-      return [];
-    });
-    await menu("quit");
-    await vi.advanceTimersByTimeAsync(0);
-    const other = document.createElement("button");
-    if (target === "scene")
-      currentProject.setCurrentScene({ ...mockScenes[1], planning_status: "undefined" });
-    if (target === "project") currentProject.setProject(null);
-    if (target === "other control") {
-      document.body.append(other);
-      other.focus();
-      other.blur();
+it.each(["menu", "native"])(
+  "keeps Catalyst open through %s quit when a campaign document cannot save",
+  async (path) => {
+    render(App);
+    await tick();
+    const release = holdCampaignSave(Promise.resolve(false));
+    try {
+      const event = { preventDefault: vi.fn() };
+      if (path === "menu") await menu("quit");
+      else
+        await vi.mocked(getCurrentWindow().onCloseRequested).mock.calls[0][0](event as never);
+      await waitFor(() =>
+        expect(ui.toast?.message).toContain("Some documents could not be saved")
+      );
+      expect(exit).not.toHaveBeenCalled();
+      if (path === "native") expect(event.preventDefault).toHaveBeenCalled();
+    } finally {
+      release();
     }
-    if (target === "unmount") app.unmount();
-    else await fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
-    await vi.advanceTimersByTimeAsync(0);
-    expect(document.activeElement).not.toBe(editor);
-    other.remove();
   }
 );

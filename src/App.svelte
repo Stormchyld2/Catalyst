@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IMPORT_FORMATS, importTypeForCommand, isImportType } from "./lib/importFormats";
+  import { IMPORT_FORMATS, importTypeForCommand } from "./lib/importFormats";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
   import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -15,7 +15,6 @@
   import ReferencesPanel from "./lib/components/ReferencesPanel.svelte";
   import FindReplaceDialog from "./lib/components/FindReplaceDialog.svelte";
   import ScenePanel from "./lib/components/ScenePanel.svelte";
-  import Sidebar from "./lib/components/Sidebar.svelte";
   import StartScreen from "./lib/components/StartScreen.svelte";
   import SettingsDialog from "./lib/components/SettingsDialog.svelte";
   import ExportDialog from "./lib/components/ExportDialog.svelte";
@@ -35,7 +34,6 @@
   import ProjectDashboard from "./lib/components/ProjectDashboard.svelte";
   import GitWorkspace from "./lib/components/GitWorkspace.svelte";
   import SoundboardWorkspace from "./lib/components/SoundboardWorkspace.svelte";
-  import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
   import CampaignWizardDialog from "./lib/components/CampaignWizardDialog.svelte";
   import DiceTray from "./lib/dice/components/DiceTray.svelte";
@@ -82,7 +80,6 @@
   export function focusAfterStartup() {
     editorial?.focusIfOpen();
   }
-  let searchDialog: ReturnType<typeof FindReplaceDialog> | undefined = $state();
   let search = $state<{ projectId: string; scope: "scene" | "project"; replace: boolean } | null>(
     null
   );
@@ -92,12 +89,6 @@
     if (search && search.projectId !== currentProject.value?.id) search = null;
   });
 
-  function openSearch(scope: "scene" | "project", replace = false) {
-    const projectId = currentProject.value?.id;
-    if (!projectId) return;
-    if (search?.projectId === projectId) searchDialog?.configure(scope, replace);
-    search = { projectId, scope, replace };
-  }
 
   async function openSearchScene(doc: ProseDocument) {
     if (!currentProject.value) return;
@@ -409,7 +400,24 @@
     }
   }
 
+  // Campaign documents (World Builder, Adventures, Campaign Notes) save
+  // through their own editor. Every quit path must wait for them: a failed or
+  // refused save keeps Catalyst open so no edit is lost.
+  async function flushCampaignDocuments(): Promise<boolean> {
+    const pendingDocumentSaves: Promise<boolean>[] = [];
+    window.dispatchEvent(new CustomEvent("catalyst:flush-documents-before-close", {
+      detail: { pendingDocumentSaves },
+    }));
+    const documentsSaved = await Promise.allSettled(pendingDocumentSaves);
+    if (documentsSaved.some((result) => result.status === "rejected" || !result.value)) {
+      ui.showError("Some documents could not be saved. Catalyst will remain open.");
+      return false;
+    }
+    return requestProjectChange();
+  }
+
   async function quit() {
+    if (!(await flushCampaignDocuments())) return;
     if (!(await flushBeforeClose())) return;
     try {
       await exit(0);
@@ -443,21 +451,9 @@
   onMount(() => {
     // Tauri awaits this handler before destroying the window.
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
-      // Collect asynchronous saves from file-backed workspaces before closing.
-      // A rejected/failed save must keep the window open.
-      const pendingDocumentSaves: Promise<boolean>[] = [];
-      window.dispatchEvent(new CustomEvent("catalyst:flush-documents-before-close", {
-        detail: { pendingDocumentSaves },
-      }));
       // Tauri destroys the window after this handler resolves unless it calls
       // preventDefault(), so only prevent the close when something blocks it.
-      const documentsSaved = await Promise.allSettled(pendingDocumentSaves);
-      if (documentsSaved.some((result) => result.status === "rejected" || !result.value)) {
-        event.preventDefault();
-        ui.showError("Some documents could not be saved. Catalyst will remain open.");
-        return;
-      }
-      if (!(await requestProjectChange()) || !(await flushBeforeClose())) {
+      if (!(await flushCampaignDocuments()) || !(await flushBeforeClose())) {
         event.preventDefault();
       }
     });
@@ -658,7 +654,6 @@
   {#if search && search.projectId === currentProject.value?.id}
     {#key search.projectId}
       <FindReplaceDialog
-        bind:this={searchDialog}
         projectId={search.projectId}
         sceneId={currentProject.currentScene?.id ?? null}
         initialScope={search.scope}

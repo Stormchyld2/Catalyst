@@ -41,8 +41,8 @@ it("records, rejects conflicts, clears, and resets shortcuts", async () => {
   render(KeyboardSettings);
   const button = screen.getByRole("button", { name: "Shortcut for Settings" });
   await fireEvent.click(button);
-  await fireEvent.keyDown(button, { key: "e", ...mod });
-  expect(screen.getByRole("alert").textContent).toContain("Export project");
+  await fireEvent.keyDown(button, { key: "k", ...mod });
+  expect(screen.getByRole("alert").textContent).toContain("Command palette");
   expect(invoke).not.toHaveBeenCalled();
   await fireEvent.keyDown(button, { key: "c", ...mod });
   expect(screen.getByRole("alert").textContent).toContain("reserved");
