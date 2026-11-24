@@ -80,7 +80,7 @@
 >
   <div class="app-dialog-surface ka-dialog-default dialog-shell templates">
     <DialogHeader
-      title="Story structure templates"
+      title="Saved outline templates"
       titleId="template-browser-title"
       {onClose}
       closeLabel="Close"
@@ -96,7 +96,7 @@
       {:else if filteredTemplates.length === 0}
         <div class="ka-empty od-stack">
           <h4>No templates available</h4>
-          <p>You can still start from a blank structure and add chapters yourself.</p>
+          <p>There are no saved outline templates. The World Builder and campaign entity templates remain available in their own workspaces.</p>
         </div>
       {:else}
         <ul class="template-list">
@@ -124,7 +124,7 @@
                 <span class="template-text">
                   <span class="template-name">{template.name}</span>
                   <small>
-                    {totalBeats(template)} beats{#if template.source}
+                    {totalBeats(template)} sections{#if template.source}
                       · {template.source}{/if}
                   </small>
                   {#if template.description}
