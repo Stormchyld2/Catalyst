@@ -129,11 +129,22 @@ describe("StartScreen", () => {
     expect(invoke).toHaveBeenCalledWith("get_all_projects");
   });
 
+  it("shows all seven RPG content import choices instead of manuscript importers", async () => {
+    render(StartScreen, { recentProjects: [], onNewProject: vi.fn() });
+    await fireEvent.click(screen.getByRole("button", { name: /Import RPG Content/ }));
+    const dialog = screen.getByRole("dialog", { name: "Import RPG Content" });
+    for (const label of ["Markdown", "Obsidian Vault", "Images / Maps / Tokens", "Foundry VTT", "Roll20", "Fantasy Grounds", "PDF Reference"]) {
+      expect(within(dialog).getByRole("button", { name: new RegExp(label.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\  it("explains the empty library", () => {")) })).toBeTruthy();
+    }
+    expect(within(dialog).queryByText(/Import chapters, scenes/)).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: /Scrivener/ })).toBeNull();
+  });
+
   it("explains the empty library", () => {
     render(StartScreen, { recentProjects: [] });
     expect(screen.getByText("Your projects will appear here")).toBeTruthy();
     expect(screen.queryByTestId("recent-projects")).toBeNull();
-    expect(screen.getByRole("button", { name: /Import Bring in work/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Import RPG Content/ })).toBeTruthy();
   });
 
   it("shows an open failure beside the list and keeps the row", async () => {
