@@ -1,0 +1,29 @@
+/* Catalyst Design System 1.0.0 — Obsidian + Frost Blue.
+   Source of truth: docs/architecture/025-CATALYST-DESIGN-SYSTEM.md.
+   These --cat-* tokens are the new semantic layer. Components migrate to them
+   one at a time; inherited --color-* tokens stay until that migration finishes. */
+:root,
+[data-theme="catalyst-dark"] {
+  --cat-bg: #111214;
+  --cat-sidebar: #17191D;
+  --cat-panel: #202328;
+  --cat-raised: #2C3036;
+  --cat-hover: #353B43;
+  --cat-inset: #171A1F;
+  --cat-text: #F0F1F3;
+  --cat-silver: #BCC2CC;
+  --cat-muted: #A3A9B2;
+  --cat-disabled: #858B95;
+  --cat-border: #41464E;
+  --cat-border-subtle: #343941;
+  --cat-accent: #6EA9CF;
+  --cat-accent-hover: #8CC0E1;
+  --cat-accent-pressed: #4D87B0;
+  --cat-accent-soft: #223646;
+  --cat-on-accent: #111214;
+  --cat-focus: #8CC0E1;
+  --cat-success: #74B99A;
+  --cat-warning: #E5B96A;
+  --cat-error: #E08B8B;
+  --cat-info: #6EA9CF;
+}

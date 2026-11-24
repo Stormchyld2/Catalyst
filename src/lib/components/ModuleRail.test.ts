@@ -56,6 +56,32 @@ describe("ModuleRail", () => {
     expect(workspace.active).toBe("home");
   });
 
+  it("renders the campaign rail groups with Settings pinned at the bottom", () => {
+    render(ModuleRail, { props: { hasActiveProject: true } });
+    const campaign = screen.getByTestId("rail-group-campaign");
+    expect(campaign.getAttribute("aria-label")).toBe("Campaign");
+    expect(campaign.querySelector("[data-testid=module-story-development]")?.textContent).toContain(
+      "World Builder"
+    );
+    expect(campaign.querySelector("[data-testid=module-outline]")?.textContent).toContain("Adventures");
+    expect(campaign.querySelector("[data-testid=module-characters]")).not.toBeNull();
+    expect(campaign.querySelector("[data-testid=module-write]")?.textContent).toContain("Campaign Notes");
+    expect(
+      screen.getByTestId("rail-group-table").querySelector("[data-testid=module-listen]")?.textContent
+    ).toContain("Soundboard");
+    const share = screen.getByTestId("rail-group-share");
+    expect(share.querySelector("[data-testid=module-publish]")?.textContent).toContain("Print & Export");
+    expect(share.querySelector("[data-testid=module-git]")?.textContent).toContain("GitHub Sync");
+    expect(document.querySelector(".module-rail__utilities [data-testid=module-settings]")).not.toBeNull();
+  });
+
+  it("no longer offers the Terminal or book-only workspaces", () => {
+    render(ModuleRail, { props: { hasActiveProject: true } });
+    expect(screen.queryByTestId("module-terminal")).toBeNull();
+    expect(screen.queryByTestId("module-review")).toBeNull();
+    expect(screen.queryByTestId("module-audiobook")).toBeNull();
+  });
+
   it("opens the existing Settings dialog through the shell callback", async () => {
     const onOpenSettings = vi.fn();
     render(ModuleRail, { props: { hasActiveProject: false, onOpenSettings } });

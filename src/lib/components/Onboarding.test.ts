@@ -56,7 +56,7 @@ describe("Onboarding", () => {
 
     ui.startOnboarding();
     await waitFor(() => expect(screen.getByTestId("onboarding")).toBeTruthy());
-    await fireEvent.click(button("Skip and start importing"));
+    await fireEvent.click(button("Skip for now"));
     expect(ui.showOnboarding).toBe(false);
 
     ui.startOnboarding();
@@ -68,11 +68,11 @@ describe("Onboarding", () => {
   it("walks the tour forwards and back, then finishes into import", async () => {
     render(Onboarding);
     await fireEvent.click(button("Take the tour"));
-    expect(screen.getByRole("dialog", { name: "Chapters and scenes" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Organize your notes" })).toBeTruthy();
     expect(screen.getByText("Step 2 of 5")).toBeTruthy();
 
     await fireEvent.click(button("Next"));
-    expect(screen.getByRole("dialog", { name: "Synopsis and beats" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Scene summaries and beats" })).toBeTruthy();
     await fireEvent.click(button("Back"));
     expect(ui.onboardingStep).toBe("tour-sidebar");
     await fireEvent.click(button("Next"));
@@ -81,7 +81,7 @@ describe("Onboarding", () => {
 
     await fireEvent.click(button("Start importing"));
     expect(localStorage.getItem("kindling:onboardingCompleted")).toBe("true");
-    expect(screen.getByRole("dialog", { name: "Import your outline" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Import your notes" })).toBeTruthy();
     expect(screen.getByText("Step 5 of 5")).toBeTruthy();
 
     await fireEvent.click(button("Back to tour"));
@@ -127,7 +127,7 @@ describe("Onboarding", () => {
 
     await fireEvent.click(button(/^Markdown/));
     await fireEvent.click(await screen.findByRole("button", { name: "Choose a different file" }));
-    expect(screen.getByRole("dialog", { name: "Import your outline" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Import your notes" })).toBeTruthy();
   });
 
   it("stays on the format list when the file picker is cancelled", async () => {
@@ -198,7 +198,7 @@ describe("Onboarding", () => {
     ui.goToStep("import");
     vi.mocked(invoke).mockRejectedValue("no space");
     const showError = vi.spyOn(ui, "showError");
-    await fireEvent.click(await screen.findByRole("button", { name: "Try the sample project" }));
+    await fireEvent.click(await screen.findByRole("button", { name: "Try the sample campaign" }));
     await waitFor(() =>
       expect(showError).toHaveBeenCalledWith("Failed to create sample project: no space")
     );
@@ -208,7 +208,7 @@ describe("Onboarding", () => {
   it("starts from scratch by closing onboarding", async () => {
     ui.goToStep("import");
     render(Onboarding);
-    await fireEvent.click(button("Start a new project from scratch"));
+    await fireEvent.click(button("Start a new campaign from scratch"));
     expect(ui.showOnboarding).toBe(false);
   });
 });

@@ -325,7 +325,7 @@
   .outline-header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; margin-bottom: 1.25rem; }
   .outline-header h1 { margin: .25rem 0; }
   .outline-header p:not(.eyebrow) { margin: .35rem 0 0; color: var(--color-text-muted, #aaa); }
-  .eyebrow, .chapter-kicker, .detail-kicker { margin: 0; color: var(--color-accent-text, #c7a457); font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .eyebrow, .chapter-kicker, .detail-kicker { margin: 0; color: var(--color-accent-text, #6EA9CF); font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
   .muted { opacity: .7; }
   button { cursor: pointer; padding: .55rem .8rem; border: 1px solid var(--color-border, #555); border-radius: 6px; background: var(--color-surface, #343434); color: inherit; }
   button:disabled { opacity: .5; cursor: default; }
@@ -334,12 +334,12 @@
   .plotline-toolbar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1rem; }
   .plotline-toolbar form { display: flex; gap: .4rem; align-items: center; }
   .plotline-toolbar label { font-size: .8rem; }
-  .plotline-toolbar input { min-width: 9rem; padding: .5rem; border: 1px solid #666; border-radius: 5px; background: #292929; color: inherit; }
+  .plotline-toolbar input { min-width: 9rem; padding: .5rem; border: 1px solid var(--color-control-border); border-radius: 5px; background: var(--color-control-bg); color: inherit; }
   .scene-order-controls { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; margin: .85rem 0; }
   .scene-order-controls span { flex-basis: 100%; font-size: .8rem; color: var(--color-text-muted, #aaa); }
   .synopsis-form { display: grid; gap: .5rem; margin: .75rem 0; }
   .synopsis-form label { font-size: .8rem; }
-  .synopsis-form textarea { resize: vertical; padding: .6rem; border: 1px solid #666; border-radius: 5px; background: #292929; color: inherit; font: inherit; }
+  .synopsis-form textarea { resize: vertical; padding: .6rem; border: 1px solid var(--color-control-border); border-radius: 5px; background: var(--color-control-bg); color: inherit; font: inherit; }
   .synopsis-actions { display: flex; gap: .5rem; }
   .assignment-list { display: grid; gap: .5rem; }
   .assignment-list label { display: flex; gap: .5rem; align-items: center; font-size: .85rem; }
@@ -356,14 +356,14 @@
   .scene-card { width: 100%; display: grid; gap: .35rem; text-align: left; padding: .7rem .75rem; border-color: var(--color-border, #555); background: var(--color-surface, #343434); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
   .scene-card strong { font-size: .85rem; }
   .scene-card span { color: var(--color-text-muted, #aaa); font-size: .76rem; line-height: 1.35; }
-  .scene-card small { color: var(--color-accent-text, #c7a457); font-size: .68rem; }
-  .scene-card.selected { border-color: var(--color-accent-text, #c7a457); background: color-mix(in srgb, var(--color-accent-text, #c7a457) 14%, var(--color-surface, #343434)); }
+  .scene-card small { color: var(--color-accent-text, #6EA9CF); font-size: .68rem; }
+  .scene-card.selected { border-color: var(--color-accent-text, #6EA9CF); background: color-mix(in srgb, var(--color-accent-text, #6EA9CF) 14%, var(--color-surface, #343434)); }
   .outline-detail { position: sticky; top: 0; align-self: start; border: 1px solid var(--color-border, #555); border-radius: 8px; padding: 1rem; min-height: 14rem; background: var(--color-surface, #303030); }
   .outline-detail h2 { margin: .2rem 0 .65rem; }
   .outline-detail h3 { margin: 1.1rem 0 .5rem; font-size: .85rem; }
   .outline-detail ol { padding-left: 1.25rem; }
   .outline-detail li + li { margin-top: .45rem; }
   .plotline-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .85rem; }
-  .plotline-chips span { padding: .25rem .45rem; border: 1px solid var(--color-border, #555); border-radius: 999px; color: var(--color-accent-text, #c7a457); font-size: .7rem; }
+  .plotline-chips span { padding: .25rem .45rem; border: 1px solid var(--color-border, #555); border-radius: 999px; color: var(--color-accent-text, #6EA9CF); font-size: .7rem; }
   @media (max-width: 900px) { .outline-layout { grid-template-columns: 1fr; } .outline-detail { position: static; } }
 </style>

@@ -1,4 +1,4 @@
-//! Local project tools for Git and the integrated terminal.
+//! Local project tools for Git (GitHub Sync).
 //!
 //! These commands operate only against the active Catalyst project folder.
 //! They do not make project content cloud-authoritative; Git remains optional
@@ -138,42 +138,6 @@ pub async fn git_push(project_root: String) -> Result<CommandResult, String> {
 pub async fn git_fetch(project_root: String) -> Result<CommandResult, String> {
     let root = resolve_project_root(&project_root)?;
     git(&root, &["fetch"])
-}
-
-#[tauri::command]
-pub async fn run_project_terminal_command(
-    project_root: String,
-    command: String,
-) -> Result<CommandResult, String> {
-    let root = resolve_project_root(&project_root)?;
-    let command = command.trim();
-    if command.is_empty() {
-        return Err("Command must not be empty.".into());
-    }
-    if command.len() > 8192 {
-        return Err("Command is too long.".into());
-    }
-
-    #[cfg(target_os = "windows")]
-    let output = Command::new("powershell")
-        .args(["-NoLogo", "-NoProfile", "-Command", command])
-        .current_dir(&root)
-        .output()
-        .map_err(|e| format!("Could not run PowerShell: {e}"))?;
-
-    #[cfg(not(target_os = "windows"))]
-    let output = Command::new("sh")
-        .args(["-lc", command])
-        .current_dir(&root)
-        .output()
-        .map_err(|e| format!("Could not run shell command: {e}"))?;
-
-    Ok(CommandResult {
-        command: command.to_string(),
-        exit_code: output.status.code(),
-        stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
-        stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
-    })
 }
 
 #[cfg(test)]

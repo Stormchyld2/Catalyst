@@ -33,7 +33,7 @@
     <div class="ka-dialog-body ka-progress od-field">
       <div class="ka-between">
         <span id="import-progress-status" role="status" aria-live="polite">
-          {ui.importStatus || "Reading your outline…"}
+          {ui.importStatus || "Reading your file…"}
         </span>
         <span class="od-nowrap">{Math.round(ui.importProgress)}%</span>
       </div>

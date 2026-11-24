@@ -1,5 +1,6 @@
 export type ThemePreference = "dark" | "light" | "system";
-export type AccentPreference = "blue" | "gold" | "teal" | "purple";
+/** Catalyst has a single primary accent, Frost Blue (design doc 025). */
+export type AccentPreference = "blue";
 
 const STORAGE_KEY = "catalyst:theme";
 // Older builds stored the preference under these keys; migrate on first read.
@@ -60,9 +61,8 @@ export function setThemePreference(pref: ThemePreference) {
 }
 
 export function getStoredAccent(): AccentPreference {
-  if (typeof localStorage === "undefined") return "blue";
-  const stored = localStorage.getItem(ACCENT_STORAGE_KEY);
-  if (stored === "gold" || stored === "teal" || stored === "purple" || stored === "blue") return stored;
+  // Older builds could store gold/teal/purple; those accents are retired, so a
+  // stored value is ignored and Frost Blue always applies.
   return "blue";
 }
 

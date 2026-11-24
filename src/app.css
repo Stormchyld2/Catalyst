@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./styles/catalyst/fonts.css";
 @import "./styles/catalyst/tokens.css";
+@import "./styles/catalyst/catalyst-design-tokens.css";
 @import "./styles/catalyst/tailwind.css";
 /* Press foundation (global form controls, selection, scrollbars, paper grain,
    .app-prose-sheet, .app-dialog-surface) then the application layer: one

@@ -282,7 +282,6 @@ pub fn run() {
             commands::git_pull,
             commands::git_push,
             commands::git_fetch,
-            commands::run_project_terminal_command,
             commands::resolve_project_link,
             commands::get_project_backlinks,
             commands::get_story_development_index,
