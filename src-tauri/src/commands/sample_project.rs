@@ -1216,6 +1216,18 @@ fn seed_entry(root: &Path, entry: &DemoEntry) -> Result<(), String> {
     if let Some(subtype) = template.manifest.subtype {
         document.metadata.insert("subtype".into(), Value::String(subtype));
     }
+    // Seed the complete registered template schema, just as Campaign Wizard
+    // does. The Overview pane can then edit ordinary fields without repairing
+    // missing metadata; no parallel file or database model is introduced.
+    for field in &template.manifest.fields {
+        let value = match field.field_type.as_str() {
+            "list" => Value::Sequence(Vec::new()),
+            "boolean" => Value::Bool(false),
+            "number" => Value::Null,
+            _ => Value::String(String::new()),
+        };
+        document.metadata.entry(field.key.clone()).or_insert(value);
+    }
     document.metadata.insert("visibility".into(), Value::String(entry.visibility.into()));
     save_document(root, &document, Some(&document.source_hash))
 }
@@ -1362,6 +1374,27 @@ mod tests {
         fs::write(root.join("my-notes.md"), "Important").unwrap();
         assert!(ensure_demo(&root).is_err());
         assert_eq!(fs::read_to_string(root.join("my-notes.md")).unwrap(), "Important");
+    }
+
+    #[test]
+    fn expansion_uses_actual_template_ids_and_initialized_metadata() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join(DEMO_SUBDIR).join(DEMO_TITLE);
+        ensure_demo(&root).unwrap();
+        let document = crate::document::service::read_document(
+            &root,
+            Path::new("Adventures/Scenes/Scene One - GM Dossier.md"),
+        ).unwrap();
+        assert_eq!(
+            document.metadata.get("template_id").and_then(Value::as_str),
+            Some("adventure-scene")
+        );
+        assert_eq!(
+            document.metadata.get("visibility").and_then(Value::as_str),
+            Some("gm-only")
+        );
+        assert!(document.metadata.contains_key("image"));
+        assert!(document.metadata.contains_key("scene_type"));
     }
 
     #[test]
