@@ -777,29 +777,6 @@
     onProjectWorkspaceActivated={() => (showGlobalHome = false)}
   />
 
-  {#if
-    currentProject.value &&
-    workspace.active === "write" &&
-    (!editorial?.isOpen() || editorial?.isLocal())
-  }
-    <Sidebar
-      onOpenSettings={() => (showSettings = true)}
-      onOpenProjectDashboard={() => {
-        showGlobalHome = false;
-        workspace.setActive("home", true);
-      }}
-      beforeCloseProject={async () => {
-        if (editorial?.isLocal()) {
-          await editorial.closeWorkspace();
-        }
-      }}
-      prepareWritingReset={async () => {
-        await scenePanel?.prepareForSearch();
-        await editorial?.flush();
-      }}
-    />
-  {/if}
-
   {#if showRecoveryManager && currentProject.value?.project_root}
     <RecoveryManagerDialog onClose={() => (showRecoveryManager = false)} />
   {/if}
