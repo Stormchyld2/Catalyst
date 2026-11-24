@@ -31,6 +31,14 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      # Fast checks first so type errors fail in a minute or two, before the long build.
+      - name: Svelte and TypeScript check
+        run: npm run check
+
+      - name: Cargo check
+        working-directory: src-tauri
+        run: cargo check --no-default-features --all-targets
+
       # Release builds use --no-default-features so the unlicensed QA (mcp) plugin is not compiled in.
       # Updater artifacts need a signing key, so they are turned off here.
       - name: Build portable exe
