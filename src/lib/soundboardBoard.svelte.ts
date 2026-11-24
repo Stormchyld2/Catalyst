@@ -46,7 +46,7 @@ export class SoundboardBoard {
       // No soundboard.json yet: start with the built-in pads (doc 033).
       this.layout = layout ?? defaultLayout();
       this.files = files;
-      this.engine.setLayout(layout);
+      this.engine.setLayout(this.layout);
       this.saveState = "idle";
     } catch (e) {
       if (projectRoot === this.root) this.error = String(e);

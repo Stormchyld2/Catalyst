@@ -25,7 +25,6 @@
     createPad,
     loopsByDefault,
     parseTags,
-    type AudioFile,
     type SoundChannel,
     type SoundPad,
     type SoundboardLayout,
