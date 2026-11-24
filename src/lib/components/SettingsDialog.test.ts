@@ -181,7 +181,7 @@ it("keeps app settings available without projects and retries a failed project l
   failed = false;
   await fireEvent.click(screen.getByRole("button", { name: "Retry loading projects" }));
   await screen.findByText(/No projects yet/);
-  await fireEvent.click(screen.getByRole("button", { name: "Author & Contact" }));
+  await fireEvent.click(screen.getByRole("button", { name: "Legacy Author & Contact" }));
   expect(screen.getByLabelText("Author Name")).toBeTruthy();
 });
 
@@ -194,7 +194,7 @@ it("does not expose blank author fields after a load failure and retries before 
       : original(command, args)
   );
   render(SettingsDialog, { onClose: vi.fn() });
-  await fireEvent.click(screen.getByRole("button", { name: "Author & Contact" }));
+  await fireEvent.click(screen.getByRole("button", { name: "Legacy Author & Contact" }));
   await screen.findByText("contact file unavailable");
   expect(screen.queryByRole("button", { name: "Save author details" })).toBeNull();
   failed = false;
@@ -248,7 +248,7 @@ it("groups navigation by scope and keeps the project selector in the sidebar acr
   const projectGroup = within(nav).getByRole("region", { name: "Projects" });
   expect(within(shared).getByRole("heading", { name: "Preferences" })).toBeTruthy();
   expect(within(shared).getByRole("heading", { name: "Plugins" })).toBeTruthy();
-  expect(within(projectGroup).getByRole("heading", { name: "Manuscript" })).toBeTruthy();
+  expect(within(projectGroup).getByRole("heading", { name: "Campaign" })).toBeTruthy();
   expect(within(projectGroup).getByRole("heading", { name: "Reference Library" })).toBeTruthy();
   const selector = await within(projectGroup).findByRole("combobox", { name: "Project" });
   expect(screen.getAllByRole("combobox", { name: "Project" })).toHaveLength(1);
@@ -258,7 +258,7 @@ it("groups navigation by scope and keeps the project selector in the sidebar acr
     "page"
   );
   expect(screen.getByTestId("settings-location").textContent?.trim()).toBe(
-    "Projects / Second manuscript / Manuscript"
+    "Projects / Second manuscript / Campaign"
   );
   await fireEvent.click(screen.getByRole("button", { name: "Custom Fields" }));
   expect(screen.getByTestId("settings-location").textContent).toContain("Reference Library");
@@ -325,7 +325,7 @@ it("resets damaged author settings and allows valid details to be saved", async 
     return original(command, args);
   });
   render(SettingsDialog, { onClose: vi.fn() });
-  await fireEvent.click(screen.getByRole("button", { name: "Author & Contact" }));
+  await fireEvent.click(screen.getByRole("button", { name: "Legacy Author & Contact" }));
   await screen.findByText("Invalid settings JSON");
   await fireEvent.click(screen.getByRole("button", { name: "Reset author details" }));
   await screen.findByLabelText("Author Name");
