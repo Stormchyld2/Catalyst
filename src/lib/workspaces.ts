@@ -121,7 +121,7 @@ const WORKSPACE_BY_ID = new Map<WorkspaceId, WorkspaceDefinition>(
 );
 
 export const DEFAULT_GLOBAL_WORKSPACE: WorkspaceId = "home";
-export const DEFAULT_PROJECT_WORKSPACE: WorkspaceId = "write";
+export const DEFAULT_PROJECT_WORKSPACE: WorkspaceId = "home";
 
 export function getWorkspace(id: WorkspaceId): WorkspaceDefinition {
   const workspace = WORKSPACE_BY_ID.get(id);
