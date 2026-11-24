@@ -272,3 +272,7 @@ Automated Rust/TS/UI tests plus manual Windows smoke checks must cover:
 Keep wizard work on its own feature branch and PR, distinct from dice roller and frontend stabilization. Document deviations from this baseline with reasons and update tests. Do not claim completion based on architecture docs alone.
 
 **Definition of done:** A user can create a real tabletop campaign through Quick Start or Guided Setup, inspect the approved folders on disk, reopen and edit its authoritative files offline, and access working starter/reference resources without novel-specific requirements.
+
+## Owner-approved personal-use and content policy (2026-11-24)
+
+Catalyst is for the owner's private use; no commercial distribution is planned. Applicable access, copying and software-license terms remain in force. Campaign ruleset selection must consume the shared S04 registry and support D&D 2014/2024, Pathfinder 2e Remastered, Call of Cthulhu 7e, WFRP 4e and System-Neutral as installed content permits. Personal local packs are not restricted to SRD content. Preserve source redistribution classifications during campaign seeding; do not copy restricted payloads into shared templates or artifacts.
