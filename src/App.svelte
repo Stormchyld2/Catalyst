@@ -808,13 +808,6 @@
     {#if !currentProject.value || showGlobalHome}
       <StartScreen
         {recentProjects}
-        onOpenEditorial={() => editorial?.openFile()}
-        onImportLongform={openLongformImportDialog}
-        onImportComplete={(project, type) => {
-          if (IMPORT_FORMATS[type].references) {
-            openReferenceClassificationDialog(project);
-          }
-        }}
         onOpenQuickStart={() => (showQuickStart = true)}
         onNewProject={() => (showNewProjectDialog = true)}
         onOpenProjectFolder={openProjectFolder}
