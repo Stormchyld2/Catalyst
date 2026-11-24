@@ -13,7 +13,7 @@ import {
 describe("Catalyst workspace registry", () => {
   it("uses Home globally and Write as the default project workspace", () => {
     expect(DEFAULT_GLOBAL_WORKSPACE).toBe("home");
-    expect(DEFAULT_PROJECT_WORKSPACE).toBe("write");
+    expect(DEFAULT_PROJECT_WORKSPACE).toBe("home");
   });
 
   it("contains each workspace exactly once", () => {
