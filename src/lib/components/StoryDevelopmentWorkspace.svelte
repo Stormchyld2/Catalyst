@@ -48,7 +48,7 @@
 
   // Reuse the file-authoritative wiki for Adventures and Campaign Notes,
   // selecting only their actual campaign folders rather than novel outlines.
-  let { focusRoot = null }: { focusRoot?: "Adventures" | "Sessions" | null } = $props();
+  let { focusRoot = null, initialDocumentPath = null }: { focusRoot?: "Adventures" | "Sessions" | null; initialDocumentPath?: string | null } = $props();
   const withinFocus = (relativePath: string) => !focusRoot || relativePath === focusRoot || relativePath.startsWith(focusRoot + "/");
   const sessionKey = (id: string) => id + ":" + (focusRoot ?? "world");
 
@@ -910,9 +910,13 @@
           saved.selectedPath && byPath.has(saved.selectedPath) && withinFocus(saved.selectedPath) ? saved.selectedPath : null;
       }
 
-      const first = selectedPath && result.entries.some((entry) => entry.relative_path === selectedPath && withinFocus(entry.relative_path))
-        ? selectedPath
-        : result.entries.find((entry) => withinFocus(entry.relative_path))?.relative_path ?? null;
+      const requested = initialDocumentPath && withinFocus(initialDocumentPath) &&
+        result.entries.some((entry) => entry.relative_path === initialDocumentPath)
+          ? initialDocumentPath : null;
+      const first = requested ??
+        (selectedPath && result.entries.some((entry) => entry.relative_path === selectedPath && withinFocus(entry.relative_path))
+          ? selectedPath
+          : result.entries.find((entry) => withinFocus(entry.relative_path))?.relative_path ?? null);
 
       selectedPath = first;
       if (!saved) {
