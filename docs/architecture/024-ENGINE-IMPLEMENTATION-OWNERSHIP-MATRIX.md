@@ -171,3 +171,7 @@ Do not claim `Tested` without exact commands/results; do not claim `Existing` so
 - Licensing, attribution, source commit and tests recorded in the implementation PR.
 
 **Definition of done for this register:** the main Catalyst repo contains all shared, module and character-specific engine IDs with required work and named implementation ownership. **Definition of done for the engines themselves is separate and requires audited code and tests.**
+
+## Owner-approved personal-use and content policy (2026-11-24)
+
+Catalyst is for the owner's private use; no commercial distribution is planned. Applicable access, copying and software-license terms remain in force. Character Studio owns S04 core classification validation; parent S13 owns source provenance and S26 owns generic export integration. Maintain shared contracts and synthetic mixed-rights fixtures; no duplicate registry or new engine. Commercial redistribution approval is not a gate for lawful personal installation.
