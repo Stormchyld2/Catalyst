@@ -226,7 +226,7 @@
     // Rolling outline filters
     if (outlineViewFilter === "planned_only") {
       scenes = currentProject.value?.project_root
-        ? scenes.filter((s) => s.source_id?.startsWith("lithomark:planned:"))
+        ? scenes.filter((s) => (s.source_id?.startsWith("catalyst:planned:") || s.source_id?.startsWith("lithomark:planned:")))
         : scenes.filter((s) => (s.planning_status ?? "fixed") !== "undefined");
     } else if (outlineViewFilter === "next_5") {
       const currentIndex = currentProject.currentScene
@@ -1224,13 +1224,13 @@
     const handler = () => handleSyncClick();
     const createSceneHandler = () => startCreatingScene();
     window.addEventListener("kindling:sync", handler);
-    window.addEventListener("lithomark:create-outline-scene", createSceneHandler);
+    window.addEventListener("catalyst:create-outline-scene", createSceneHandler);
     return () => {
       chaptersRequestId++;
       scenesRequestId++;
       beatsRequestId++;
       window.removeEventListener("kindling:sync", handler);
-      window.removeEventListener("lithomark:create-outline-scene", createSceneHandler);
+      window.removeEventListener("catalyst:create-outline-scene", createSceneHandler);
     };
   });
 

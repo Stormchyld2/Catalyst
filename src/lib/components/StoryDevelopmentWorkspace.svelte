@@ -205,8 +205,8 @@
     document ? extractHeadings(bodyDraft) : []
   );
   const storyTemplateGroups = $derived.by(() => {
-    const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Items", general: "General" };
-    const order = ["character", "location", "worldbuilding", "organization", "object", "general"];
+    const labels: Record<string, string> = { character: "Characters", location: "Locations", worldbuilding: "Worldbuilding", organization: "Organizations", object: "Items", campaign: "Campaign", adventure: "Adventures", creature: "Creatures", general: "General" };
+    const order = ["campaign", "character", "creature", "adventure", "location", "worldbuilding", "organization", "object", "general"];
     const grouped = new Map<string, EntityTemplateSummary[]>();
     for (const template of entityTemplates.templates.filter((item) => !item.scope || item.scope === "story-development")) {
       const key = template.category || "general";
@@ -412,8 +412,10 @@
       relocateError = "Enter a different project-relative Markdown path.";
       return;
     }
-    if (!destinationPath.startsWith("Story Development/") && !destinationPath.startsWith("Characters/")
-      && !destinationPath.startsWith("Locations/") && !destinationPath.startsWith("Worldbuilding/")) {
+    // Book roots plus the campaign roots (see campaign_wizard.rs CAMPAIGN_ROOTS).
+    const storyRoots = ["Story Development", "Characters", "Locations", "Worldbuilding",
+      "Campaign", "World", "Adventures", "Sessions", "Game Master", "Maps"];
+    if (!storyRoots.some((root) => destinationPath.startsWith(`${root}/`))) {
       relocateError = "Choose a path within the Story Development hierarchy.";
       return;
     }
@@ -1270,19 +1272,19 @@
         void loadDocument(currentProject.value.id, detail.relativePath);
       }
     };
-    window.addEventListener("lithomark:recovery-restored", handleRecoveryRestored);
-    window.addEventListener("lithomark:flush-documents-before-close", flushBeforeClose);
+    window.addEventListener("catalyst:recovery-restored", handleRecoveryRestored);
+    window.addEventListener("catalyst:flush-documents-before-close", flushBeforeClose);
     window.addEventListener("beforeunload", handleBeforeUnload);
-    window.addEventListener("lithomark:before-workspace-change", handleWorkspaceChange);
-    window.addEventListener("lithomark:before-project-change", handleWorkspaceChange);
+    window.addEventListener("catalyst:before-workspace-change", handleWorkspaceChange);
+    window.addEventListener("catalyst:before-project-change", handleWorkspaceChange);
     window.addEventListener("keydown", handleSaveShortcut, true);
 
     return () => {
-      window.removeEventListener("lithomark:recovery-restored", handleRecoveryRestored);
-      window.removeEventListener("lithomark:flush-documents-before-close", flushBeforeClose);
+      window.removeEventListener("catalyst:recovery-restored", handleRecoveryRestored);
+      window.removeEventListener("catalyst:flush-documents-before-close", flushBeforeClose);
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("lithomark:before-workspace-change", handleWorkspaceChange);
-      window.removeEventListener("lithomark:before-project-change", handleWorkspaceChange);
+      window.removeEventListener("catalyst:before-workspace-change", handleWorkspaceChange);
+      window.removeEventListener("catalyst:before-project-change", handleWorkspaceChange);
       window.removeEventListener("keydown", handleSaveShortcut, true);
     };
   });

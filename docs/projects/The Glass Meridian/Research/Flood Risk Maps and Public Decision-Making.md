@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: research
   id: res-8b08df16-89a4-4853-a53a-4a62e0107fc3
 title: Flood Risk Maps and Public Decision-Making

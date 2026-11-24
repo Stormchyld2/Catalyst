@@ -52,7 +52,7 @@
     switchingWorkspace = true;
     try {
       const pendingDocumentSaves: Promise<boolean>[] = [];
-      const guard = new CustomEvent("lithomark:before-workspace-change", {
+      const guard = new CustomEvent("catalyst:before-workspace-change", {
         cancelable: true,
         detail: { from: workspace.active, to: id, pendingDocumentSaves },
       });

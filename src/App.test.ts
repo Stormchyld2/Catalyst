@@ -277,17 +277,19 @@ it.each(["import", "new"])(
       vi.mocked(runImport).mockResolvedValue(next);
       await menu("import_ywriter");
     } else {
-      // New projects are created through the file-authoritative New Book Foundation flow.
+      // New projects are created through the file-authoritative New Campaign Wizard.
       vi.mocked(invoke).mockImplementation(async (cmd) => {
-        if (cmd === "create_new_book_foundation")
+        if (cmd === "create_new_campaign")
           return {
             manifest: {
               project_id: next.id,
               title: next.name,
-              project_type: "novel",
+              project_type: "campaign",
               created_at: "2026-09-30T00:00:00Z",
             },
             paths: { root: "/tmp/New project" },
+            overview_path: "Story Development/Campaign/Campaign Overview.md",
+            overview_id: "note-00000000-0000-4000-8000-000000000000",
           };
         if (cmd === "get_story_development_index") return { entries: [], issues: [] };
         return cmd === "get_entity_template_registry"
@@ -295,22 +297,15 @@ it.each(["import", "new"])(
           : [];
       });
       await menu("new_project");
-      const wizard = within(await screen.findByRole("dialog", { name: /New Book/ }));
-      await fireEvent.input(wizard.getByRole("textbox", { name: "Book title" }), {
+      const wizard = within(await screen.findByRole("dialog", { name: /New Campaign/ }));
+      await fireEvent.click(wizard.getByRole("button", { name: /Quick Start/ }));
+      await fireEvent.input(wizard.getByRole("textbox", { name: "Campaign name" }), {
         target: { value: next.name },
       });
-      await fireEvent.input(wizard.getByRole("textbox", { name: "Project folder" }), {
+      await fireEvent.input(wizard.getByRole("textbox", { name: "Campaign folder" }), {
         target: { value: "/tmp/New project" },
       });
-      for (let step = 0; step < 10 && !wizard.queryByRole("button", { name: "Create Book" }); step++) {
-        if (wizard.queryByRole("heading", { name: "Worldbuilding", level: 2 })) {
-          await fireEvent.input(wizard.getByRole("textbox", { name: "Setting" }), {
-            target: { value: "Synthetic test setting" },
-          });
-        }
-        await fireEvent.click(wizard.getByRole("button", { name: /Next/ }));
-      }
-      await fireEvent.click(wizard.getByRole("button", { name: "Create Book" }));
+      await fireEvent.click(wizard.getByRole("button", { name: "Create Campaign" }));
     }
     await waitFor(() => expect(currentProject.value?.id).toBe(next.id));
     expect(screen.queryByLabelText("Find")).toBeNull();
@@ -675,12 +670,12 @@ it.each(["export", "export success"])(
   async (background) => {
     vi.useFakeTimers();
     currentProject.setChapters(mockChapters);
-    localStorage.setItem("kindling:lastExportPath", "/tmp/lithomark-review-export");
+    localStorage.setItem("kindling:lastExportPath", "/tmp/catalyst-review-export");
     vi.mocked(invoke).mockImplementation(async (cmd) => {
       if (cmd === "save_scene_synopsis") throw new Error("disk full");
       if (cmd === "export_to_markdown")
         return {
-          output_path: "/tmp/lithomark-review-export",
+          output_path: "/tmp/catalyst-review-export",
           chapters_exported: 1,
           scenes_exported: 1,
           files_created: 1,
@@ -843,7 +838,7 @@ it("attempts writing saves and offers explicit recovery when an editorial save b
     ],
   };
   vi.mocked(invoke).mockImplementation(async (cmd) => {
-    if (cmd === "take_editorial_open_files") return ["/review.lithomark-review"];
+    if (cmd === "take_editorial_open_files") return ["/review.catalyst-review"];
     if (cmd === "open_editorial_package")
       return { format: "kindling-editorial", version: 1, kind: "review", round, session: null };
     return [];
@@ -924,7 +919,7 @@ it("ignores shortcuts while a dialog is open even when focus has fallen to the p
 
 it("moves focus into Export complete after an export, not back to the page", async () => {
   currentProject.setChapters(mockChapters);
-  localStorage.setItem("kindling:lastExportPath", "/tmp/lithomark-review-export");
+  localStorage.setItem("kindling:lastExportPath", "/tmp/catalyst-review-export");
   vi.mocked(invoke).mockImplementation(async (cmd) =>
     cmd === "export_to_markdown"
       ? { output_path: "/tmp/out", chapters_exported: 1, scenes_exported: 1, files_created: 1 }

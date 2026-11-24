@@ -36,7 +36,7 @@
   import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
   import TerminalWorkspace from "./lib/components/TerminalWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
-  import NewBookFoundationDialog from "./lib/components/NewBookFoundationDialog.svelte";
+  import CampaignWizardDialog from "./lib/components/CampaignWizardDialog.svelte";
   import { shortcuts } from "./lib/stores/shortcuts.svelte";
   import { COMMAND_DEFS } from "./lib/commands";
   import { currentProject } from "./lib/stores/project.svelte";
@@ -172,7 +172,7 @@
   async function requestProjectChange(): Promise<boolean> {
     const pendingDocumentSaves: Promise<boolean>[] = [];
     const permitted = window.dispatchEvent(
-      new CustomEvent("lithomark:before-project-change", {
+      new CustomEvent("catalyst:before-project-change", {
         cancelable: true,
         detail: { pendingDocumentSaves },
       })
@@ -434,7 +434,7 @@
       // Collect asynchronous saves from file-backed workspaces before closing.
       // A rejected/failed save must keep the window open.
       const pendingDocumentSaves: Promise<boolean>[] = [];
-      window.dispatchEvent(new CustomEvent("lithomark:flush-documents-before-close", {
+      window.dispatchEvent(new CustomEvent("catalyst:flush-documents-before-close", {
         detail: { pendingDocumentSaves },
       }));
       // Tauri destroys the window after this handler resolves unless it calls
@@ -916,9 +916,9 @@
     />
   {/if}
 
-  <!-- File-authoritative New Book Foundation (triggered by File menu or StartScreen) -->
+  <!-- File-authoritative New Campaign Wizard (triggered by File menu or StartScreen) -->
   {#if showNewProjectDialog}
-    <NewBookFoundationDialog
+    <CampaignWizardDialog
       onClose={() => (showNewProjectDialog = false)}
       onComplete={() => {
         showNewProjectDialog = false;

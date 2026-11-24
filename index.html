@@ -10,12 +10,13 @@
     <script>
       // Apply theme before first paint to prevent flash
       (function () {
-        var t = localStorage.getItem("lithomark:theme");
-        if (!t) {
-          t = localStorage.getItem("kindling:theme");
+        var t = localStorage.getItem("catalyst:theme");
+        var legacy = ["lithomark:theme", "kindling:theme"];
+        for (var i = 0; !t && i < legacy.length; i++) {
+          t = localStorage.getItem(legacy[i]);
           if (t) {
-            localStorage.setItem("lithomark:theme", t);
-            localStorage.removeItem("kindling:theme");
+            localStorage.setItem("catalyst:theme", t);
+            localStorage.removeItem(legacy[i]);
           }
         }
         t = t || "dark";

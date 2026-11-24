@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-a553df11-c4bb-48a2-b39b-53db13df5699
 title: Lumen and the Meridian System

@@ -543,7 +543,7 @@
     if (!text) return;
     currentProject.setCurrentScene(scene);
     window.dispatchEvent(
-      new CustomEvent("lithomark:insert-outline-text", {
+      new CustomEvent("catalyst:insert-outline-text", {
         detail: { sceneId: scene.id, text },
       })
     );
@@ -1015,7 +1015,7 @@
               <button
                 type="button"
                 class="ka-button ka-button--secondary outline-add"
-                onclick={() => window.dispatchEvent(new Event("lithomark:create-outline-scene"))}
+                onclick={() => window.dispatchEvent(new Event("catalyst:create-outline-scene"))}
               >
                 <Plus class="w-4 h-4" aria-hidden="true" />
                 New scene

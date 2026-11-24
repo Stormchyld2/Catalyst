@@ -29,6 +29,8 @@ pub mod entity_templates;
 pub mod link_resolver;
 pub mod manuscript;
 pub mod new_book_foundation;
+pub mod campaign_wizard;
+pub mod gm_library;
 pub mod review;
 pub mod story_development;
 pub mod write_projection;
@@ -41,7 +43,6 @@ pub mod plugin;
 pub mod db;
 pub mod detect;
 mod editorial_files;
-mod legacy_data;
 pub mod menu;
 pub mod models;
 pub mod parsers;
@@ -212,23 +213,6 @@ pub fn run() {
                 default_dir.clone(),
             );
 
-            // The rebrand changed the bundle identifier and so the app data
-            // folder. Import only the pre-Catalyst author settings, once; the
-            // LithoMark database and project list are never adopted.
-            if legacy_data::should_import(qa_background, app_data_dir != default_dir) {
-                match legacy_data::import_legacy_settings(&app_data_dir) {
-                    Ok(true) => eprintln!(
-                        "[catalyst] imported settings from the {} folder",
-                        legacy_data::LEGACY_IDENTIFIER
-                    ),
-                    Ok(false) => {}
-                    Err(e) => eprintln!(
-                        "[catalyst] could not import settings from the {} folder: {e}",
-                        legacy_data::LEGACY_IDENTIFIER
-                    ),
-                }
-            }
-
             // Initialize application state with database
             let state =
                 AppState::new(app_data_dir).expect("Failed to initialize application state");
@@ -290,6 +274,7 @@ pub fn run() {
             commands::get_all_projects,
             commands::get_project_dashboard_metrics,
             commands::create_new_book_foundation,
+            commands::create_new_campaign,
             commands::get_git_workspace_status,
             commands::git_initialize,
             commands::git_set_origin,

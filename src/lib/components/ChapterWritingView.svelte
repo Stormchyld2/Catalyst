@@ -27,12 +27,13 @@
 
   // Recovery drafts are supplementary; the Markdown manuscript remains authoritative.
   function recoveryKey(projectId: string, chapterId: string) {
-    return `lithomark:unsaved-chapter:${projectId}:${chapterId}`;
+    return `catalyst:unsaved-chapter:${projectId}:${chapterId}`;
   }
 
   function recover(projectId: string, chapterId: string): string | null {
     try {
-      return window.localStorage.getItem(recoveryKey(projectId, chapterId));
+      return window.localStorage.getItem(recoveryKey(projectId, chapterId))
+        ?? window.localStorage.getItem(`lithomark:unsaved-chapter:${projectId}:${chapterId}`);
     } catch {
       return null;
     }
@@ -48,8 +49,9 @@
 
   function forget(projectId: string, chapterId: string, savedHtml: string) {
     try {
-      const key = recoveryKey(projectId, chapterId);
-      if (window.localStorage.getItem(key) === savedHtml) window.localStorage.removeItem(key);
+      for (const key of [recoveryKey(projectId, chapterId), `lithomark:unsaved-chapter:${projectId}:${chapterId}`]) {
+        if (window.localStorage.getItem(key) === savedHtml) window.localStorage.removeItem(key);
+      }
     } catch (error) {
       console.error("Could not clear chapter recovery draft:", error);
     }
@@ -153,8 +155,8 @@
   }
 
   onMount(() => {
-    window.addEventListener("lithomark:insert-outline-text", insertOutlineText);
-    return () => window.removeEventListener("lithomark:insert-outline-text", insertOutlineText);
+    window.addEventListener("catalyst:insert-outline-text", insertOutlineText);
+    return () => window.removeEventListener("catalyst:insert-outline-text", insertOutlineText);
   });
 
   onDestroy(() => {

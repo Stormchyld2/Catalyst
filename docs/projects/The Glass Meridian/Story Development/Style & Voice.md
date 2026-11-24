@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: note
   id: note-9c847807-61f2-4e48-bee4-6e823b7ce16c
 title: Style & Voice

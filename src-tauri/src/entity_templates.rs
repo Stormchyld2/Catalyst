@@ -167,18 +167,23 @@ fn collect_markdown(root: &Path, directory: &Path, output: &mut Vec<PathBuf>) ->
     Ok(())
 }
 
+const TEMPLATE_KEY: &str = "catalyst_template";
+const LEGACY_TEMPLATE_KEY: &str = "lithomark_template";
+
 fn read_user_template(path: &Path, relative_path: &Path) -> Result<EntityTemplate, String> {
     let raw = fs::read_to_string(path)
         .map_err(|e| format!("Could not read template '{}': {e}", path.display()))?;
     let (yaml, body) = split_frontmatter(&raw)?;
     let root: BTreeMap<String, serde_yaml::Value> =
         serde_yaml::from_str(yaml).map_err(|e| format!("Invalid template YAML: {e}"))?;
+    // Templates saved before the Catalyst rename use the legacy key; read both.
     let value = root
-        .get("lithomark_template")
-        .ok_or_else(|| "Template frontmatter is missing 'lithomark_template'.".to_string())?
+        .get(TEMPLATE_KEY)
+        .or_else(|| root.get(LEGACY_TEMPLATE_KEY))
+        .ok_or_else(|| format!("Template frontmatter is missing '{TEMPLATE_KEY}'."))?
         .clone();
     let manifest: EntityTemplateManifest = serde_yaml::from_value(value)
-        .map_err(|e| format!("Invalid lithomark_template metadata: {e}"))?;
+        .map_err(|e| format!("Invalid {TEMPLATE_KEY} metadata: {e}"))?;
     validate_manifest(&manifest)?;
 
     Ok(EntityTemplate {
@@ -278,7 +283,7 @@ fn validate_user_relative_path(relative_path: &str) -> Result<PathBuf, String> {
 fn serialize_user_template(manifest: &EntityTemplateManifest, body: &str) -> Result<String, String> {
     let mut root = BTreeMap::new();
     root.insert(
-        "lithomark_template".to_string(),
+        TEMPLATE_KEY.to_string(),
         serde_yaml::to_value(manifest)
             .map_err(|e| format!("Could not serialize template metadata: {e}"))?,
     );
@@ -972,6 +977,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
     templates.extend(review_templates());
     templates.extend(publishing_templates());
     templates.extend(project_templates());
+    templates.extend(campaign_templates());
     templates
 }
 
@@ -1439,6 +1445,160 @@ fn manuscript_templates() -> Vec<EntityTemplate> {
             "Back-matter manuscript unit for acknowledgments, appendices, glossaries, notes, author material, and similar content.",
             &["matter_type", "status", "include_in_export", "tags"],
             &[("matter_type","Back Matter Type","text"),("status","Status","text"),("include_in_export","Include in Export","boolean"),("tags","Tags","list")],
+            "",
+        ),
+    ]
+}
+
+/// Tabletop campaign templates used by the New Campaign Wizard and offered in
+/// the wiki's New Document menu. They follow the same contract as the other
+/// Story Development templates (image field, overview fields for the context
+/// panel, structured fields, Markdown scaffold) so seeded campaign records
+/// render in the right-hand Overview panel like any other entity.
+fn campaign_templates() -> Vec<EntityTemplate> {
+    const VIS: (&str, &str, &str) = ("visibility", "Visibility", "text");
+    vec![
+        built_in(
+            "campaign-overview",
+            "Campaign Overview",
+            "campaign",
+            "note",
+            Some("campaign-overview"),
+            "The campaign's premise, tone and central conflict at a glance.",
+            &["subtitle", "genre", "tone", "central_conflict", "start_date", "gm_name", "status"],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("genre","Genre","text"),("tone","Tone / Theme","text"),("central_conflict","Central Conflict","multiline"),("start_date","Campaign Start Date","text"),("gm_name","Game Master","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            "## Premise\n\n## Tone & Expectations\n\n## Central Conflict\n\n## Major Threads\n\n## Player-Facing Pitch\n\n## GM Notes",
+        ),
+        built_in(
+            "npc-profile",
+            "NPC Profile",
+            "character",
+            "character",
+            Some("npc"),
+            "Non-player character: role, disposition, motivation and secrets. No combat statistics required.",
+            &["subtitle", "disposition", "role", "affiliation", "motivation", "current_location", "status", "visibility"],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("disposition","Disposition","text"),("role","Role","text"),("affiliation","Affiliation","text"),("motivation","Motivation","multiline"),("current_location","Current Location","text"),("status","Status","text"),("aliases","Aliases","list"),("relationships","Relationships","list"),VIS,("tags","Tags","list")],
+            "## Appearance\n\n## Personality & Mannerisms\n\n## Wants & Motivation\n\n## Secrets\n\n## Relationships\n\n## Voice & Quotes\n\n## Statistics Reference\n\n## Session History",
+        ),
+        built_in(
+            "player-character-placeholder",
+            "Player Character (Placeholder)",
+            "character",
+            "character",
+            Some("player-character"),
+            "Minimal placeholder for a player character until Character Studio is available. Not a character sheet.",
+            &["player", "status", "character_record"],
+            &[("image","Image","image"),("player","Player","text"),("status","Status","text"),("character_record","Character Record","text"),VIS,("tags","Tags","list")],
+            "## Concept\n\n## Background Hooks\n\n## Party Ties\n\n## GM Notes",
+        ),
+        built_in(
+            "creature-profile",
+            "Creature Profile",
+            "creature",
+            "note",
+            Some("creature"),
+            "Monster or creature profile with habitat, behaviour and encounter notes; rules statistics stay optional.",
+            &["subtitle", "creature_type", "habitat", "threat", "status", "visibility"],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("creature_type","Creature Type","text"),("habitat","Habitat","text"),("threat","Threat / Challenge","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            "## Description\n\n## Behaviour & Tactics\n\n## Habitat & Ecology\n\n## Lore\n\n## Statistics Reference\n\n## Loot & Rewards",
+        ),
+        built_in(
+            "quest-adventure",
+            "Quest / Adventure",
+            "adventure",
+            "plot-thread",
+            Some("quest"),
+            "Adventure, story arc or quest with objectives, branches, rewards and consequences.",
+            &["subtitle", "quest_type", "status", "patron", "objective", "reward", "visibility"],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("quest_type","Quest Type","text"),("status","Status","text"),("patron","Patron / Quest Giver","text"),("objective","Objective","multiline"),("reward","Reward","text"),VIS,("tags","Tags","list")],
+            "## Hook\n\n## Objectives\n\n## Key Locations\n\n## Key NPCs\n\n## Branches & Choices\n\n## Complications\n\n## Rewards\n\n## Consequences",
+        ),
+        built_in(
+            "encounter-card",
+            "Encounter",
+            "adventure",
+            "note",
+            Some("encounter"),
+            "Combat, social or exploration encounter linked to characters, creatures, maps and rewards.",
+            &["subtitle", "encounter_type", "location", "difficulty", "status", "visibility"],
+            &[("image","Image","image"),("subtitle","Subtitle","text"),("encounter_type","Encounter Type","text"),("location","Location","text"),("difficulty","Difficulty","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            "## Setup\n\n## Participants\n\n## Terrain & Features\n\n## Tactics or Goals\n\n## Scaling\n\n## Outcome & Rewards",
+        ),
+        built_in(
+            "session-plan",
+            "Session Plan",
+            "campaign",
+            "note",
+            Some("session-plan"),
+            "Prep sheet for an upcoming game session.",
+            &["session_number", "session_date", "status", "visibility"],
+            &[("image","Image","image"),("session_number","Session Number","number"),("session_date","Session Date","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            "## Recap\n\n## Strong Start\n\n## Potential Scenes\n\n## Secrets & Clues\n\n## NPCs\n\n## Locations\n\n## Encounters\n\n## Rewards",
+        ),
+        built_in(
+            "session-log",
+            "Session Log",
+            "campaign",
+            "note",
+            Some("session-log"),
+            "Chronological record of what happened at the table.",
+            &["session_number", "session_date", "attendance", "visibility"],
+            &[("image","Image","image"),("session_number","Session Number","number"),("session_date","Session Date","text"),("attendance","Attendance","list"),VIS,("tags","Tags","list")],
+            "## Summary\n\n## Key Events\n\n## Player Discoveries\n\n## Loot & Rewards\n\n## Campaign State Changes\n\n## Open Threads",
+        ),
+        built_in(
+            "house-rules",
+            "House Rules",
+            "campaign",
+            "note",
+            Some("house-rules"),
+            "Table rules, variants and rulings for this campaign.",
+            &["rules_system", "status"],
+            &[("image","Image","image"),("rules_system","Rules System","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            "## Rules Variants\n\n## Character Creation\n\n## Rests, Death & Downtime\n\n## Rulings Log",
+        ),
+        built_in(
+            "gm-notes",
+            "GM Notes",
+            "campaign",
+            "note",
+            Some("gm-notes"),
+            "Private Game Master notes, secrets and reminders.",
+            &["status", "visibility"],
+            &[("image","Image","image"),("status","Status","text"),VIS,("tags","Tags","list")],
+            "## Notes\n\n## Secrets & Clues\n\n## Reminders",
+        ),
+        built_in(
+            "map-reference",
+            "Map Reference",
+            "campaign",
+            "note",
+            Some("map-reference"),
+            "References to existing map files. Map Studio does not generate these yet.",
+            &["map_scale", "status"],
+            &[("image","Image","image"),("map_scale","Scale","text"),("status","Status","text"),VIS,("tags","Tags","list")],
+            "## Map Files\n\n## Key\n\n## Notes",
+        ),
+        built_in(
+            "gm-guide",
+            "GM Guide",
+            "campaign",
+            "note",
+            Some("gm-guide"),
+            "Offline Game Master advice. Catalyst's starter guides are original and editable.",
+            &["guide_topic", "source", "license"],
+            &[("image","Image","image"),("guide_topic","Topic","text"),("source","Source","text"),("license","License","text"),VIS,("tags","Tags","list")],
+            "",
+        ),
+        built_in(
+            "random-table",
+            "Random Table",
+            "campaign",
+            "note",
+            Some("random-table"),
+            "A rollable table. Roll the listed die and read the matching row.",
+            &["die", "table_category", "source"],
+            &[("image","Image","image"),("die","Die","text"),("table_category","Category","text"),("source","Source","text"),("license","License","text"),VIS,("tags","Tags","list")],
             "",
         ),
     ]

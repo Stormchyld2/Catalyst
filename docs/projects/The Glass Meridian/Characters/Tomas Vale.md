@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: character
   id: chr-90a0574d-f6c5-4007-a1fa-486a4fce896d
 title: Tomas Vale

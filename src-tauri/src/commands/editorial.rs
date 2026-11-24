@@ -1276,7 +1276,7 @@ mod tests {
     fn package_round_trip_is_portable_versioned_and_validated() {
         let (_conn, package) = fixture();
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("review.lithomark-feedback");
+        let path = dir.path().join("review.catalyst-feedback");
         write_package(&path, &package).unwrap();
         let imported = read_package(&path).unwrap();
         assert_eq!(imported.round, package.round);

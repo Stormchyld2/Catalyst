@@ -1,5 +1,5 @@
 ---
-lithomark:
+catalyst:
   type: event
   id: evt-e2bf20eb-fdab-40d3-9973-1fc1f7fd6013
 title: Nightwater Flood

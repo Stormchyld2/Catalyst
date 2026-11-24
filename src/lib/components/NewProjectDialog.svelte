@@ -5,7 +5,7 @@
   import { currentProject } from "../stores/project.svelte";
   import { ui } from "../stores/ui.svelte";
   import { workspace } from "../stores/workspace.svelte";
-  import type { Project, ProjectType, StoryTemplate } from "../types";
+  import type { Project, StoryTemplate } from "../types";
   import TemplateBrowser from "./TemplateBrowser.svelte";
   import DialogHeader from "./DialogHeader.svelte";
   import { modalFocus } from "../utils/modalFocus";
@@ -18,7 +18,7 @@
     onComplete?: (project: Project) => void;
   } = $props();
 
-  let projectType = $state<ProjectType>("novel");
+  let projectType = $state<"novel" | "screenplay">("novel");
   let name = $state("My Project");
   let projectRoot = $state("");
   let targetLength = $state<"short" | "feature" | "long_feature">("feature");
@@ -71,7 +71,7 @@
     }
 
     const canReplaceProject = window.dispatchEvent(
-      new CustomEvent("lithomark:before-project-change", { cancelable: true })
+      new CustomEvent("catalyst:before-project-change", { cancelable: true })
     );
     if (!canReplaceProject) return;
 

@@ -13,7 +13,10 @@ use uuid::Uuid;
 
 use crate::models::Project;
 
-pub const PROJECT_FORMAT: &str = "lithomark-project";
+pub const PROJECT_FORMAT: &str = "catalyst-project";
+/// Format marker written before the Catalyst rename. Projects that carry it
+/// open normally and keep it; it is never rewritten silently.
+pub const LEGACY_PROJECT_FORMAT: &str = "lithomark-project";
 pub const PROJECT_FORMAT_VERSION: u32 = 1;
 pub const PROJECT_MANIFEST_FILENAME: &str = "project.yaml";
 
@@ -159,7 +162,7 @@ impl ProjectManifest {
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        if self.format != PROJECT_FORMAT {
+        if self.format != PROJECT_FORMAT && self.format != LEGACY_PROJECT_FORMAT {
             return Err(format!(
                 "Unsupported project format '{}'. Expected '{}'.",
                 self.format, PROJECT_FORMAT
@@ -238,6 +241,16 @@ pub fn initialize_project_root_from_manifest(
     root: &Path,
     manifest: &ProjectManifest,
 ) -> Result<ProjectPaths, String> {
+    initialize_project_root_with_directories(root, manifest, PROJECT_DIRECTORIES)
+}
+
+/// Initialize a project root with an explicit directory layout. Book projects
+/// use the shared Catalyst layout; campaigns supply their own tabletop layout.
+pub fn initialize_project_root_with_directories(
+    root: &Path,
+    manifest: &ProjectManifest,
+    directories: &[&str],
+) -> Result<ProjectPaths, String> {
     manifest.validate()?;
 
     if root.as_os_str().is_empty() {
@@ -263,7 +276,7 @@ pub fn initialize_project_root_from_manifest(
     fs::create_dir_all(root)
         .map_err(|e| format!("Could not create project root '{}': {e}", root.display()))?;
 
-    for relative in PROJECT_DIRECTORIES {
+    for relative in directories {
         fs::create_dir_all(root.join(relative)).map_err(|e| {
             format!(
                 "Could not create Catalyst project directory '{}': {e}",

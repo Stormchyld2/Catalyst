@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-pub const REVIEW_FORMAT: &str = "lithomark-review";
+pub const REVIEW_FORMAT: &str = "catalyst-review";
+/// Review packages written before the Catalyst rename remain readable.
+pub const LEGACY_REVIEW_FORMAT: &str = "lithomark-review";
 pub const REVIEW_FORMAT_VERSION: u32 = 1;
 pub const INTEGRITY_ALGORITHM: &str = "sha256";
 
@@ -79,7 +81,7 @@ impl ReviewManifest {
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        if self.format != REVIEW_FORMAT {
+        if self.format != REVIEW_FORMAT && self.format != LEGACY_REVIEW_FORMAT {
             return Err(format!(
                 "Unsupported review format '{}'. Expected '{}'.",
                 self.format, REVIEW_FORMAT

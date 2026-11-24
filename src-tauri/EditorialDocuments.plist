@@ -7,7 +7,7 @@
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
-				<string>lithomark-review</string>
+				<string>catalyst-review</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>icon.icns</string>
@@ -19,13 +19,13 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.catalyst.writer.lithomark-review</string>
+				<string>com.catalyst.writer.catalyst-review</string>
 			</array>
 		</dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
-				<string>lithomark-feedback</string>
+				<string>catalyst-feedback</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>icon.icns</string>
@@ -37,7 +37,7 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.catalyst.writer.lithomark-feedback</string>
+				<string>com.catalyst.writer.catalyst-feedback</string>
 			</array>
 		</dict>
 	</array>

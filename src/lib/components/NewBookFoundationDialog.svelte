@@ -239,7 +239,7 @@
   async function createBook() {
     if (!validateCurrentStep() || saving) return;
     const canReplace = window.dispatchEvent(
-      new CustomEvent("lithomark:before-project-change", { cancelable: true })
+      new CustomEvent("catalyst:before-project-change", { cancelable: true })
     );
     if (!canReplace) return;
 

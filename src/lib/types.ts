@@ -18,7 +18,7 @@ export type SourceType =
   | "Blank";
 
 /** Project type: novel (default) or screenplay */
-export type ProjectType = "novel" | "screenplay";
+export type ProjectType = "novel" | "screenplay" | "campaign";
 
 /** Rolling outline planning status for chapters and scenes */
 export type PlanningStatus = "fixed" | "flexible" | "undefined";
