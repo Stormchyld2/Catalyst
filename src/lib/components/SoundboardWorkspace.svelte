@@ -19,17 +19,18 @@
   import type { Project } from "../types";
   import {
     AUDIO_EXTENSIONS,
+    BUILTIN_SOUNDS,
     CHANNELS,
+    SoundboardEngine,
     clampVolume,
     createPad,
-    emptyLayout,
-    isExclusiveChannel,
+    defaultLayout,
+    loopsByDefault,
     type AudioFile,
     type SoundChannel,
     type SoundPad,
     type SoundboardLayout,
-  } from "../soundboard/layout";
-  import { SoundboardEngine } from "../soundboard/engine.svelte";
+  } from "../soundboard.svelte";
 
   let { project }: { project: Project } = $props();
 
@@ -37,9 +38,9 @@
   const SAVE_DELAY_MS = 400;
   const CHANNEL_ICONS = { music: Music, ambient: Wind, effects: Zap } as const;
 
-  let layout = $state<SoundboardLayout>(emptyLayout());
+  let layout = $state<SoundboardLayout>({ ...defaultLayout(), pads: [] });
   let files = $state<AudioFile[]>([]);
-  let loading = $state(false);
+  let loading = $state(true);
   let error = $state<string | null>(null);
   let saveState = $state<"idle" | "saving" | "saved" | "error">("idle");
   let editing = $state<SoundPad | null>(null);
@@ -47,11 +48,11 @@
   let loadedRoot = "";
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const engine = new SoundboardEngine(emptyLayout(), (file) =>
+  const engine = new SoundboardEngine(defaultLayout(), (file) =>
     invoke<ArrayBuffer>("read_soundboard_audio", { projectRoot: loadedRoot, path: file }),
   );
 
-  const fileSet = $derived(new Set(files.map((f) => f.path)));
+  const fileSet = $derived(new Set([...BUILTIN_SOUNDS.map((s) => s.file), ...files.map((f) => f.path)]));
   const unusedFiles = $derived(files.filter((f) => !layout.pads.some((p) => p.file === f.path)));
   const anyPlaying = $derived(Object.keys(engine.playing).length > 0);
 
@@ -76,11 +77,11 @@
     editing = null;
     try {
       const [nextLayout, nextFiles] = await Promise.all([
-        invoke<SoundboardLayout>("load_soundboard_layout", { projectRoot }),
+        invoke<SoundboardLayout | null>("load_soundboard_layout", { projectRoot }),
         invoke<AudioFile[]>("list_soundboard_audio", { projectRoot }),
       ]);
       if (projectRoot !== loadedRoot) return;
-      layout = nextLayout;
+      layout = nextLayout ?? defaultLayout();
       files = nextFiles;
       engine.setLayout(layout);
       saveState = "idle";
@@ -135,11 +136,13 @@
   }
 
   function startAdd(channel: SoundChannel) {
-    const file = unusedFiles[0]?.path ?? files[0]?.path ?? "";
-    editing = file
-      ? createPad(file, { channel, loop: isExclusiveChannel(channel) })
-      : { id: "", label: "", file: "", channel, loop: isExclusiveChannel(channel), volume: 1 };
+    const file = unusedFiles[0]?.path ?? BUILTIN_SOUNDS.find((s) => s.channel === channel)!.file;
+    editing = createPad(file, { channel, loop: loopsByDefault(channel) });
     editingIsNew = true;
+  }
+
+  function updatePad(id: string, patch: Partial<SoundPad>) {
+    commit({ ...layout, pads: layout.pads.map((p) => (p.id === id ? { ...p, ...patch } : p)) });
   }
 
   function startEdit(pad: SoundPad) {
@@ -168,17 +171,20 @@
     editing = null;
   }
 
+  function defaultLabel(file: string) {
+    return BUILTIN_SOUNDS.find((s) => s.file === file)?.label ?? createPad(file).label;
+  }
+
   function onEditorFileChange(file: string) {
     if (!editing) return;
-    const oldDefault = editing.file ? createPad(editing.file).label : "";
+    const oldDefault = defaultLabel(editing.file);
     editing = {
       ...editing,
       file,
-      label: !editing.label || editing.label === oldDefault ? createPad(file).label : editing.label,
+      label: !editing.label || editing.label === oldDefault ? defaultLabel(file) : editing.label,
     };
   }
 
-  /** Add one pad per audio file that is not on the board yet. */
   function addAllUnused() {
     if (unusedFiles.length === 0) return;
     commit({ ...layout, pads: [...layout.pads, ...unusedFiles.map((f) => createPad(f.path))] });
@@ -222,7 +228,7 @@
       <AudioLines size={22} aria-hidden="true" />
       <div>
         <h1 id="soundboard-title">Soundboard</h1>
-        <p class="sb-sub">Plays audio from this campaign's <code>Assets/Audio</code> folder. Works fully offline.</p>
+        <p class="sb-sub">Built-in sounds plus your own audio from this campaign's <code>Assets/Audio</code> folder. Works fully offline.</p>
       </div>
     </div>
     <div class="sb-actions">
@@ -292,11 +298,11 @@
     {#if loading}
       <p class="sb-empty">Loading soundboard…</p>
     {:else}
-      {#if files.length === 0 && layout.pads.length === 0}
-        <div class="sb-empty sb-empty--card">
-          <p><strong>No audio yet.</strong> Use <em>Import audio</em> to copy files into this campaign, or put them in the campaign's <code>Assets/Audio</code> folder and press <em>Rescan</em>.</p>
-          <p class="sb-hint">Tip: files inside <code>Assets/Audio/Music</code> or <code>Assets/Audio/Ambience</code> become looping music or ambience pads.</p>
-        </div>
+      {#if files.length === 0}
+        <p class="sb-hint">
+          Want your own sounds? Use <em>Import audio</em> to copy MP3s or other audio into this campaign, or put them in
+          its <code>Assets/Audio</code> folder and press <em>Rescan</em>.
+        </p>
       {:else if unusedFiles.length > 0}
         <p class="sb-hint">
           {unusedFiles.length} audio file{unusedFiles.length === 1 ? " is" : "s are"} not on the board yet.
@@ -325,17 +331,38 @@
                 >
                   <span class="sb-pad__label">{pad.label}</span>
                   <span class="sb-pad__meta">
-                    {#if pad.loop}<Repeat size={12} aria-label="Loops" />{/if}
                     {#if missing}missing file{:else if problem}can't play{:else if playing}playing{/if}
                   </span>
                 </button>
+                <div class="sb-pad__controls">
+                  <button
+                    type="button"
+                    class="sb-pad__loop"
+                    aria-pressed={pad.loop}
+                    onclick={() => updatePad(pad.id, { loop: !pad.loop })}
+                    aria-label={`Loop ${pad.label}`}
+                    title={pad.loop ? "Loops until stopped. Click to play once." : "Plays once. Click to loop."}
+                  >
+                    <Repeat size={12} aria-hidden="true" />
+                    {pad.loop ? "Loop" : "Once"}
+                  </button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={pad.volume}
+                    oninput={(e) => updatePad(pad.id, { volume: clampVolume(Number(e.currentTarget.value)) })}
+                    aria-label={`${pad.label} volume`}
+                  />
+                </div>
                 <button type="button" class="sb-pad__edit" onclick={() => startEdit(pad)} aria-label={`Edit ${pad.label}`}>
                   <Pencil size={14} aria-hidden="true" />
                 </button>
                 {#if problem}<span class="sr-only" role="status">{pad.label}: {problem}</span>{/if}
               </div>
             {/each}
-            <button type="button" class="sb-pad sb-pad--add" onclick={() => startAdd(channel.id)} disabled={files.length === 0}>
+            <button type="button" class="sb-pad sb-pad--add" onclick={() => startAdd(channel.id)}>
               <Plus size={18} aria-hidden="true" /> Add pad
             </button>
           </div>
@@ -376,9 +403,18 @@
             {#if !fileSet.has(editing.file)}
               <option value={editing.file} disabled>{editing.file || "Choose a file"}{editing.file ? " (missing)" : ""}</option>
             {/if}
-            {#each files as f (f.path)}
-              <option value={f.path}>{f.path}</option>
-            {/each}
+            <optgroup label="Built-in">
+              {#each BUILTIN_SOUNDS as b (b.file)}
+                <option value={b.file}>{b.label}</option>
+              {/each}
+            </optgroup>
+            {#if files.length}
+              <optgroup label="This campaign (Assets/Audio)">
+                {#each files as f (f.path)}
+                  <option value={f.path}>{f.path}</option>
+                {/each}
+              </optgroup>
+            {/if}
           </select>
         </label>
         <label>
@@ -610,11 +646,13 @@
     border-radius: 12px;
     border: 1px solid var(--cat-border);
     background: var(--cat-panel);
+    display: flex;
+    flex-direction: column;
   }
   .sb-pad__play {
     width: 100%;
-    height: 100%;
-    min-height: 92px;
+    flex: 1;
+    min-height: 64px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -659,6 +697,34 @@
   .is-missing .sb-pad__meta {
     color: var(--cat-warning);
   }
+  .sb-pad__controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px 10px;
+  }
+  .sb-pad__loop {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: none;
+    border: 1px solid var(--cat-border);
+    background: var(--cat-inset);
+    color: var(--cat-muted);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+  .sb-pad__loop[aria-pressed="true"] {
+    border-color: var(--cat-accent);
+    color: var(--cat-accent-hover);
+  }
+  .sb-pad__loop:focus-visible {
+    outline: 2px solid var(--cat-focus);
+    outline-offset: 2px;
+  }
   .sb-pad__edit {
     position: absolute;
     top: 8px;
@@ -676,6 +742,7 @@
     background: var(--cat-hover);
   }
   .sb-pad--add {
+    flex-direction: row;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -685,18 +752,8 @@
     font: inherit;
     cursor: pointer;
   }
-  .sb-pad--add:disabled {
-    cursor: default;
-    color: var(--cat-disabled);
-  }
   .sb-empty {
     color: var(--cat-muted);
-  }
-  .sb-empty--card {
-    background: var(--cat-panel);
-    border: 1px dashed var(--cat-border);
-    border-radius: 12px;
-    padding: 16px 18px;
   }
   .sb-dialog-backdrop {
     position: fixed;

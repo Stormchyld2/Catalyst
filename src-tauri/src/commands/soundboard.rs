@@ -21,7 +21,7 @@ pub async fn read_soundboard_audio(project_root: String, path: String) -> Result
 }
 
 #[tauri::command]
-pub async fn load_soundboard_layout(project_root: String) -> Result<Layout, String> {
+pub async fn load_soundboard_layout(project_root: String) -> Result<Option<Layout>, String> {
     soundboard::load_layout(&PathBuf::from(project_root))
 }
 
