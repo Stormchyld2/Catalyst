@@ -48,4 +48,4 @@ jobs:
       # covered by #[cfg(windows)] tests that only run here.
       - name: Windows document, demo and campaign tests
         working-directory: src-tauri
-        run: cargo test --no-default-features --lib -- document:: sample_project campaign_wizard
+        run: cargo test --no-default-features --lib -- "document::" sample_project campaign_wizard rpg_import
