@@ -1619,35 +1619,35 @@ fn legacy_lithomark_templates() -> Vec<EntityTemplate> {
 fn catalyst_additional_templates() -> Vec<EntityTemplate> {
     vec![
         built_in(
-            "adventure-overview", "Adventure Overview", "adventure", "adventure", Some("adventure"),
+            "adventure-overview", "Adventure Overview", "adventure", "plot-thread", Some("adventure"),
             "Adventure summary, hooks and playable branches.",
             &["premise", "status", "starting_location", "goal", "level_range"],
             &[("image", "Image", "image"), ("premise", "Premise", "text"), ("status", "Status", "text"), ("starting_location", "Starting Location", "text"), ("goal", "Goal", "text"), ("level_range", "Level Range", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
             "## Premise\n\n## Player Hook\n\n## Objectives\n\n## Scene Sequence\n\n## Key NPCs and Factions\n\n## Locations and Maps\n\n## Branches and Consequences\n\n## GM Secrets\n\n## Rewards",
         ),
         built_in(
-            "adventure-scene", "Adventure Scene", "adventure", "adventure", Some("scene"),
+            "adventure-scene", "Adventure Scene", "adventure", "plot-thread", Some("scene"),
             "Scene with triggers, choices and outcomes.",
             &["scene_type", "location", "objective", "participants", "status"],
             &[("image", "Image", "image"), ("scene_type", "Scene Type", "text"), ("location", "Location", "text"), ("objective", "Objective", "text"), ("participants", "Participants", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
             "## Read-Aloud Introduction\n\n## What Players Can Learn\n\n## NPCs and Creatures\n\n## Choices and Complications\n\n## Encounter or Map Link\n\n## Possible Outcomes\n\n## GM Notes",
         ),
         built_in(
-            "quest-chain", "Quest Chain", "adventure", "adventure", Some("quest-chain"),
+            "quest-chain", "Quest Chain", "adventure", "plot-thread", Some("quest-chain"),
             "Linked quests, prerequisites and consequences.",
             &["status", "starting_quest", "goal", "reward"],
             &[("image", "Image", "image"), ("status", "Status", "text"), ("starting_quest", "Starting Quest", "text"), ("goal", "Goal", "text"), ("reward", "Reward", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
             "## Quest Sequence\n\n## Prerequisites\n\n## Branch Points\n\n## Dependencies\n\n## Rewards\n\n## Consequences",
         ),
         built_in(
-            "puzzle-profile", "Puzzle", "adventure", "adventure", Some("puzzle"),
+            "puzzle-profile", "Puzzle", "adventure", "plot-thread", Some("puzzle"),
             "Playable puzzle with clues and alternate solutions.",
             &["location", "difficulty", "solution", "status"],
             &[("image", "Image", "image"), ("location", "Location", "text"), ("difficulty", "Difficulty", "text"), ("solution", "Solution", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
             "## Setup\n\n## Player-Facing Clues\n\n## Solution\n\n## Hints\n\n## Alternative Approaches\n\n## Consequences",
         ),
         built_in(
-            "trap-hazard", "Trap & Hazard", "adventure", "adventure", Some("hazard"),
+            "trap-hazard", "Trap & Hazard", "adventure", "plot-thread", Some("hazard"),
             "Terrain or constructed hazard with ruleset optional.",
             &["location", "trigger", "effect", "detection", "difficulty"],
             &[("image", "Image", "image"), ("location", "Location", "text"), ("trigger", "Trigger", "text"), ("effect", "Effect", "text"), ("detection", "Detection", "text"), ("difficulty", "Difficulty", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
@@ -1696,28 +1696,28 @@ fn catalyst_additional_templates() -> Vec<EntityTemplate> {
             "## Overview\n\n## History\n\n## Territory and Borders\n\n## Government\n\n## Peoples and Cultures\n\n## Settlements\n\n## Allies and Rivals\n\n## Adventure Hooks",
         ),
         built_in(
-            "deity-profile", "Deity & Divine Figure", "worldbuilding", "worldbuilding", Some("deity"),
+            "deity-profile", "Deity & Divine Figure", "worldbuilding", "note", Some("deity"),
             "Deities, faith and cultural influence.",
             &["pantheon", "domains", "followers", "symbols", "status"],
             &[("image", "Image", "image"), ("pantheon", "Pantheon", "text"), ("domains", "Domains", "text"), ("followers", "Followers", "text"), ("symbols", "Symbols", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
             "## Origin and Lore\n\n## Beliefs and Worship\n\n## Clergy and Temples\n\n## Relationships\n\n## Campaign Relevance",
         ),
         built_in(
-            "economy-currency", "Economy & Currency", "worldbuilding", "worldbuilding", Some("economy"),
+            "economy-currency", "Economy & Currency", "worldbuilding", "note", Some("economy"),
             "Local economies and system-specific currencies.",
             &["region", "currency", "trade", "status"],
             &[("image", "Image", "image"), ("region", "Region", "text"), ("currency", "Currency", "text"), ("trade", "Trade", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
             "## Currency and Exchange\n\n## Trade Goods\n\n## Markets and Professions\n\n## Scarcity and Resources\n\n## Ruleset Reference",
         ),
         built_in(
-            "calendar-system", "Calendar & Timekeeping", "worldbuilding", "worldbuilding", Some("calendar"),
+            "calendar-system", "Calendar & Timekeeping", "worldbuilding", "note", Some("calendar"),
             "Campaign calendars, festivals and era names.",
             &["era", "year_length", "calendar_type", "region"],
             &[("image", "Image", "image"), ("era", "Era", "text"), ("year_length", "Year Length", "text"), ("calendar_type", "Calendar Type", "text"), ("region", "Region", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
             "## Time Units\n\n## Months and Seasons\n\n## Holidays\n\n## Historical Eras\n\n## Campaign Dates",
         ),
         built_in(
-            "flora-plant", "Plant & Flora", "worldbuilding", "worldbuilding", Some("flora"),
+            "flora-plant", "Plant & Flora", "worldbuilding", "note", Some("flora"),
             "Fantasy or realistic flora with lore and uses.",
             &["habitat", "rarity", "properties", "hazards"],
             &[("image", "Image", "image"), ("habitat", "Habitat", "text"), ("rarity", "Rarity", "text"), ("properties", "Properties", "text"), ("hazards", "Hazards", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
@@ -1752,7 +1752,7 @@ fn catalyst_additional_templates() -> Vec<EntityTemplate> {
             "## Description\n\n## Availability\n\n## Usage\n\n## Ruleset Effect Reference\n\n## Campaign Notes",
         ),
         built_in(
-            "spell-power-lore", "Spell & Power Lore", "worldbuilding", "worldbuilding", Some("spell-lore"),
+            "spell-power-lore", "Spell & Power Lore", "worldbuilding", "note", Some("spell-lore"),
             "Spell lore separate from mechanics.",
             &["tradition", "origin", "ruleset_ref", "availability"],
             &[("image", "Image", "image"), ("tradition", "Tradition", "text"), ("origin", "Origin", "text"), ("ruleset_ref", "Ruleset Ref", "text"), ("availability", "Availability", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
@@ -2080,6 +2080,8 @@ mod catalyst_template_catalog_tests {
         for t in &registry.templates {
             assert!(ids.insert(t.manifest.id.as_str()), "duplicate {}", t.manifest.id);
             validate_manifest(&t.manifest).unwrap();
+            crate::document::service::generate_stable_id(&t.manifest.document_type)
+                .unwrap_or_else(|e| panic!("template {} has unsupported document type: {e}", t.manifest.id));
         }
         for id in ["campaign-overview", "quest-adventure", "adventure-scene", "dungeon-site", "secret-clue", "rpg-print-profile"] {
             assert!(ids.contains(id), "missing {id}");
