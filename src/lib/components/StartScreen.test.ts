@@ -127,18 +127,18 @@ describe("StartScreen", () => {
     expect(invoke).toHaveBeenCalledWith("get_all_projects");
   });
 
+  it("does not offer the obsolete review package importer", () => {
+    render(StartScreen, { recentProjects: [], onOpenEditorial: vi.fn() });
+    expect(screen.queryByRole("button", { name: /Import Review/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Import RPG Content/ })).toBeTruthy();
+  });
+
   it("shows all seven RPG content import choices instead of manuscript importers", async () => {
     render(StartScreen, { recentProjects: [], onNewProject: vi.fn() });
     await fireEvent.click(screen.getByRole("button", { name: /Import RPG Content/ }));
     const dialog = screen.getByRole("dialog", { name: "Import RPG Content" });
     for (const label of ["Markdown", "Obsidian", "Images", "Foundry", "Roll20", "Fantasy Grounds", "PDF"]) {
       expect(within(dialog).getAllByRole("button", { name: new RegExp(label) }).length).toBeGreaterThan(0);
-    }
-    expect(within(dialog).queryByText(/Import chapters, scenes/)).toBeNull();
-    expect(within(dialog).queryByRole("button", { name: /Scrivener/ })).toBeNull();
-  });
-
-  it("explains the empty library", () => {")) })).toBeTruthy();
     }
     expect(within(dialog).queryByText(/Import chapters, scenes/)).toBeNull();
     expect(within(dialog).queryByRole("button", { name: /Scrivener/ })).toBeNull();
