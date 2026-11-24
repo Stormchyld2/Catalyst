@@ -40,9 +40,9 @@ jobs:
         run: cargo check --no-default-features --all-targets
 
       # Release builds use --no-default-features so the unlicensed QA (mcp) plugin is not compiled in.
-      # Updater artifacts need a signing key, so they are turned off here.
+      # Updater artifacts need a signing key, so tauri.build-check.conf.json turns them off.
       - name: Build portable exe
-        run: npx tauri build --no-bundle -c '{"bundle":{"createUpdaterArtifacts":false}}' -- --no-default-features
+        run: npx tauri build --no-bundle -c src-tauri/tauri.build-check.conf.json -- --no-default-features
         shell: bash
 
       - name: Upload Catalyst.exe
