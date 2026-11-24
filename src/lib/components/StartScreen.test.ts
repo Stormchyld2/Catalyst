@@ -131,8 +131,14 @@ describe("StartScreen", () => {
     render(StartScreen, { recentProjects: [], onNewProject: vi.fn() });
     await fireEvent.click(screen.getByRole("button", { name: /Import RPG Content/ }));
     const dialog = screen.getByRole("dialog", { name: "Import RPG Content" });
-    for (const label of ["Markdown", "Obsidian Vault", "Images / Maps / Tokens", "Foundry VTT", "Roll20", "Fantasy Grounds", "PDF Reference"]) {
-      expect(within(dialog).getByRole("button", { name: new RegExp(label.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\  it("explains the empty library", () => {")) })).toBeTruthy();
+    for (const label of ["Markdown", "Obsidian", "Images", "Foundry", "Roll20", "Fantasy Grounds", "PDF"]) {
+      expect(within(dialog).getByRole("button", { name: new RegExp(label) })).toBeTruthy();
+    }
+    expect(within(dialog).queryByText(/Import chapters, scenes/)).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: /Scrivener/ })).toBeNull();
+  });
+
+  it("explains the empty library", () => {")) })).toBeTruthy();
     }
     expect(within(dialog).queryByText(/Import chapters, scenes/)).toBeNull();
     expect(within(dialog).queryByRole("button", { name: /Scrivener/ })).toBeNull();
