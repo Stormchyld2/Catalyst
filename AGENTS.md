@@ -92,3 +92,7 @@ Windows is the primary platform. Code behind `#[cfg(windows)]` counts as tested 
 Stop before building something that breaks these rules or an architecture doc. Describe the conflict, propose the smallest change that resolves it, and wait for approval.
 
 **Governing principle:** user ownership, portability, stable identity and simple, working code beat implementation convenience.
+
+## Owner-approved personal-use content policy (2026-11-24)
+
+Catalyst is for the owner's private use only; no redistribution or commercial release is planned. Comprehensive lawful local rules content is the target for D&D 2014/2024, Pathfinder 2e Remastered, Call of Cthulhu 7e and WFRP 4e, plus System-Neutral. Commercial redistribution approval is not a personal-installation gate; applicable access, copying and software-license terms still apply. Preserve source provenance and per-record/asset redistribution classifications: redistributable, personal-only, permission-required, unknown. Keep restricted payloads outside tracked Git and shared artifacts. Any future distribution requires explicit owner approval, verified rights, allowlist filtering, dependency checks and attribution. Do not build a speculative distribution pipeline or duplicate Character Studio engines. Follow the corresponding updates to 020–024 and 026 on the campaign architecture branch. GM/player access controls remain separate from content rights.
