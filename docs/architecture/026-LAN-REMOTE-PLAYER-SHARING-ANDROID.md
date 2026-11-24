@@ -168,3 +168,7 @@ No phase may claim production readiness until its security and offline synchroni
 **Character Studio team (separate repo):** build M01–M04 and C01–C12 Windows-first; maintain portable S04–S06 engines and schemas; design remote capabilities and sync command ports without introducing a competing LAN server; after Windows validated, implement M21 Android UI/replica/sync using shared domain code.
 
 **Documentation and integration:** Any new public command, permission or character DTO updates both repos' contract fixtures. This document defines architecture, not an assertion of implemented features. Confirm code paths and tests in each workstream's implementation PR.
+
+## Owner-approved personal-use and content policy (2026-11-24)
+
+Catalyst is for the owner's private use; no commercial distribution is planned. Applicable access, copying and software-license terms remain in force. Personal-use content access does not imply permission to transmit rulebooks or restricted rule payloads to other devices/users. Preserve existing GM/player permissions and independently enforce applicable content rights; exclude unknown/restricted source payloads from sharing unless the specific transfer is authorized. Do not confuse redistribution tags with access-control permissions.
