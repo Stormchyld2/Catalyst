@@ -1270,6 +1270,35 @@ Leave actual session logs empty until the group plays."###,
     },
 ];
 
+/// Original, printable offline SVG map assets. They are visual supplements
+/// to the keyed Markdown guides; do not assume a working VTT map renderer.
+const VISUAL_MAPS: &[(&str, &str)] = &[
+    ("Assets/Images/briar-glen-village.svg", r####"<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-label="Briar Glen — GM Village Map">
+<defs><pattern id="sq" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#8da19c" stroke-width="0.75" opacity="0.35"/></pattern></defs>
+<rect width="100%" height="100%" fill="#f0ede2"/><rect x="32" y="56" width="896" height="552" fill="url(#sq)" stroke="#495a52" stroke-width="2"/>
+<text x="32" y="34" font-family="sans-serif" font-size="24" font-weight="bold" fill="#243a36">Briar Glen — GM Village Map</text>
+<text x="928" y="34" text-anchor="end" font-family="sans-serif" font-size="14" fill="#486159">Catalyst • Hollow Crown • GM map</text>
+<path d="M250 340L710 340" stroke="#7b876b" stroke-width="19" stroke-linecap="round" fill="none" opacity=".75"/><path d="M430 345L430 180" stroke="#7b876b" stroke-width="19" stroke-linecap="round" fill="none" opacity=".75"/><path d="M430 345L430 520" stroke="#7b876b" stroke-width="19" stroke-linecap="round" fill="none" opacity=".75"/><rect x="60" y="210" width="195" height="125" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="157.5" y="272.5" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">V3 Mill</text><rect x="330" y="230" width="215" height="120" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="437.5" y="290" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">V2 Well</text><rect x="675" y="220" width="205" height="125" rx="10" fill="#e7ceab" stroke="#42574b" stroke-width="3"/><text x="777.5" y="282.5" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">V1 Bell Square</text><rect x="60" y="415" width="220" height="120" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="170" y="475" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">V4 Old Shrine</text><rect x="365" y="415" width="225" height="118" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="477.5" y="474" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">V5 North Gate</text><rect x="690" y="410" width="190" height="116" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="785" y="468" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">V6 Guest Cottage</text><text x="810" y="105" font-family="sans-serif" font-size="20" fill="#1a483d">N ↑ Tower Road</text>
+<text x="32" y="628" font-family="sans-serif" font-size="13" fill="#486159">Grid: 5-ft reference squares for scene positioning; keyed rooms are schematic • not to scale</text>
+</svg>"####),
+    ("Assets/Images/briarwatch-tower.svg", r####"<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-label="Briarwatch Tower — GM Site Map">
+<defs><pattern id="sq" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#8da19c" stroke-width="0.75" opacity="0.35"/></pattern></defs>
+<rect width="100%" height="100%" fill="#f0ede2"/><rect x="32" y="56" width="896" height="552" fill="url(#sq)" stroke="#495a52" stroke-width="2"/>
+<text x="32" y="34" font-family="sans-serif" font-size="24" font-weight="bold" fill="#243a36">Briarwatch Tower — GM Site Map</text>
+<text x="928" y="34" text-anchor="end" font-family="sans-serif" font-size="14" fill="#486159">Catalyst • Hollow Crown • GM map</text>
+<path d="M162 330L745 330" stroke="#7b876b" stroke-width="19" stroke-linecap="round" fill="none" opacity=".75"/><path d="M480 160L480 525" stroke="#7b876b" stroke-width="19" stroke-linecap="round" fill="none" opacity=".75"/><rect x="64" y="250" width="190" height="135" rx="10" fill="#dcd8b7" stroke="#42574b" stroke-width="3"/><text x="159" y="317.5" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">T1 Watch Road</text><rect x="299" y="260" width="165" height="110" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="381.5" y="315" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">T3 Landing</text><rect x="570" y="265" width="272" height="108" rx="10" fill="#e7ceab" stroke="#42574b" stroke-width="3"/><text x="706" y="319" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">T2 Signal Shed</text><rect x="365" y="88" width="230" height="110" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="480" y="143" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">T4 Upper Bells</text><rect x="365" y="440" width="230" height="95" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="480" y="487.5" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">T5 Spiral Stair</text><text x="625" y="145" font-family="sans-serif" font-size="16" fill="#31463e">Shed: tuning weight + potion</text><text x="620" y="482" font-family="sans-serif" font-size="17" fill="#31463e">↓ Vault (separate map)</text>
+<text x="32" y="628" font-family="sans-serif" font-size="13" fill="#486159">Grid: 5-ft reference squares for scene positioning; keyed rooms are schematic • not to scale</text>
+</svg>"####),
+    ("Assets/Images/crown-vault.svg", r####"<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-label="Crown Vault — GM Chamber Map">
+<defs><pattern id="sq" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#8da19c" stroke-width="0.75" opacity="0.35"/></pattern></defs>
+<rect width="100%" height="100%" fill="#f0ede2"/><rect x="32" y="56" width="896" height="552" fill="url(#sq)" stroke="#495a52" stroke-width="2"/>
+<text x="32" y="34" font-family="sans-serif" font-size="24" font-weight="bold" fill="#243a36">Crown Vault — GM Chamber Map</text>
+<text x="928" y="34" text-anchor="end" font-family="sans-serif" font-size="14" fill="#486159">Catalyst • Hollow Crown • GM map</text>
+<rect x="250" y="134" width="460" height="385" rx="82" fill="#d6d2c6" stroke="#4a5d55" stroke-width="5"/><circle cx="480" cy="325" r="93" fill="#f5e5a7" stroke="#b58a3a" stroke-width="7"/><circle cx="480" cy="325" r="73" fill="none" stroke="#b58a3a" stroke-dasharray="8 6" stroke-width="3"/><text x="480" y="312" text-anchor="middle" font-family="sans-serif" font-size="19" fill="#6d5219" font-weight="bold">C2 CROWN</text><text x="480" y="342" text-anchor="middle" font-family="sans-serif" font-size="19" fill="#6d5219" font-weight="bold">RING</text><rect x="340" y="73" width="278" height="75" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="479" y="110.5" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">C1 Entry / Stairs</text><rect x="60" y="280" width="180" height="105" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="150" y="332.5" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">C4 Mark Discs</text><rect x="727" y="280" width="177" height="105" rx="10" fill="#c9d2c0" stroke="#42574b" stroke-width="3"/><text x="815.5" y="332.5" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">C3 Archive Door</text><rect x="365" y="480" width="235" height="75" rx="10" fill="#a9d2cc" stroke="#42574b" stroke-width="3"/><text x="482.5" y="517.5" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="17" fill="#26352f">C5 Sleepwalkers</text><text x="75" y="165" font-family="sans-serif" font-size="15" fill="#40534a">Seed → Flame → Crown</text>
+<text x="32" y="628" font-family="sans-serif" font-size="13" fill="#486159">Grid: 5-ft reference squares for scene positioning; keyed rooms are schematic • not to scale</text>
+</svg>"####),
+];
+
 const LOCATION_MAP: &str = r#"# Briarwatch Tower — schematic only
 This is a text diagram for the GM, **not** a generated Map Studio asset or a grid-accurate battle map.
 
@@ -1372,6 +1401,21 @@ fn seed_entry(root: &Path, entry: &DemoEntry) -> Result<(), String> {
 }
 
 /// Versioned content additions only: preserve every existing user edit and ID.
+fn seed_visual_maps_if_missing(root: &Path) -> Result<(), String> {
+    for (relative, svg) in VISUAL_MAPS {
+        let path = root.join(relative);
+        if path.exists() { continue; }
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).map_err(|e| format!("Could not create demo map folder: {e}"))?;
+        }
+        let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&path)
+            .map_err(|e| format!("Could not create demo map '{}': {e}", path.display()))?;
+        use std::io::Write;
+        file.write_all(svg.as_bytes()).map_err(|e| format!("Could not save demo map '{}': {e}", path.display()))?;
+    }
+    Ok(())
+}
+
 fn seed_expansion_if_missing(root: &Path) -> Result<(), String> {
     for entry in EXPANDED_ENTRIES.iter().chain(PREMADE_ENTRIES.iter()).chain(SUPPORT_ENTRIES.iter()) {
         let target = root.join(entry.path);
@@ -1381,6 +1425,7 @@ fn seed_expansion_if_missing(root: &Path) -> Result<(), String> {
         // The canonical campaign tree contains all of these destination roots.
         seed_entry(root, entry)?;
     }
+    seed_visual_maps_if_missing(root)?;
     Ok(())
 }
 
@@ -1482,6 +1527,9 @@ mod tests {
         assert!(root.join("Characters/Player Characters/Sera Dawn - Level 1 Premade.md").exists());
         assert!(root.join("Characters/Player Characters/Calder Reed - Level 1 Premade.md").exists());
         assert!(root.join("Maps/Dungeons/Crown Vault - Keyed Map.md").exists());
+        assert!(root.join("Assets/Images/crown-vault.svg").exists());
+        assert!(root.join("Assets/Images/briarwatch-tower.svg").exists());
+        assert!(root.join("Assets/Images/briar-glen-village.svg").exists());
         assert!(!root.join("Manuscript").exists());
         let notes = root.join("Sessions/Session Logs/Actual play.md");
         fs::write(&notes, "The party chose to restore the seal.").unwrap();
