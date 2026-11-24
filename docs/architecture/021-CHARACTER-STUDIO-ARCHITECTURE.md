@@ -310,3 +310,7 @@ The first donor list was broad. Prioritize **compatible technology and a healthy
 **Selected engineering strategy:** inspect `rpgman` Rust calculation engine first (including all dependency/licenses), `Character Forge` for validation and print path, and `Sheetsmith` for schema-driven manual sheet layouts. Port only clearly separable code into existing Catalyst services with notices and regression tests; do not import another project's app shell, database or content pipeline. Do not imply any reuse has occurred until an implementation PR proves it.
 
 An application built in SvelteKit may have components usable in a plain Svelte/Tauri app, but **its routing/server APIs are not automatically portable**. The Rust engine must be audited for version/edition coupling and not promoted to a universal tabletop system engine without proof.
+
+## Owner-approved personal-use and content policy (2026-11-24)
+
+Catalyst is for the owner's private use; no commercial distribution is planned. Applicable access, copying and software-license terms remain in force. Owner-approved V1 target is D&D 2014/2024 (2014 default), Pathfinder 2e Remastered, Call of Cthulhu 7e, WFRP 4e and System-Neutral. Earlier SRD-only and deferred-system scope is superseded for the owner's personal installation. Comprehensive lawful local content is the target. Consume Character Studio's existing engines and pack-defined workflows; no duplicate implementation.
