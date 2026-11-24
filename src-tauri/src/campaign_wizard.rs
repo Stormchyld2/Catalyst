@@ -1472,6 +1472,11 @@ mod tests {
         assert!(overview.body.contains("Captain Mara"));
         assert!(overview.body.contains("Iron Navy"));
         assert!(overview.body.contains("Lost cargo"));
+        assert!(overview.body.contains("[[The Shattered Isles]]"));
+        assert!(overview.body.contains("[[Kestrel]]"));
+        assert!(overview.body.contains("[[Captain Mara]]"));
+        assert!(overview.body.contains("[[Iron Navy]]"));
+        assert!(overview.body.contains("[[Wreck of the Gull]]"));
         assert!(overview.body.contains("## Campaign Timeline"));
         assert_eq!(overview.body.matches("## Campaign Summary").count(), 1);
         assert!(!overview.body.contains("Flanking grants advantage"));
