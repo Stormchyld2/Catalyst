@@ -116,6 +116,20 @@
     error = null;
   }
 
+  function duplicateCurrentTemplate() {
+    const source = registry.templates.find((template) => template.id === selectedId);
+    if (!source) return;
+    // Retain all editable fields and the Markdown scaffold; never overwrite a built-in.
+    selectTemplate(source);
+    editingSource = "new";
+    previousRelativePath = null;
+    const slug = source.id.replace(/[^a-z0-9_-]/g, "-");
+    id = slug + "-custom-" + Date.now().toString(36);
+    name = source.name + " (Custom)";
+    relativePath = "Custom/" + id + ".md";
+    selectedId = null;
+  }
+
   function newTemplate() {
     selectedId = null;
     editingSource = "new";
@@ -288,6 +302,9 @@
         <footer>
           <span class="template-path">{registry.user_templates_dir}</span>
           <div>
+            {#if selectedId !== null && registry.templates.some((template) => template.id === selectedId)}
+              <button type="button" class="secondary" onclick={duplicateCurrentTemplate} disabled={saving} aria-label="Duplicate selected template to customize">Duplicate &amp; Customize</button>
+            {/if}
             {#if editingSource === "user"}
               <button class="danger" type="button" onclick={deleteTemplate} disabled={saving}>
                 <Trash2 size={14} aria-hidden="true" /> Delete
