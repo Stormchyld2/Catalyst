@@ -35,6 +35,8 @@
   import ProjectDashboard from "./lib/components/ProjectDashboard.svelte";
   import GitWorkspace from "./lib/components/GitWorkspace.svelte";
   import SoundboardWorkspace from "./lib/components/SoundboardWorkspace.svelte";
+  import GmScreenWorkspace from "./lib/components/GmScreenWorkspace.svelte";
+  import { soundboard } from "./lib/soundboard/board.svelte";
   import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
   import CampaignWizardDialog from "./lib/components/CampaignWizardDialog.svelte";
@@ -54,6 +56,11 @@
 
   let { onReady }: { onReady?: () => void } = $props();
   // Keep the native window title in sync with the selected book.
+  // The soundboard outlives its workspaces (doc 034); silence it when the campaign closes.
+  $effect(() => {
+    if (!currentProject.value?.project_root) void soundboard.close();
+  });
+
   $effect(() => {
     const bookTitle = currentProject.value?.name?.trim();
     const title = bookTitle ? `${bookTitle} — Catalyst` : "Catalyst";
@@ -814,6 +821,8 @@
       <GitWorkspace project={currentProject.value} />
     {:else if workspace.active === "listen"}
       <SoundboardWorkspace project={currentProject.value} />
+    {:else if workspace.active === "gm-screen"}
+      <GmScreenWorkspace project={currentProject.value} />
     {:else}
       <section class="workspace-placeholder" aria-live="polite">
         <div class="workspace-placeholder__card">

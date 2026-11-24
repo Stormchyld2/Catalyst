@@ -20,6 +20,8 @@ export interface SoundPad {
   channel: SoundChannel;
   loop: boolean;
   volume: number;
+  /** GM Screen pad sets (doc 034). */
+  tags?: string[];
 }
 
 export interface SoundboardLayout {
@@ -98,6 +100,27 @@ export function createPad(file: string, overrides: Partial<SoundPad> = {}): Soun
     volume: 1,
     ...overrides,
   };
+}
+
+/** "combat, Tavern ,combat" → ["combat", "Tavern"]: trimmed, no blanks, no case-insensitive repeats. */
+export function parseTags(text: string): string[] {
+  const tags: string[] = [];
+  for (const tag of text.split(",").map((t) => t.trim())) {
+    if (tag && !tags.some((t) => t.toLowerCase() === tag.toLowerCase())) tags.push(tag);
+  }
+  return tags;
+}
+
+/** Every tag used on the board, sorted, for the GM Screen's pad-set dropdown. */
+export function padTags(layout: SoundboardLayout): string[] {
+  return parseTags(layout.pads.flatMap((p) => p.tags ?? []).join(",")).sort((a, b) => a.localeCompare(b));
+}
+
+/** Pads carrying `tag` (case-insensitive); a null tag means all pads. */
+export function padsWithTag(layout: SoundboardLayout, tag: string | null): SoundPad[] {
+  if (!tag) return layout.pads;
+  const wanted = tag.toLowerCase();
+  return layout.pads.filter((p) => p.tags?.some((t) => t.toLowerCase() === wanted));
 }
 
 export function audioMimeType(file: string): string {

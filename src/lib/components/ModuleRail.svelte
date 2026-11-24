@@ -10,6 +10,7 @@
     Settings,
     Users,
     AudioLines,
+    PanelsTopLeft,
   } from "lucide-svelte";
   import {
     WORKSPACES,
@@ -44,6 +45,7 @@
     characters: Users,
     write: NotebookPen,
     listen: AudioLines,
+    "gm-screen": PanelsTopLeft,
     publish: FileOutput,
     git: GitBranch,
     settings: Settings,

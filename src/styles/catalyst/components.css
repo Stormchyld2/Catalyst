@@ -468,18 +468,10 @@ body::before {
   color:var(--color-selection-text);
 }
 
-html {
-  scrollbar-color:var(--color-scrollbar-thumb) var(--color-scrollbar-track);
-  scrollbar-width:thin;
-}
-::-webkit-scrollbar { width:8px; height:8px; }
-::-webkit-scrollbar-track { background:var(--color-scrollbar-track); }
-::-webkit-scrollbar-thumb {
-  background:var(--color-scrollbar-thumb);
-  border:2px solid var(--color-scrollbar-track);
-  border-radius:var(--radius-pill);
-}
-::-webkit-scrollbar-thumb:hover { background:var(--color-scrollbar-thumb-hover); }
+/* Catalyst hides scrollbars everywhere (doc 034): the wheel, trackpad and
+   keyboard still scroll; containers show edge fades where they need a cue. */
+* { scrollbar-width:none; }
+::-webkit-scrollbar { display:none; width:0; height:0; }
 
 :where(
   input:not([type]),

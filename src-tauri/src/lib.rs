@@ -31,6 +31,7 @@ pub mod manuscript;
 pub mod new_book_foundation;
 pub mod campaign_wizard;
 pub mod gm_library;
+pub mod gm_screen;
 pub mod review;
 pub mod soundboard;
 pub mod story_development;
@@ -271,6 +272,8 @@ pub fn run() {
             commands::save_file_chapter_prose,
             commands::save_file_scene_prose,
             commands::get_file_writing_stats,
+            gm_screen::load_gm_screen,
+            gm_screen::save_gm_screen,
             dice_sessions::start_dice_session,
             dice_sessions::append_dice_roll,
             dice_sessions::get_dice_session_history,

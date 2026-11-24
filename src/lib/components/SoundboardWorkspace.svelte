@@ -22,34 +22,29 @@
     CHANNELS,
     clampVolume,
     createPad,
-    emptyLayout,
     isExclusiveChannel,
-    type AudioFile,
+    parseTags,
     type SoundChannel,
     type SoundPad,
     type SoundboardLayout,
   } from "../soundboard/layout";
-  import { SoundboardEngine } from "../soundboard/engine.svelte";
+  import { soundboard } from "../soundboard/board.svelte";
 
   let { project }: { project: Project } = $props();
 
   const root = $derived(project.project_root ?? "");
-  const SAVE_DELAY_MS = 400;
   const CHANNEL_ICONS = { music: Music, ambient: Wind, effects: Zap } as const;
 
-  let layout = $state<SoundboardLayout>(emptyLayout());
-  let files = $state<AudioFile[]>([]);
-  let loading = $state(false);
-  let error = $state<string | null>(null);
-  let saveState = $state<"idle" | "saving" | "saved" | "error">("idle");
+  // Shared with the GM Screen so playback survives switching workspaces (doc 034).
+  const engine = soundboard.engine;
+  const layout = $derived(soundboard.layout);
+  const files = $derived(soundboard.files);
+  const loading = $derived(soundboard.loading);
+  const error = $derived(soundboard.error);
+  const saveState = $derived(soundboard.saveState);
   let editing = $state<SoundPad | null>(null);
   let editingIsNew = $state(false);
-  let loadedRoot = "";
-  let saveTimer: ReturnType<typeof setTimeout> | null = null;
-
-  const engine = new SoundboardEngine(emptyLayout(), (file) =>
-    invoke<ArrayBuffer>("read_soundboard_audio", { projectRoot: loadedRoot, path: file }),
-  );
+  let editingTags = $state("");
 
   const fileSet = $derived(new Set(files.map((f) => f.path)));
   const unusedFiles = $derived(files.filter((f) => !layout.pads.some((p) => p.file === f.path)));
@@ -57,70 +52,16 @@
 
   $effect(() => {
     const next = root;
-    if (next && next !== loadedRoot) void load(next);
+    if (next && next !== soundboard.root) {
+      editing = null;
+      void soundboard.open(next);
+    }
   });
 
-  onDestroy(() => {
-    if (saveTimer) {
-      clearTimeout(saveTimer);
-      void persist();
-    }
-    engine.dispose();
-  });
+  onDestroy(() => void soundboard.flush());
 
-  async function load(projectRoot: string) {
-    engine.stopAll();
-    loadedRoot = projectRoot;
-    loading = true;
-    error = null;
-    editing = null;
-    try {
-      const [nextLayout, nextFiles] = await Promise.all([
-        invoke<SoundboardLayout>("load_soundboard_layout", { projectRoot }),
-        invoke<AudioFile[]>("list_soundboard_audio", { projectRoot }),
-      ]);
-      if (projectRoot !== loadedRoot) return;
-      layout = nextLayout;
-      files = nextFiles;
-      engine.setLayout(layout);
-      saveState = "idle";
-    } catch (e) {
-      error = String(e);
-    } finally {
-      loading = false;
-    }
-  }
-
-  async function refreshFiles() {
-    if (!loadedRoot) return;
-    try {
-      files = await invoke<AudioFile[]>("list_soundboard_audio", { projectRoot: loadedRoot });
-      for (const pad of layout.pads) engine.forget(pad.file);
-    } catch (e) {
-      error = String(e);
-    }
-  }
-
-  function commit(next: SoundboardLayout) {
-    layout = next;
-    engine.setLayout(next);
-    saveState = "saving";
-    if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => void persist(), SAVE_DELAY_MS);
-  }
-
-  async function persist() {
-    saveTimer = null;
-    const projectRoot = loadedRoot;
-    if (!projectRoot) return;
-    try {
-      await invoke("save_soundboard_layout", { projectRoot, layout: $state.snapshot(layout) });
-      if (projectRoot === loadedRoot && !saveTimer) saveState = "saved";
-    } catch (e) {
-      saveState = "error";
-      error = `Could not save the soundboard: ${String(e)}`;
-    }
-  }
+  const refreshFiles = () => soundboard.refreshFiles();
+  const commit = (next: SoundboardLayout) => soundboard.commit(next);
 
   function setMaster(value: number) {
     commit({ ...layout, master_volume: clampVolume(value) });
@@ -140,11 +81,13 @@
       ? createPad(file, { channel, loop: isExclusiveChannel(channel) })
       : { id: "", label: "", file: "", channel, loop: isExclusiveChannel(channel), volume: 1 };
     editingIsNew = true;
+    editingTags = "";
   }
 
   function startEdit(pad: SoundPad) {
     editing = { ...pad };
     editingIsNew = false;
+    editingTags = (pad.tags ?? []).join(", ");
   }
 
   function saveEdit() {
@@ -154,7 +97,9 @@
       id: editing.id || createPad(editing.file).id,
       label: editing.label.trim() || createPad(editing.file).label,
       volume: clampVolume(editing.volume),
+      tags: parseTags(editingTags),
     };
+    if (pad.tags?.length === 0) delete pad.tags;
     const pads = editingIsNew ? [...layout.pads, pad] : layout.pads.map((p) => (p.id === pad.id ? pad : p));
     const previous = layout.pads.find((p) => p.id === pad.id);
     if (previous && (previous.file !== pad.file || previous.channel !== pad.channel)) engine.stop(pad.id, false);
@@ -185,8 +130,8 @@
   }
 
   async function importAudio() {
-    if (!loadedRoot) return;
-    error = null;
+    if (!soundboard.root) return;
+    soundboard.error = null;
     try {
       const picked = await open({
         multiple: true,
@@ -197,13 +142,13 @@
       const sources = picked == null ? [] : Array.isArray(picked) ? picked : [picked];
       if (sources.length === 0) return;
       const imported = await invoke<string[]>("import_soundboard_audio", {
-        projectRoot: loadedRoot,
+        projectRoot: soundboard.root,
         sourcePaths: sources,
       });
       await refreshFiles();
       commit({ ...layout, pads: [...layout.pads, ...imported.map((file) => createPad(file))] });
     } catch (e) {
-      error = `Import failed: ${String(e)}`;
+      soundboard.error = `Import failed: ${String(e)}`;
     }
   }
 
@@ -388,6 +333,10 @@
               <option value={c.id}>{c.label}</option>
             {/each}
           </select>
+        </label>
+        <label>
+          <span>Tags <small>(comma separated, for GM Screen pad sets)</small></span>
+          <input type="text" bind:value={editingTags} maxlength="200" placeholder="combat, tavern" />
         </label>
         <label class="sb-check">
           <input type="checkbox" bind:checked={editing.loop} />

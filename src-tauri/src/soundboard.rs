@@ -63,6 +63,9 @@ pub struct Pad {
     pub looping: bool,
     #[serde(default = "default_volume")]
     pub volume: f32,
+    /// GM Screen pad sets (doc 034). Left out of the file when empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -158,6 +161,13 @@ impl Layout {
         let mut seen = std::collections::HashSet::new();
         for pad in &mut self.pads {
             pad.volume = clamp_volume(pad.volume);
+            let mut tags: Vec<String> = Vec::new();
+            for tag in pad.tags.iter().map(|t| t.trim()).filter(|t| !t.is_empty()) {
+                if !tags.iter().any(|t| t.eq_ignore_ascii_case(tag)) {
+                    tags.push(tag.to_string());
+                }
+            }
+            pad.tags = tags;
             pad.file = pad.file.replace('\\', "/");
             validate_relative_audio_path(&pad.file)?;
             if pad.id.trim().is_empty() {
@@ -403,6 +413,7 @@ mod tests {
             channel: Channel::Effects,
             looping: false,
             volume: 1.0,
+            tags: Vec::new(),
         }
     }
 
@@ -442,7 +453,20 @@ mod tests {
         let text = fs::read_to_string(layout_path(dir.path())).unwrap();
         assert!(text.contains("\"loop\": true"));
         assert!(text.contains("\"channel\": \"music\""));
+        assert!(!text.contains("\"tags\""));
         assert_eq!(load_layout(dir.path()).unwrap(), saved);
+    }
+
+    #[test]
+    fn pad_tags_are_trimmed_deduplicated_and_saved() {
+        let dir = root();
+        let mut layout = Layout::default();
+        let mut p = pad("pad-1", "door.mp3");
+        p.tags = vec![" Combat ".into(), "combat".into(), "".into(), "Tavern".into()];
+        layout.pads.push(p);
+        let saved = save_layout(dir.path(), layout).unwrap();
+        assert_eq!(saved.pads[0].tags, vec!["Combat", "Tavern"]);
+        assert_eq!(load_layout(dir.path()).unwrap().pads[0].tags, vec!["Combat", "Tavern"]);
     }
 
     #[test]

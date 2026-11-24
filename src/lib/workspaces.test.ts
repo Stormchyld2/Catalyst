@@ -26,6 +26,7 @@ describe("Catalyst workspace registry", () => {
       "characters",
       "write",
       "listen",
+      "gm-screen",
       "publish",
       "git",
       "settings",
@@ -60,7 +61,7 @@ describe("Catalyst workspace registry", () => {
 
   it("marks the active Core Preview workspaces", () => {
     expect(WORKSPACES.filter((workspace) => isPreviewWorkspace(workspace.id)).map((w) => w.id))
-      .toEqual(["home", "story-development", "outline", "write", "listen", "git"]);
+      .toEqual(["home", "story-development", "outline", "write", "listen", "gm-screen", "git"]);
   });
 
   it("removes the Terminal and book-only workspaces from the campaign rail", () => {
@@ -75,6 +76,7 @@ describe("Catalyst workspace registry", () => {
     expect(getWorkspace("characters").label).toBe("Characters");
     expect(getWorkspace("write").label).toBe("Campaign Notes");
     expect(getWorkspace("listen").label).toBe("Soundboard");
+    expect(getWorkspace("gm-screen").label).toBe("GM Screen");
     expect(getWorkspace("publish").label).toBe("Print & Export");
     expect(getWorkspace("git").label).toBe("GitHub Sync");
   });
@@ -88,7 +90,7 @@ describe("Catalyst workspace registry", () => {
       "characters",
       "write",
     ]);
-    expect(WORKSPACES.filter((w) => w.group === "table").map((w) => w.id)).toEqual(["listen"]);
+    expect(WORKSPACES.filter((w) => w.group === "table").map((w) => w.id)).toEqual(["listen", "gm-screen"]);
     expect(WORKSPACES.filter((w) => w.group === "share").map((w) => w.id)).toEqual(["publish", "git"]);
     expect(getWorkspace("settings").group).toBe("app");
   });
