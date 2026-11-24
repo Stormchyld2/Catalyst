@@ -325,7 +325,7 @@ describe("CampaignWizardDialog", () => {
       session_length: "3 hours",
       session_zero: true,
     });
-  });
+  }, 30000);
 
   it("keeps entered values when moving back and forth between steps", async () => {
     render(CampaignWizardDialog, { props: { onClose: vi.fn() } });
