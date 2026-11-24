@@ -10,23 +10,10 @@ use crate::models::{
 
 use super::AppState;
 
-const BUNDLED_TEMPLATES: &[&str] = &[
-    include_str!("../../templates/save-the-cat.json"),
-    include_str!("../../templates/three-act-structure.json"),
-    include_str!("../../templates/heros-journey.json"),
-    include_str!("../../templates/story-circle.json"),
-    include_str!("../../templates/seven-point.json"),
-];
-
+// Retired the five built-in novel outline presets in Catalyst.
+// Keep API compatibility; user-created templates are unaffected.
 fn load_bundled_templates() -> Vec<StoryTemplate> {
-    BUNDLED_TEMPLATES
-        .iter()
-        .filter_map(|json| {
-            let mut t: StoryTemplate = serde_json::from_str(json).ok()?;
-            t.bundled = true;
-            Some(t)
-        })
-        .collect()
+    Vec::new()
 }
 
 #[tauri::command]
@@ -536,5 +523,15 @@ mod tests {
                 t.name
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod bundled_template_retirement_tests {
+    use super::*;
+
+    #[test]
+    fn novel_structure_presets_are_not_bundled() {
+        assert!(load_bundled_templates().is_empty());
     }
 }
