@@ -1397,7 +1397,7 @@ fn seed_entry(root: &Path, entry: &DemoEntry) -> Result<(), String> {
         document.metadata.entry(field.key.clone()).or_insert(value);
     }
     document.metadata.insert("visibility".into(), Value::String(entry.visibility.into()));
-    save_document(root, &document, Some(&document.source_hash))
+    save_document(root, &document, Some(&document.source_hash)).map(|_| ())
 }
 
 /// Versioned content additions only: preserve every existing user edit and ID.
