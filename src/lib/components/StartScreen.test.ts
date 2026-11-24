@@ -56,14 +56,14 @@ afterEach(() => {
 });
 
 describe("StartScreen", () => {
-  it("opens The Glass Meridian sample directly in Story Development", async () => {
+  it("opens The Hollow Crown D&D adventure in the campaign dashboard", async () => {
     const sample = project({
-      id: "glass-meridian",
-      name: "The Glass Meridian",
+      id: "hollow-crown",
+      name: "The Hollow Crown",
       source_type: "Blank",
-      project_root: "C:/Temp/Catalyst/The Glass Meridian",
-      genre: "Speculative Mystery",
-      word_target: 88000,
+      project_root: "C:/Temp/Catalyst/The Hollow Crown",
+      genre: "D&D 5e Fantasy Mystery",
+      word_target: null,
     });
     vi.mocked(invoke).mockImplementation(async (command) => {
       if (command === "create_sample_project") return sample;
@@ -72,11 +72,11 @@ describe("StartScreen", () => {
 
     render(StartScreen, { recentProjects: [], onNewProject: vi.fn() });
 
-    await fireEvent.click(screen.getByRole("button", { name: /The Glass Meridian Sample/ }));
-    await waitFor(() => expect(currentProject.value?.name).toBe("The Glass Meridian"));
+    await fireEvent.click(screen.getByRole("button", { name: /The Hollow Crown/ }));
+    await waitFor(() => expect(currentProject.value?.name).toBe("The Hollow Crown"));
 
     expect(invoke).toHaveBeenCalledWith("create_sample_project");
-    expect(workspace.active).toBe("story-development");
+    expect(workspace.active).toBe("home");
   });
 
   it("lists recent projects as rows with plain metadata and a labelled delete action", () => {
