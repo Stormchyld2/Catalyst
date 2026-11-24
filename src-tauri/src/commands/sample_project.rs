@@ -394,7 +394,7 @@ Use the Session Log template after play. The demo intentionally contains no fabr
         title: "Thornbound Sentinel - 5e Stat Block",
         visibility: "gm-only",
         body: r#"# Thornbound Sentinel
-*Medium plant construct, unaligned* — **Armor Class 12** (woven bark), **Hit Points 12** (3d8−1), **Speed 25 ft.**
+*Medium plant construct, unaligned* — **Armor Class 12** (woven bark), **Hit Points 11** (2d8+2), **Speed 25 ft.**
 
 | STR | DEX | CON | INT | WIS | CHA |
 | --- | --- | --- | --- | --- | --- |
@@ -409,7 +409,7 @@ Use the Session Log template after play. The demo intentionally contains no fabr
 **Thorn Strike.** Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 3 (1d4+1) piercing damage.
 
 ## Encounter Scaling
-For a party of three level-1 characters, use 9 hit points; for five level-1 characters use 15. The sentinel can be bypassed without fighting. Do not treat the rough challenge estimate as an officially calculated CR.
+For a party of three level-1 characters, use 8 hit points; for five level-1 characters use 14. The sentinel can be bypassed without fighting. Do not treat the rough challenge estimate as an officially calculated CR.
 "#,
     },
     DemoEntry {
@@ -467,7 +467,7 @@ The guardian and echo are alternatives, not a gauntlet. Telegraph danger, allow 
 Use the original Thornbound Sentinel and Hollow Echo stat-block documents. All other NPCs are narrative unless the GM chooses to supply suitable legal 5e statistics. Do not assume automatic initiative, HP tracking or character integration in Catalyst.
 
 ## Party Size
-For three PCs, use 9 hit points for the sentinel; for five PCs use 15. Use only one hostile creature at a time. Never force combat, and avoid an echo battle immediately after the sentinel.
+For three PCs, use 8 hit points for the sentinel; for five PCs use 14. Use only one hostile creature at a time. Never force combat, and avoid an echo battle immediately after the sentinel.
 "#,
     },
     DemoEntry {
