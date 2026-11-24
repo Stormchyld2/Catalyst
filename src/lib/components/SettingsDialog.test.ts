@@ -67,7 +67,7 @@ afterEach(() => {
 });
 
 async function openProjects() {
-  await fireEvent.click(screen.getByRole("button", { name: "Project Details" }));
+  await fireEvent.click(screen.getByRole("button", { name: "Campaign Details" }));
   await screen.findByRole("combobox", { name: "Project" });
 }
 async function choose(id: string) {
@@ -176,7 +176,7 @@ it("keeps app settings available without projects and retries a failed project l
   );
   render(SettingsDialog, { onClose: vi.fn() });
   expect(screen.getByRole("radio", { name: "Light" })).toBeTruthy();
-  await fireEvent.click(screen.getByRole("button", { name: "Project Details" }));
+  await fireEvent.click(screen.getByRole("button", { name: "Campaign Details" }));
   await screen.findByText(/Could not load projects/);
   failed = false;
   await fireEvent.click(screen.getByRole("button", { name: "Retry loading projects" }));
@@ -249,19 +249,19 @@ it("groups navigation by scope and keeps the project selector in the sidebar acr
   expect(within(shared).getByRole("heading", { name: "Preferences" })).toBeTruthy();
   expect(within(shared).getByRole("heading", { name: "Plugins" })).toBeTruthy();
   expect(within(projectGroup).getByRole("heading", { name: "Campaign" })).toBeTruthy();
-  expect(within(projectGroup).getByRole("heading", { name: "Reference Library" })).toBeTruthy();
+  expect(within(projectGroup).getByRole("heading", { name: "World Builder References" })).toBeTruthy();
   const selector = await within(projectGroup).findByRole("combobox", { name: "Project" });
   expect(screen.getAllByRole("combobox", { name: "Project" })).toHaveLength(1);
   expect(screen.getByTestId("settings-location").textContent).toContain("Catalyst / Preferences");
   await fireEvent.change(selector, { target: { value: second.id } });
-  expect(screen.getByRole("button", { name: "Project Details" }).getAttribute("aria-current")).toBe(
+  expect(screen.getByRole("button", { name: "Campaign Details" }).getAttribute("aria-current")).toBe(
     "page"
   );
   expect(screen.getByTestId("settings-location").textContent?.trim()).toBe(
     "Projects / Second manuscript / Campaign"
   );
   await fireEvent.click(screen.getByRole("button", { name: "Custom Fields" }));
-  expect(screen.getByTestId("settings-location").textContent).toContain("Reference Library");
+  expect(screen.getByTestId("settings-location").textContent).toContain("World Builder References");
   expect(within(projectGroup).getByRole("combobox", { name: "Project" })).toBe(selector);
   expect(currentProject.value?.id).toBe(mockProject.id);
 });
