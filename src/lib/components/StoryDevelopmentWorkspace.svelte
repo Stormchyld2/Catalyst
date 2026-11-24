@@ -46,6 +46,12 @@
   import { markdownHeadingId, renderMarkdown } from "../utils/markdownPreview";
   import EntityTemplateManager from "./EntityTemplateManager.svelte";
 
+  // Reuse the file-authoritative wiki for Adventures and Campaign Notes,
+  // selecting only their actual campaign folders rather than novel outlines.
+  let { focusRoot = null }: { focusRoot?: "Adventures" | "Sessions" | null } = $props();
+  const withinFocus = (relativePath: string) => !focusRoot || relativePath === focusRoot || relativePath.startsWith(focusRoot + "/");
+  const sessionKey = (id: string) => id + ":" + (focusRoot ?? "world");
+
   interface StoryDevelopmentEntry {
     id: string;
     entry_kind?: "document" | "image";
@@ -191,16 +197,12 @@
   );
   const normalizedSearch = $derived(searchQuery.trim().toLowerCase());
   const visibleEntries = $derived(
-    normalizedSearch
-      ? index.entries.filter((entry) =>
-          `${entry.title} ${entry.relative_path} ${entry.document_type}`
-            .toLowerCase()
-            .includes(normalizedSearch)
-        )
-      : index.entries
+    index.entries.filter((entry) => withinFocus(entry.relative_path) &&
+      (!normalizedSearch || `${entry.title} ${entry.relative_path} ${entry.document_type}`
+        .toLowerCase().includes(normalizedSearch)))
   );
   let storyFolders = $state<string[]>(["Story Development"]);
-  const tree = $derived(buildTree(visibleEntries, normalizedSearch ? [] : storyFolders));
+  const tree = $derived(buildTree(visibleEntries, normalizedSearch ? [] : storyFolders.filter(withinFocus)));
   const contentsHeadings = $derived(
     document ? extractHeadings(bodyDraft) : []
   );
@@ -302,11 +304,11 @@
   }
 
   let newDocumentOpen = $state(false);
-  let newDocumentFolder = $state("Story Development");
+  let newDocumentFolder = $state(focusRoot ?? "Story Development");
   let newDocumentMode = $state<"template" | "empty">("template");
   let folderDialogOpen = $state(false);
   let folderName = $state("");
-  let folderParent = $state("Story Development");
+  let folderParent = $state(focusRoot ?? "Story Development");
   let folderError = $state<string | null>(null);
   let creatingFolder = $state(false);
   let selectedFolder = $state<string | null>(null);
@@ -337,7 +339,7 @@
 
   async function startNewDocument() {
     try { await refreshStoryFolders(); } catch (cause) { newDocumentError = String(cause); return; }
-    newDocumentFolder = selectedFolder && storyFolders.includes(selectedFolder) ? selectedFolder : storyFolders[0] ?? "Story Development";
+    newDocumentFolder = selectedFolder && storyFolders.includes(selectedFolder) ? selectedFolder : storyFolders.find(withinFocus) ?? focusRoot ?? "Story Development";
     newDocumentMode = "template";
     newDocumentTemplate = entityTemplates.templates.find(t => t.id === "character-profile")?.id
       ?? entityTemplates.templates[0]?.id ?? "";
@@ -891,13 +893,13 @@
       if (currentProject.value?.id !== requestProjectId) return;
       loadedProjectId = requestProjectId;
 
-      const saved = storyDevelopmentSessions.get(requestProjectId);
+      const saved = storyDevelopmentSessions.get(sessionKey(requestProjectId));
       if (saved) {
         const byPath = new Map(result.entries.map((entry) => [entry.relative_path, entry]));
-        openTabs = saved.openTabPaths
+        openTabs = saved.openTabPaths.filter(withinFocus)
           .map((path) => byPath.get(path))
           .filter((entry): entry is StoryDevelopmentEntry => Boolean(entry));
-        closedTabs = saved.closedTabPaths
+        closedTabs = saved.closedTabPaths.filter(withinFocus)
           .map((path) => byPath.get(path))
           .filter((entry): entry is StoryDevelopmentEntry => Boolean(entry));
         expanded = new Set(saved.expandedPaths);
@@ -905,12 +907,12 @@
         searchQuery = saved.searchQuery;
         contentsOpen = saved.contentsOpen;
         selectedPath =
-          saved.selectedPath && byPath.has(saved.selectedPath) ? saved.selectedPath : null;
+          saved.selectedPath && byPath.has(saved.selectedPath) && withinFocus(saved.selectedPath) ? saved.selectedPath : null;
       }
 
-      const first = selectedPath && result.entries.some((entry) => entry.relative_path === selectedPath)
+      const first = selectedPath && result.entries.some((entry) => entry.relative_path === selectedPath && withinFocus(entry.relative_path))
         ? selectedPath
-        : result.entries[0]?.relative_path ?? null;
+        : result.entries.find((entry) => withinFocus(entry.relative_path))?.relative_path ?? null;
 
       selectedPath = first;
       if (!saved) {
@@ -1206,7 +1208,7 @@
 
   function saveSessionState(projectId: string | null) {
     if (!projectId) return;
-    storyDevelopmentSessions.set(projectId, {
+    storyDevelopmentSessions.set(sessionKey(projectId), {
       selectedPath,
       openTabPaths: openTabs.map((entry) => entry.relative_path),
       closedTabPaths: closedTabs.map((entry) => entry.relative_path),
