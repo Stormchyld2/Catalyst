@@ -63,6 +63,9 @@ pub struct Pad {
     pub looping: bool,
     #[serde(default = "default_volume")]
     pub volume: f32,
+    /// Fields written by newer versions or by hand are kept on save.
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -99,6 +102,8 @@ pub struct Layout {
     pub channels: Channels,
     #[serde(default)]
     pub pads: Vec<Pad>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, serde_json::Value>,
 }
 
 fn default_format() -> String {
@@ -119,6 +124,7 @@ impl Default for Layout {
             master_volume: default_master(),
             channels: Channels::default(),
             pads: Vec::new(),
+            extra: serde_json::Map::new(),
         }
     }
 }
@@ -159,7 +165,13 @@ impl Layout {
         for pad in &mut self.pads {
             pad.volume = clamp_volume(pad.volume);
             pad.file = pad.file.replace('\\', "/");
-            validate_relative_audio_path(&pad.file)?;
+            if pad.file.starts_with("builtin:") {
+                if !is_builtin_sound(&pad.file) {
+                    return Err(format!("'{}' is not a built-in sound.", pad.file));
+                }
+            } else {
+                validate_relative_audio_path(&pad.file)?;
+            }
             if pad.id.trim().is_empty() {
                 return Err("Every soundboard pad needs an id.".into());
             }
@@ -223,6 +235,18 @@ pub fn validate_relative_audio_path(relative: &str) -> Result<PathBuf, String> {
         return Err(format!("'{relative}' is not a supported audio file."));
     }
     Ok(path)
+}
+
+/// Built-in sounds ship with the app (`static/soundboard/`) and are referenced
+/// as `builtin:<name>.ogg`; they are never read from the campaign folder.
+pub fn is_builtin_sound(file: &str) -> bool {
+    file.strip_prefix("builtin:").is_some_and(|name| {
+        name.ends_with(".ogg")
+            && name.len() > 4
+            && name
+                .bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'.')
+    })
 }
 
 /// Resolve a pad's file to a real path inside the campaign's audio folder,
@@ -299,17 +323,18 @@ pub fn layout_path(root: &Path) -> PathBuf {
     audio_dir(root).join(LAYOUT_FILE)
 }
 
-/// Read the board layout; a campaign without one gets an empty board.
-pub fn load_layout(root: &Path) -> Result<Layout, String> {
+/// Read the board layout. `None` means the campaign has never saved one, so
+/// the UI starts it with the built-in pads.
+pub fn load_layout(root: &Path) -> Result<Option<Layout>, String> {
     require_absolute(root)?;
     let path = layout_path(root);
     match fs::read_to_string(&path) {
         Ok(text) => {
             let layout: Layout = serde_json::from_str(&text)
                 .map_err(|e| format!("Assets/Audio/{LAYOUT_FILE} could not be read: {e}"))?;
-            layout.normalized()
+            layout.normalized().map(Some)
         }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Layout::default()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(e) => Err(format!("Could not read Assets/Audio/{LAYOUT_FILE}: {e}")),
     }
 }
@@ -403,6 +428,7 @@ mod tests {
             channel: Channel::Effects,
             looping: false,
             volume: 1.0,
+            extra: serde_json::Map::new(),
         }
     }
 
@@ -410,7 +436,7 @@ mod tests {
     fn missing_folder_is_an_empty_board() {
         let dir = root();
         assert!(list_audio_files(dir.path()).unwrap().is_empty());
-        assert_eq!(load_layout(dir.path()).unwrap(), Layout::default());
+        assert_eq!(load_layout(dir.path()).unwrap(), None);
     }
 
     #[test]
@@ -442,7 +468,7 @@ mod tests {
         let text = fs::read_to_string(layout_path(dir.path())).unwrap();
         assert!(text.contains("\"loop\": true"));
         assert!(text.contains("\"channel\": \"music\""));
-        assert_eq!(load_layout(dir.path()).unwrap(), saved);
+        assert_eq!(load_layout(dir.path()).unwrap(), Some(saved));
     }
 
     #[test]
@@ -457,6 +483,41 @@ mod tests {
         layout.pads.push(pad("pad-1", "b.mp3"));
         assert!(save_layout(dir.path(), layout).is_err());
         assert!(!layout_path(dir.path()).exists());
+    }
+
+    #[test]
+    fn builtin_sounds_are_accepted_but_never_read_from_disk() {
+        let dir = root();
+        let mut layout = Layout::default();
+        layout.pads.push(pad("pad-1", "builtin:rain-storm.ogg"));
+        assert!(save_layout(dir.path(), layout).is_ok());
+        assert!(read_audio_file(dir.path(), "builtin:rain-storm.ogg").is_err());
+        for bad in [
+            "builtin:../x.ogg",
+            "builtin:a/b.ogg",
+            "builtin:Rain.ogg",
+            "builtin:.ogg",
+        ] {
+            let mut layout = Layout::default();
+            layout.pads.push(pad("pad-1", bad));
+            assert!(save_layout(dir.path(), layout).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn unknown_layout_fields_survive_a_save() {
+        let dir = root();
+        fs::create_dir_all(audio_dir(dir.path())).unwrap();
+        fs::write(
+            layout_path(dir.path()),
+            r#"{"format":"catalyst-soundboard","version":1,"scene":"storm","pads":[{"id":"pad-1","label":"Rain","file":"rain.mp3","color":"blue"}]}"#,
+        )
+        .unwrap();
+        let layout = load_layout(dir.path()).unwrap().unwrap();
+        save_layout(dir.path(), layout).unwrap();
+        let text = fs::read_to_string(layout_path(dir.path())).unwrap();
+        assert!(text.contains("\"scene\": \"storm\""));
+        assert!(text.contains("\"color\": \"blue\""));
     }
 
     #[test]

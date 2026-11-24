@@ -6,7 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import SoundboardWorkspace from "./SoundboardWorkspace.svelte";
 import type { Project } from "../types";
-import { emptyLayout, type SoundboardLayout } from "../soundboard/layout";
+import { BUILTIN_SOUNDS, defaultLayout, type SoundboardLayout } from "../soundboard.svelte";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
@@ -28,11 +28,11 @@ const project: Project = {
   target_page_count: null,
 };
 
-let stored: SoundboardLayout;
+let stored: SoundboardLayout | null;
 let files: { path: string; name: string; size: number }[];
 
 beforeEach(() => {
-  stored = emptyLayout();
+  stored = { ...defaultLayout(), pads: [] };
   files = [
     { path: "Music/Tavern.ogg", name: "Tavern.ogg", size: 10 },
     { path: "door.wav", name: "door.wav", size: 5 },
@@ -59,6 +59,29 @@ beforeEach(() => {
 });
 
 describe("SoundboardWorkspace", () => {
+  it("gives a campaign without a saved board the built-in starter pads", async () => {
+    stored = null;
+    files = [];
+    render(SoundboardWorkspace, { project });
+    for (const name of ["Travel March", "Dungeon Drone", "Ocean Waves", "Eerie Atmosphere", "Sword Clash"]) {
+      expect(await screen.findByRole("button", { name: new RegExp(`^${name}`) })).toBeTruthy();
+    }
+    expect(screen.getAllByRole("button", { name: /^Edit / })).toHaveLength(BUILTIN_SOUNDS.length);
+    expect(stored).toBeNull();
+  });
+
+  it("toggles a pad between loop and one-shot and saves it", async () => {
+    stored = null;
+    render(SoundboardWorkspace, { project });
+    const toggle = await screen.findByRole("button", { name: "Loop Ocean Waves" });
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    await fireEvent.click(toggle);
+    await waitFor(() => expect(toggle.getAttribute("aria-pressed")).toBe("false"));
+    await waitFor(() => expect(stored?.pads.find((p) => p.label === "Ocean Waves")?.loop).toBe(false), {
+      timeout: 2000,
+    });
+  });
+
   it("loads the campaign layout and audio list from the campaign folder", async () => {
     render(SoundboardWorkspace, { project });
     await screen.findByText(/2 audio files are not on the board yet/);
@@ -70,14 +93,14 @@ describe("SoundboardWorkspace", () => {
     render(SoundboardWorkspace, { project });
     await fireEvent.click(await screen.findByRole("button", { name: "Add them all" }));
     expect(await screen.findByRole("button", { name: /^Tavern/ })).toBeTruthy();
-    await waitFor(() => expect(stored.pads).toHaveLength(2), { timeout: 2000 });
-    const music = stored.pads.find((p) => p.file === "Music/Tavern.ogg");
-    expect(music).toMatchObject({ channel: "music", loop: true, label: "Tavern" });
-    expect(stored.pads.find((p) => p.file === "door.wav")).toMatchObject({ channel: "effects", loop: false });
+    await waitFor(() => expect(stored!.pads).toHaveLength(2), { timeout: 2000 });
+    const music = stored!.pads.find((p) => p.file === "Music/Tavern.ogg");
+    expect(music).toMatchObject({ channel: "effects", loop: false, label: "Tavern" });
+    expect(stored!.pads.find((p) => p.file === "door.wav")).toMatchObject({ channel: "effects", loop: false });
   });
 
   it("marks a pad whose file was removed from Assets/Audio", async () => {
-    stored.pads = [{ id: "pad-1", label: "Gone", file: "gone.mp3", channel: "effects", loop: false, volume: 1 }];
+    stored!.pads = [{ id: "pad-1", label: "Gone", file: "gone.mp3", channel: "effects", loop: false, volume: 1 }];
     render(SoundboardWorkspace, { project });
     expect(await screen.findByText("missing file")).toBeTruthy();
     expect((screen.getByRole("button", { name: /^Gone/ }) as HTMLButtonElement).disabled).toBe(true);
@@ -95,17 +118,17 @@ describe("SoundboardWorkspace", () => {
       }),
     );
     expect(await screen.findByRole("button", { name: /^Rain/ })).toBeTruthy();
-    await waitFor(() => expect(stored.pads.map((p) => p.file)).toEqual(["Rain.mp3"]), { timeout: 2000 });
+    await waitFor(() => expect(stored!.pads.map((p) => p.file)).toEqual(["Rain.mp3"]), { timeout: 2000 });
   });
 
   it("edits a pad's name and loop setting", async () => {
-    stored.pads = [{ id: "pad-1", label: "Door", file: "door.wav", channel: "effects", loop: false, volume: 1 }];
+    stored!.pads = [{ id: "pad-1", label: "Door", file: "door.wav", channel: "effects", loop: false, volume: 1 }];
     render(SoundboardWorkspace, { project });
     await fireEvent.click(await screen.findByRole("button", { name: "Edit Door" }));
     const name = screen.getByPlaceholderText("Tavern night") as HTMLInputElement;
     await fireEvent.input(name, { target: { value: "Front door" } });
     await fireEvent.click(screen.getByLabelText("Loop until stopped"));
     await fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(stored.pads[0]).toMatchObject({ label: "Front door", loop: true }), { timeout: 2000 });
+    await waitFor(() => expect(stored!.pads[0]).toMatchObject({ label: "Front door", loop: true }), { timeout: 2000 });
   });
 });
