@@ -814,17 +814,11 @@
         onProjectActivated={() => (showGlobalHome = false)}
       />
     {:else if workspace.active === "write"}
-      <ScenePanel
-        bind:this={scenePanel}
-        onOpenEditorial={async (id, sceneId, cursor) => {
-          await editorial?.openLocal(id, sceneId, cursor);
-        }}
-      />
-      <ReferencesPanel />
+      <StoryDevelopmentWorkspace focusRoot="Sessions" />
     {:else if workspace.active === "story-development"}
       <StoryDevelopmentWorkspace />
     {:else if workspace.active === "outline"}
-      <OutlineWorkspace project={currentProject.value} />
+      <StoryDevelopmentWorkspace focusRoot="Adventures" />
     {:else if workspace.active === "home"}
       <ProjectDashboard
         project={currentProject.value}
