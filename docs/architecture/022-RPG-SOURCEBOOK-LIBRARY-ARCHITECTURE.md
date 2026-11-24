@@ -79,3 +79,7 @@ Character Studio UI consumes these services. Parent Catalyst can reuse the same 
 - Character option source link resolves to expected book ID/page and edition.
 - Invalid extracted rule candidate cannot change a character or active rules pack.
 - No network calls, paid-content redistribution, unauthorized DRM circumvention or bundling of imported books in app releases.
+
+## Owner-approved personal-use and content policy (2026-11-24)
+
+Catalyst is for the owner's private use; no commercial distribution is planned. Applicable access, copying and software-license terms remain in force. S13 records source provenance and redistribution classification for books, extracted rules and assets: redistributable, personal-only, permission-required, unknown. Inherit only verified applicable source rights; narrower restrictions win. A tag is not proof of permission. Local lawful use is separate from redistribution. Keep restricted payloads outside tracked Git and shared artifacts; preserve classification through extraction and imports.
