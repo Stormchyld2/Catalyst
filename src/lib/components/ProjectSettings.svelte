@@ -89,9 +89,11 @@
     error = null;
 
     try {
-      const parsedWordTarget = isCampaign ? project.word_target : String(wordTarget ?? "").trim().length
-        ? Number(String(wordTarget ?? "").trim())
-        : null;
+      const parsedWordTarget = isCampaign
+        ? project.word_target
+        : String(wordTarget ?? "").trim().length
+          ? Number(String(wordTarget ?? "").trim())
+          : null;
       if (
         parsedWordTarget !== null &&
         (!Number.isSafeInteger(parsedWordTarget) || parsedWordTarget < 0)
