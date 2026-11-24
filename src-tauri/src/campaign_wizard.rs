@@ -950,7 +950,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
         w.notes.trim(),
         if party_name.is_empty() { "Party not named" } else { party_name },
         players.join("\n"),
-        format!("{}\n\n{}", story.central_conflict.trim(), if story.starting_adventure.trim().is_empty() { String::new() } else { format!("Starting adventure: [[{}]]", story.starting_adventure.trim()) }),
+        format!("{}\n\n{}\n\n{}", story.central_conflict.trim(), if story.starting_adventure.trim().is_empty() { String::new() } else { format!("Starting adventure: [[{}]]", story.starting_adventure.trim()) }, story.arcs.iter().filter(|arc| !arc.trim().is_empty()).map(|arc| format!("- [[{}]]", short_title(arc))).collect::<Vec<_>>().join("\n")),
         story.side_quests.iter().map(|quest| format!("- [[{}]]", short_title(quest))).collect::<Vec<_>>().join("\n"),
         npc_names.join("\n"),
         faction_names.join("\n"),
