@@ -933,25 +933,25 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
     let players = input.party.players.iter()
         .filter_map(|p| {
             let name = p.character_name.trim();
-            if name.is_empty() { None } else { Some(format!("- {name}")) }
+            if name.is_empty() { None } else { Some(format!("- [[{name}]]")) }
         }).collect::<Vec<_>>();
     let npc_names = input.npcs.iter().filter_map(|n| {
         let name = n.name.trim();
-        if name.is_empty() { None } else { Some(format!("- {name}")) }
+        if name.is_empty() { None } else { Some(format!("- [[{name}]]")) }
     }).collect::<Vec<_>>();
     let faction_names = input.factions.iter().filter_map(|n| {
         let name = n.name.trim();
-        if name.is_empty() { None } else { Some(format!("- {name}")) }
+        if name.is_empty() { None } else { Some(format!("- [[{name}]]")) }
     }).collect::<Vec<_>>();
     let overview_body = format!(
         "## Campaign Summary\n\n{}\n\n## World and Setting\n\n{}\n\n{}\n\n## Party\n\n{}\n\n{}\n\n## Main Story Arc\n\n{}\n\n## Active Quests\n\n{}\n\n## Important NPCs and Factions\n\n### NPCs\n\n{}\n\n### Factions\n\n{}\n\n## Campaign Timeline\n\nUpdate after actual sessions; see Sessions/Session Logs and Sessions/Campaign State.\n\n## Player-Facing Pitch\n\n{}\n\n## GM-Only Notes\n\nAdd private GM notes here. Visibility metadata is descriptive and must not be treated as enforced sharing permissions.\n\n## Related Records\n\n- Worldbuilding/ (lore and locations)\n- Characters/ (PC placeholders and NPC profiles)\n- Adventures/ (scenes and quests)\n- Sessions/ (plans, logs and campaign state)\n- Rules & Mechanics/ (system references and house rules)\n\nEdit the source records rather than duplicating their content here.",
         b.premise.trim(),
-        w.name.trim(),
+        if w.name.trim().is_empty() { String::new() } else { format!("[[{}]]", w.name.trim()) },
         w.notes.trim(),
         if party_name.is_empty() { "Party not named" } else { party_name },
         players.join("\n"),
-        story.central_conflict.trim(),
-        story.side_quests.join("\n"),
+        format!("{}\n\n{}", story.central_conflict.trim(), if story.starting_adventure.trim().is_empty() { String::new() } else { format!("Starting adventure: [[{}]]", story.starting_adventure.trim()) }),
+        story.side_quests.iter().map(|quest| format!("- [[{}]]", short_title(quest))).collect::<Vec<_>>().join("\n"),
         npc_names.join("\n"),
         faction_names.join("\n"),
         b.subtitle.trim()
