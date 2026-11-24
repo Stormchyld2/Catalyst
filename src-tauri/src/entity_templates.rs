@@ -212,7 +212,7 @@ pub fn validate_manifest(manifest: &EntityTemplateManifest) -> Result<(), String
     if manifest.category.trim().is_empty() {
         return Err("Template category must not be empty.".into());
     }
-    if !["story-development", "manuscript", "outline", "review", "publishing", "project"]
+    if !["story-development", "worldbuilding", "campaign", "adventure", "encounter", "session", "gm", "manuscript", "outline", "review", "publishing", "project"]
         .contains(&manifest.scope.as_str())
     {
         return Err(format!("Template scope '{}' is not supported.", manifest.scope));
@@ -310,8 +310,7 @@ pub fn save_user_template(
     fs::create_dir_all(user_templates_dir)
         .map_err(|e| format!("Could not create Templates folder '{}': {e}", user_templates_dir.display()))?;
 
-    if built_in_templates()
-        .iter()
+    if built_in_templates().into_iter().chain(legacy_lithomark_templates())
         .any(|template| template.manifest.id == input.manifest.id)
     {
         return Err(format!(
@@ -417,6 +416,7 @@ fn normalize_body(body: &str) -> String {
 pub(crate) fn built_in_template(id: &str) -> Option<EntityTemplate> {
     built_in_templates()
         .into_iter()
+        .chain(legacy_lithomark_templates())
         .find(|template| template.manifest.id == id)
 }
 
@@ -434,7 +434,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("image", "Image", "image"),
                 ("subtitle", "Subtitle", "text"),
                 ("role", "Role", "text"),
-                ("pov", "POV", "text"),
+                ("pov", "Roleplay Perspective", "text"),
                 ("status", "Status", "text"),
                 ("aliases", "Aliases", "list"),
                 ("age", "Age", "text"),
@@ -442,12 +442,12 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("occupation", "Occupation", "text"),
                 ("affiliation", "Affiliation", "text"),
                 ("current_location", "Current Location", "text"),
-                ("narrative_role", "Narrative Role", "multiline"),
+                ("narrative_role", "Campaign Role", "multiline"),
                 ("first_appearance", "First Appearance", "text"),
                 ("last_appearance", "Last Appearance", "text"),
                 ("tags", "Tags", "list"),
             ],
-            "# Character Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Full name |  |\n| Birth year |  |\n| Age at story opening |  |\n| Occupation |  |\n| Narrative role |  |\n\n## Core Character Concept\n\n## Family & Background\n\n## Education & Career\n\n## Important Life Events\n\n## Key Relationships\n\n## Professional & Practical Strengths\n\n## Personality\n\n### Strengths\n\n### Flaws\n\n### Contradictions\n\n## Psychological & Behavioral Habits\n\n## Life Outside the Main Story\n\n## Character Arc & Progression\n\n### Stage One\n\n### Stage Two\n\n### Stage Three\n\n### Stage Four\n\n### Stage Five\n\n## Voice & Dialogue Notes\n\n## Continuity Notes",
+            "# Character Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Full name |  |\n| Birth year |  |\n| Age at campaign start |  |\n| Occupation |  |\n| Campaign role |  |\n\n## Core Character Concept\n\n## Family & Background\n\n## Education & Career\n\n## Important Life Events\n\n## Key Relationships\n\n## Professional & Practical Strengths\n\n## Personality\n\n### Strengths\n\n### Flaws\n\n### Contradictions\n\n## Psychological & Behavioral Habits\n\n## Life Beyond Adventuring\n\n## Character Development & Campaign History\n\n### Stage One\n\n### Stage Two\n\n### Stage Three\n\n### Stage Four\n\n### Stage Five\n\n## Voice & Dialogue Notes\n\n## Continuity Notes",
         ),
         built_in(
             "character-relationship",
@@ -466,10 +466,10 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("origin", "Origin", "text"),
                 ("public_dynamic", "Public Dynamic", "multiline"),
                 ("private_dynamic", "Private Dynamic", "multiline"),
-                ("story_role", "Story Role", "multiline"),
+                ("story_role", "Campaign Role", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Relationship Summary\n\n## Canonical Relationship\n\n| Field | Canon |\n| --- | --- |\n| Character A |  |\n| Character B |  |\n| Relationship type |  |\n| Status |  |\n\n## Origin & Shared History\n\n## Public Dynamic\n\n## Private Dynamic\n\n## Trust, Loyalty & Intimacy\n\n## Sources of Conflict\n\n## Power Balance\n\n## Secrets & Misunderstandings\n\n## Important Shared Events\n\n## Relationship Progression\n\n### Beginning State\n\n### Pressure & Change\n\n### Breaking / Turning Point\n\n### End State\n\n## Story Function\n\n## Dialogue & Interaction Notes\n\n## Continuity Notes",
+            "# Relationship Summary\n\n## Canonical Relationship\n\n| Field | Canon |\n| --- | --- |\n| Character A |  |\n| Character B |  |\n| Relationship type |  |\n| Status |  |\n\n## Origin & Shared History\n\n## Public Dynamic\n\n## Private Dynamic\n\n## Trust, Loyalty & Intimacy\n\n## Sources of Conflict\n\n## Power Balance\n\n## Secrets & Misunderstandings\n\n## Important Shared Events\n\n## Relationship Progression\n\n### Beginning State\n\n### Pressure & Change\n\n### Breaking / Turning Point\n\n### End State\n\n## Campaign Use\n\n## Dialogue & Interaction Notes\n\n## Continuity Notes",
         ),
         built_in(
             "character-arc",
@@ -491,7 +491,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("ending_state", "Ending State", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Character Arc Summary\n\n## Character & Arc Type\n\n## Starting State\n\n## External Goal\n\n## Internal Need\n\n## Wound, Fear & Misbelief\n\n## Stakes & Consequences\n\n## Arc Progression\n\n### Stage One — Establishment\n\n### Stage Two — Pressure\n\n### Stage Three — Crisis\n\n### Stage Four — Choice\n\n### Stage Five — Consequence\n\n## Key Turning Points\n\n## Relationships That Shape the Arc\n\n## Ending State\n\n## Thematic Function\n\n## Continuity Notes",
+            "# Character Arc Summary\n\n## Character & Arc Type\n\n## Starting State\n\n## External Goal\n\n## Internal Need\n\n## Wound, Fear & Misbelief\n\n## Stakes & Consequences\n\n## Arc Progression\n\n### Starting State\n\n### Challenges and Changes\n\n### Crucial Choices\n\n### Consequences\n\n### Current State\n\n## Key Turning Points\n\n## Relationships That Shape the Arc\n\n## Ending State\n\n## Thematic Function\n\n## Continuity Notes",
         ),
         built_in(
             "profession-occupation",
@@ -551,10 +551,10 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("location_type", "Location Type", "text"),
                 ("aliases", "Aliases", "list"),
                 ("region", "Region", "text"),
-                ("story_role", "Story Role", "multiline"),
+                ("story_role", "Campaign Role", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Location Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Name |  |\n| Type |  |\n| Region |  |\n| Story role |  |\n\n## Physical Description\n\n## Geography & Layout\n\n## Atmosphere & Sensory Details\n\n## History\n\n## Culture & Population\n\n## Important Areas\n\n## Connected Characters\n\n## Connected Organizations\n\n## Story Function\n\n## Events & Scenes\n\n## Continuity Notes",
+            "# Location Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Name |  |\n| Type |  |\n| Region |  |\n| Story role |  |\n\n## Physical Description\n\n## Geography & Layout\n\n## Atmosphere & Sensory Details\n\n## History\n\n## Culture & Population\n\n## Important Areas\n\n## Connected Characters\n\n## Connected Organizations\n\n## Campaign Use\n\n## Events & Scenes\n\n## Continuity Notes",
         ),
         built_in(
             "settlement-city",
@@ -576,7 +576,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("demonym", "Demonym", "text"),
                 ("tags", "Tags", "list"),
             ],
-            "# Settlement Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Name |  |\n| Type |  |\n| Region |  |\n| Population |  |\n| Government |  |\n\n## Geography & Setting\n\n## Districts & Layout\n\n## Population & Demographics\n\n## Government & Law\n\n## Economy & Trade\n\n## Infrastructure & Services\n\n## Culture & Daily Life\n\n## Religion & Belief\n\n## History & Founding\n\n## Important Locations\n\n## Organizations & Factions\n\n## Notable Residents\n\n## Conflicts & Pressures\n\n## Story Function\n\n## Events & Scenes\n\n## Continuity Notes",
+            "# Settlement Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Name |  |\n| Type |  |\n| Region |  |\n| Population |  |\n| Government |  |\n\n## Geography & Setting\n\n## Districts & Layout\n\n## Population & Demographics\n\n## Government & Law\n\n## Economy & Trade\n\n## Infrastructure & Services\n\n## Culture & Daily Life\n\n## Religion & Belief\n\n## History & Founding\n\n## Important Locations\n\n## Organizations & Factions\n\n## Notable Residents\n\n## Conflicts & Pressures\n\n## Campaign Use\n\n## Events & Scenes\n\n## Continuity Notes",
         ),
         built_in(
             "building-structure",
@@ -598,7 +598,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("architectural_style", "Architectural Style", "text"),
                 ("tags", "Tags", "list"),
             ],
-            "# Building & Structure Summary\n\n## Canonical Identity\n\n## Exterior & Approach\n\n## Interior Layout\n\n## Rooms & Important Areas\n\n## Construction & Architecture\n\n## Access, Security & Defenses\n\n## Utilities & Infrastructure\n\n## Ownership & Occupants\n\n## Daily Use & Activity\n\n## History\n\n## Secrets & Hidden Areas\n\n## Connected Characters & Organizations\n\n## Story Function\n\n## Events & Scenes\n\n## Continuity Notes",
+            "# Building & Structure Summary\n\n## Canonical Identity\n\n## Exterior & Approach\n\n## Interior Layout\n\n## Rooms & Important Areas\n\n## Construction & Architecture\n\n## Access, Security & Defenses\n\n## Utilities & Infrastructure\n\n## Ownership & Occupants\n\n## Daily Use & Activity\n\n## History\n\n## Secrets & Hidden Areas\n\n## Connected Characters & Organizations\n\n## Campaign Use\n\n## Events & Scenes\n\n## Continuity Notes",
         ),
         built_in(
             "geography-landmark",
@@ -621,7 +621,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("hazards", "Hazards", "list"),
                 ("tags", "Tags", "list"),
             ],
-            "# Geography & Landmark Summary\n\n## Canonical Identity\n\n## Physical Description\n\n## Location & Boundaries\n\n## Terrain & Geology\n\n## Climate & Weather\n\n## Flora & Fauna\n\n## Resources\n\n## Hazards & Obstacles\n\n## Access & Travel\n\n## Human / Cultural Presence\n\n## History & Legends\n\n## Connected Locations\n\n## Story Function\n\n## Events & Scenes\n\n## Continuity Notes",
+            "# Geography & Landmark Summary\n\n## Canonical Identity\n\n## Physical Description\n\n## Location & Boundaries\n\n## Terrain & Geology\n\n## Climate & Weather\n\n## Flora & Fauna\n\n## Resources\n\n## Hazards & Obstacles\n\n## Access & Travel\n\n## Human / Cultural Presence\n\n## History & Legends\n\n## Connected Locations\n\n## Campaign Use\n\n## Events & Scenes\n\n## Continuity Notes",
         ),
         built_in(
             "region-territory",
@@ -644,7 +644,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("resources", "Resources", "list"),
                 ("tags", "Tags", "list"),
             ],
-            "# Region & Territory Summary\n\n## Canonical Identity\n\n## Boundaries & Geography\n\n## Climate & Environment\n\n## Population & Peoples\n\n## Settlements & Important Locations\n\n## Government & Administration\n\n## Economy & Resources\n\n## Infrastructure & Travel\n\n## Culture & Identity\n\n## History\n\n## Neighboring Regions & Relations\n\n## Conflicts & Disputes\n\n## Strategic Importance\n\n## Story Function\n\n## Continuity Notes",
+            "# Region & Territory Summary\n\n## Canonical Identity\n\n## Boundaries & Geography\n\n## Climate & Environment\n\n## Population & Peoples\n\n## Settlements & Important Locations\n\n## Government & Administration\n\n## Economy & Resources\n\n## Infrastructure & Travel\n\n## Culture & Identity\n\n## History\n\n## Neighboring Regions & Relations\n\n## Conflicts & Disputes\n\n## Strategic Importance\n\n## Campaign Use\n\n## Continuity Notes",
         ),
         built_in(
             "organization-profile",
@@ -661,10 +661,10 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("aliases", "Aliases", "list"),
                 ("leader", "Leader", "text"),
                 ("headquarters", "Headquarters", "text"),
-                ("story_role", "Story Role", "multiline"),
+                ("story_role", "Campaign Role", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Organization Summary\n\n## Canonical Identity\n\n## Purpose & Mission\n\n## History\n\n## Structure\n\n## Leadership\n\n## Membership\n\n## Resources & Influence\n\n## Culture & Internal Politics\n\n## Allies & Rivals\n\n## Story Function\n\n## Key Events\n\n## Continuity Notes",
+            "# Organization Summary\n\n## Canonical Identity\n\n## Purpose & Mission\n\n## History\n\n## Structure\n\n## Leadership\n\n## Membership\n\n## Resources & Influence\n\n## Culture & Internal Politics\n\n## Allies & Rivals\n\n## Campaign Use\n\n## Key Events\n\n## Continuity Notes",
         ),
         built_in(
             "government-profile",
@@ -682,10 +682,10 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("capital", "Capital", "text"),
                 ("leader", "Leader", "text"),
                 ("institutions", "Institutions", "list"),
-                ("story_role", "Story Role", "multiline"),
+                ("story_role", "Campaign Role", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Government Summary\n\n## Canonical Identity\n\n## Territory & Population\n\n## History\n\n## Constitutional Structure\n\n## Leadership\n\n## Institutions\n\n## Laws & Justice\n\n## Economy & Resources\n\n## Military & Security\n\n## Political Culture\n\n## Factions & Opposition\n\n## Foreign Relations\n\n## Story Function\n\n## Continuity Notes",
+            "# Government Summary\n\n## Canonical Identity\n\n## Territory & Population\n\n## History\n\n## Constitutional Structure\n\n## Leadership\n\n## Institutions\n\n## Laws & Justice\n\n## Economy & Resources\n\n## Military & Security\n\n## Political Culture\n\n## Factions & Opposition\n\n## Foreign Relations\n\n## Campaign Use\n\n## Continuity Notes",
         ),
         built_in(
             "military-security-organization",
@@ -696,7 +696,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Military, intelligence, law-enforcement, guard, or security organization covering command, doctrine, capabilities, culture, and operations.",
             &["subtitle", "organization_type", "leader", "headquarters", "jurisdiction", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("organization_type","Organization Type","text"),("leader","Commander / Leader","text"),("headquarters","Headquarters","text"),("jurisdiction","Jurisdiction / Theater","text"),("status","Status","text"),("branches","Branches / Units","list"),("allies","Allies","list"),("rivals","Rivals / Adversaries","list"),("tags","Tags","list")],
-            "# Military & Security Organization Summary\n\n## Canonical Identity\n\n## Mission & Mandate\n\n## History & Founding\n\n## Command Structure\n\n## Branches, Units & Specialties\n\n## Ranks & Roles\n\n## Recruitment & Training\n\n## Doctrine & Standard Procedures\n\n## Equipment & Resources\n\n## Bases, Facilities & Territory\n\n## Intelligence & Communications\n\n## Culture, Traditions & Reputation\n\n## Laws, Authority & Oversight\n\n## Allies, Rivals & Adversaries\n\n## Important Personnel\n\n## Operations & Key Events\n\n## Story Function\n\n## Continuity Notes",
+            "# Military & Security Organization Summary\n\n## Canonical Identity\n\n## Mission & Mandate\n\n## History & Founding\n\n## Command Structure\n\n## Branches, Units & Specialties\n\n## Ranks & Roles\n\n## Recruitment & Training\n\n## Doctrine & Standard Procedures\n\n## Equipment & Resources\n\n## Bases, Facilities & Territory\n\n## Intelligence & Communications\n\n## Culture, Traditions & Reputation\n\n## Laws, Authority & Oversight\n\n## Allies, Rivals & Adversaries\n\n## Important Personnel\n\n## Operations & Key Events\n\n## Campaign Use\n\n## Continuity Notes",
         ),
         built_in(
             "faction-secret-society",
@@ -707,7 +707,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Faction, movement, conspiracy, clandestine order, or secret society covering agenda, membership, methods, secrecy, and internal politics.",
             &["subtitle", "organization_type", "leader", "headquarters", "agenda", "secrecy", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("organization_type","Faction Type","text"),("leader","Leader","text"),("headquarters","Base / Headquarters","text"),("agenda","Agenda / Goal","multiline"),("secrecy","Secrecy Level","text"),("status","Status","text"),("symbols","Symbols / Identifiers","list"),("allies","Allies","list"),("rivals","Rivals","list"),("tags","Tags","list")],
-            "# Faction & Secret Society Summary\n\n## Canonical Identity\n\n## Public Face\n\n## True Purpose & Agenda\n\n## Origins & History\n\n## Leadership & Power Structure\n\n## Membership & Recruitment\n\n## Ranks, Cells & Internal Divisions\n\n## Beliefs, Rules & Initiation\n\n## Methods & Operations\n\n## Resources & Influence\n\n## Symbols, Codes & Recognition\n\n## Secrecy & Counterintelligence\n\n## Allies, Rivals & Enemies\n\n## Internal Conflicts & Secrets\n\n## Important Members\n\n## Story Function\n\n## Continuity Notes",
+            "# Faction & Secret Society Summary\n\n## Canonical Identity\n\n## Public Face\n\n## True Purpose & Agenda\n\n## Origins & History\n\n## Leadership & Power Structure\n\n## Membership & Recruitment\n\n## Ranks, Cells & Internal Divisions\n\n## Beliefs, Rules & Initiation\n\n## Methods & Operations\n\n## Resources & Influence\n\n## Symbols, Codes & Recognition\n\n## Secrecy & Counterintelligence\n\n## Allies, Rivals & Enemies\n\n## Internal Conflicts & Secrets\n\n## Important Members\n\n## Campaign Use\n\n## Continuity Notes",
         ),
         built_in(
             "worldbuilding-profile",
@@ -758,7 +758,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Precise chronology entry for canon events, sequence dependencies, participants, and continuity.",
             &["subtitle", "date", "time", "location", "participants", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("date","Date","text"),("time","Time","text"),("location","Location","text"),("participants","Participants","list"),("status","Canon Status","text"),("preceded_by","Preceded By","text"),("followed_by","Followed By","text"),("tags","Tags","list")],
-            "# Event Summary\n\n## Canonical Date, Time & Place\n\n## Participants\n\n## Preconditions\n\n## Event Sequence\n\n## Immediate Outcome\n\n## Consequences\n\n## Preceded By\n\n## Followed By\n\n## Related Plot Threads\n\n## Evidence / Source of Canon\n\n## Continuity Checks",
+            "# Event Summary\n\n## Canonical Date, Time & Place\n\n## Participants\n\n## Preconditions\n\n## Event Sequence\n\n## Immediate Outcome\n\n## Consequences\n\n## Preceded By\n\n## Followed By\n\n## Related Adventure Threads\n\n## Evidence / Source of Canon\n\n## Continuity Checks",
         ),
         built_in(
             "magic-system",
@@ -840,10 +840,10 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("object_type", "Object Type", "text"),
                 ("owner", "Owner", "text"),
                 ("origin", "Origin", "text"),
-                ("story_role", "Story Role", "multiline"),
+                ("story_role", "Campaign Role", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Object Summary\n\n## Canonical Identity\n\n## Physical Description\n\n## Origin & History\n\n## Ownership & Custody\n\n## Capabilities / Properties\n\n## Symbolic Meaning\n\n## Story Function\n\n## Appearances & Events\n\n## Continuity Notes",
+            "# Object Summary\n\n## Canonical Identity\n\n## Physical Description\n\n## Origin & History\n\n## Ownership & Custody\n\n## Capabilities / Properties\n\n## Symbolic Meaning\n\n## Campaign Use\n\n## Appearances & Events\n\n## Continuity Notes",
         ),
         built_in(
             "artifact-relic",
@@ -854,7 +854,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Unique or historically significant artifact covering provenance, properties, ownership, symbolism, secrets, and story consequences.",
             &["subtitle", "object_type", "creator", "origin", "owner", "current_location", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("object_type","Artifact Type","text"),("creator","Creator / Maker","text"),("origin","Origin","text"),("owner","Owner / Custodian","text"),("current_location","Current Location","text"),("status","Status","text"),("materials","Materials","list"),("properties","Properties / Powers","list"),("tags","Tags","list")],
-            "# Artifact & Relic Summary\n\n## Canonical Identity\n\n## Physical Description\n\n## Materials & Construction\n\n## Creation & Origin\n\n## Provenance & Ownership History\n\n## Properties, Powers & Capabilities\n\n## Limits, Costs & Risks\n\n## Activation / Use\n\n## Symbolism & Cultural Meaning\n\n## Legends & Conflicting Accounts\n\n## Current Owner & Location\n\n## Secrets & Hidden Properties\n\n## Story Function\n\n## Appearances & Key Events\n\n## Continuity Notes",
+            "# Artifact & Relic Summary\n\n## Canonical Identity\n\n## Physical Description\n\n## Materials & Construction\n\n## Creation & Origin\n\n## Provenance & Ownership History\n\n## Properties, Powers & Capabilities\n\n## Limits, Costs & Risks\n\n## Activation / Use\n\n## Symbolism & Cultural Meaning\n\n## Legends & Conflicting Accounts\n\n## Current Owner & Location\n\n## Secrets & Hidden Properties\n\n## Campaign Use\n\n## Appearances & Key Events\n\n## Continuity Notes",
         ),
         built_in(
             "vehicle-vessel",
@@ -865,7 +865,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Vehicle, ship, aircraft, spacecraft, train, or other conveyance covering design, capabilities, crew, operations, and history.",
             &["subtitle", "vehicle_type", "manufacturer", "owner", "operator", "home_base", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("vehicle_type","Vehicle / Vessel Type","text"),("manufacturer","Manufacturer / Builder","text"),("owner","Owner","text"),("operator","Operator / Captain","text"),("home_base","Home Base / Port","text"),("status","Status","text"),("capacity","Capacity","text"),("crew","Crew","list"),("tags","Tags","list")],
-            "# Vehicle & Vessel Summary\n\n## Canonical Identity\n\n## Appearance & Design\n\n## Construction & History\n\n## Propulsion / Movement\n\n## Performance & Range\n\n## Interior Layout & Compartments\n\n## Systems & Equipment\n\n## Defenses / Armament\n\n## Crew, Passengers & Capacity\n\n## Ownership & Operation\n\n## Maintenance, Fuel & Logistics\n\n## Limitations & Vulnerabilities\n\n## Home Base, Routes & Operating Area\n\n## Story Function\n\n## Key Journeys & Events\n\n## Continuity Notes",
+            "# Vehicle & Vessel Summary\n\n## Canonical Identity\n\n## Appearance & Design\n\n## Construction & History\n\n## Propulsion / Movement\n\n## Performance & Range\n\n## Interior Layout & Compartments\n\n## Systems & Equipment\n\n## Defenses / Armament\n\n## Crew, Passengers & Capacity\n\n## Ownership & Operation\n\n## Maintenance, Fuel & Logistics\n\n## Limitations & Vulnerabilities\n\n## Home Base, Routes & Operating Area\n\n## Campaign Use\n\n## Key Journeys & Events\n\n## Continuity Notes",
         ),
         built_in(
             "material-resource",
@@ -895,7 +895,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("importance", "Importance", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Event Summary\n\n## Canonical Date & Place\n\n## Participants\n\n## What Happened\n\n## Causes\n\n## Immediate Consequences\n\n## Long-Term Consequences\n\n## Character Impact\n\n## Evidence / Sources\n\n## Story Function\n\n## Continuity Notes",
+            "# Event Summary\n\n## Canonical Date & Place\n\n## Participants\n\n## What Happened\n\n## Causes\n\n## Immediate Consequences\n\n## Long-Term Consequences\n\n## Character Impact\n\n## Evidence / Sources\n\n## Campaign Use\n\n## Continuity Notes",
         ),
         built_in(
             "general-reference",
@@ -917,7 +917,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Diegetic document profile for letters, reports, articles, records, journals, laws, messages, files, and other texts that exist inside the story world.",
             &["subtitle", "document_type", "author", "recipient", "date", "origin", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("document_type","Document Type","text"),("author","Author / Issuer","text"),("recipient","Recipient / Audience","text"),("date","Date","text"),("origin","Place / Organization of Origin","text"),("status","Authenticity / Status","text"),("classification","Classification / Access","text"),("tags","Tags","list")],
-            "# Document Summary\n\n## Canonical Identity\n\n## Physical / Digital Description\n\n## Author, Issuer & Provenance\n\n## Intended Recipient / Audience\n\n## Date & Circumstances\n\n## In-World Content\n\n## Meaning & Interpretation\n\n## Reliability, Bias & Authenticity\n\n## Chain of Custody / Discovery\n\n## Who Knows About It\n\n## Secrets, Redactions & Hidden Information\n\n## Story Function\n\n## Appearances & References\n\n## Continuity Notes",
+            "# Document Summary\n\n## Canonical Identity\n\n## Physical / Digital Description\n\n## Author, Issuer & Provenance\n\n## Intended Recipient / Audience\n\n## Date & Circumstances\n\n## In-World Content\n\n## Meaning & Interpretation\n\n## Reliability, Bias & Authenticity\n\n## Chain of Custody / Discovery\n\n## Who Knows About It\n\n## Secrets, Redactions & Hidden Information\n\n## Campaign Use\n\n## Appearances & References\n\n## Continuity Notes",
         ),
         built_in(
             "plot-thread-mystery",
@@ -928,7 +928,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Story-development tracker for mysteries, questions, clues, reveals, red herrings, dependencies, and resolution.",
             &["subtitle", "thread_type", "status", "introduced", "resolved", "stakes", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("thread_type","Thread / Mystery Type","text"),("status","Status","text"),("introduced","Introduced In","text"),("resolved","Resolved In","text"),("stakes","Stakes","multiline"),("characters","Key Characters","list"),("locations","Key Locations","list"),("tags","Tags","list")],
-            "# Plot Thread / Mystery Summary\n\n## Central Question or Conflict\n\n## What the Reader Knows\n\n## What the Characters Know\n\n## Hidden Truth / Intended Resolution\n\n## Origin & Setup\n\n## Stakes\n\n## Clues & Evidence\n\n## Red Herrings & Misdirection\n\n## Escalation & Complications\n\n## Dependencies & Connected Threads\n\n## Character Involvement\n\n## Reveal Plan\n\n## Resolution & Consequences\n\n## Scene / Chapter Tracking\n\n## Continuity Checks",
+            "# Plot Thread / Mystery Summary\n\n## Central Question or Conflict\n\n## What the Players Know\n\n## What the Player Characters Know\n\n## Hidden Truth / Intended Resolution\n\n## Origin & Setup\n\n## Stakes\n\n## Clues & Evidence\n\n## Red Herrings & Misdirection\n\n## Escalation & Complications\n\n## Dependencies & Connected Threads\n\n## Character Involvement\n\n## Reveal Plan\n\n## Resolution & Consequences\n\n## Scene / Chapter Tracking\n\n## Continuity Checks",
         ),
         built_in(
             "conflict-war",
@@ -939,7 +939,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Conflict dossier for wars, feuds, rebellions, political struggles, rivalries, and other sustained contests.",
             &["subtitle", "conflict_type", "start_date", "end_date", "status", "location", "belligerents", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("conflict_type","Conflict Type","text"),("start_date","Start Date / Period","text"),("end_date","End Date / Period","text"),("status","Status","text"),("location","Primary Theater / Location","text"),("belligerents","Sides / Belligerents","list"),("leaders","Leaders","list"),("tags","Tags","list")],
-            "# Conflict & War Summary\n\n## Canonical Identity\n\n## Background & Root Causes\n\n## Trigger / Inciting Incident\n\n## Sides, Factions & Leadership\n\n## Goals & Stakes\n\n## Resources & Capabilities\n\n## Geography & Theaters\n\n## Strategy, Tactics & Methods\n\n## Chronology & Major Events\n\n## Turning Points\n\n## Civilian & Social Impact\n\n## Political & Economic Impact\n\n## Alliances & External Actors\n\n## Outcome / Current State\n\n## Long-Term Consequences\n\n## Story Function\n\n## Continuity Notes",
+            "# Conflict & War Summary\n\n## Canonical Identity\n\n## Background & Root Causes\n\n## Trigger / Inciting Incident\n\n## Sides, Factions & Leadership\n\n## Goals & Stakes\n\n## Resources & Capabilities\n\n## Geography & Theaters\n\n## Strategy, Tactics & Methods\n\n## Chronology & Major Events\n\n## Turning Points\n\n## Civilian & Social Impact\n\n## Political & Economic Impact\n\n## Alliances & External Actors\n\n## Outcome / Current State\n\n## Long-Term Consequences\n\n## Campaign Use\n\n## Continuity Notes",
         ),
         built_in(
             "tradition-ritual",
@@ -950,7 +950,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "Tradition, ceremony, custom, rite, festival, or recurring social practice covering meaning, participants, procedure, variation, and story use.",
             &["subtitle", "tradition_type", "culture", "location", "frequency", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("tradition_type","Tradition / Ritual Type","text"),("culture","Culture / Community","text"),("location","Location","text"),("frequency","Frequency / Timing","text"),("status","Status","text"),("participants","Participants","list"),("symbols","Symbols / Objects","list"),("tags","Tags","list")],
-            "# Tradition & Ritual Summary\n\n## Canonical Identity\n\n## Origin & History\n\n## Purpose & Meaning\n\n## Participants & Roles\n\n## Timing & Occasion\n\n## Location & Setting\n\n## Preparation\n\n## Sequence / Procedure\n\n## Objects, Clothing & Symbols\n\n## Words, Music & Performance\n\n## Food, Gifts & Offerings\n\n## Rules, Taboos & Expectations\n\n## Variations & Regional Differences\n\n## Social Status & Controversies\n\n## Story Function\n\n## Continuity Notes",
+            "# Tradition & Ritual Summary\n\n## Canonical Identity\n\n## Origin & History\n\n## Purpose & Meaning\n\n## Participants & Roles\n\n## Timing & Occasion\n\n## Location & Setting\n\n## Preparation\n\n## Sequence / Procedure\n\n## Objects, Clothing & Symbols\n\n## Words, Music & Performance\n\n## Food, Gifts & Offerings\n\n## Rules, Taboos & Expectations\n\n## Variations & Regional Differences\n\n## Social Status & Controversies\n\n## Campaign Use\n\n## Continuity Notes",
         ),
         built_in(
             "research-profile",
@@ -968,15 +968,12 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("status", "Status", "text"),
                 ("tags", "Tags", "list"),
             ],
-            "# Research Question\n\n## Why It Matters\n\n## Working Notes\n\n## Facts & Findings\n\n## Sources\n\n## Unresolved Questions\n\n## Application to the Story\n\n## Canon / Accuracy Notes",
+            "# Research Question\n\n## Why It Matters\n\n## Working Notes\n\n## Facts & Findings\n\n## Sources\n\n## Unresolved Questions\n\n## Application to the Campaign\n\n## Canon / Accuracy Notes",
         ),
     ];
 
-    templates.extend(manuscript_templates());
-    templates.extend(outline_templates());
-    templates.extend(review_templates());
-    templates.extend(publishing_templates());
-    templates.extend(project_templates());
+    // Novel/project publishing and manuscript presets are legacy ID fallbacks only.
+    templates.extend(catalyst_additional_templates());
     templates.extend(campaign_templates());
     templates
 }
@@ -1604,6 +1601,187 @@ fn campaign_templates() -> Vec<EntityTemplate> {
     ]
 }
 
+/// Old LithoMark templates remain resolvable by ID for existing documents,
+/// but are deliberately absent from new Catalyst document creation menus.
+fn legacy_lithomark_templates() -> Vec<EntityTemplate> {
+    let mut result = Vec::new();
+    result.extend(manuscript_templates());
+    result.extend(outline_templates());
+    result.extend(review_templates());
+    result.extend(publishing_templates());
+    result.extend(project_templates());
+    result
+}
+
+
+/// RPG additions use the existing file-backed entity registry and do not create
+/// parallel campaign or character mechanics engines. Identifiers are stable.
+fn catalyst_additional_templates() -> Vec<EntityTemplate> {
+    vec![
+        built_in(
+            "adventure-overview", "Adventure Overview", "adventure", "adventure", Some("adventure"),
+            "Adventure summary, hooks and playable branches.",
+            &["premise", "status", "starting_location", "goal", "level_range"],
+            &[("image", "Image", "image"), ("premise", "Premise", "text"), ("status", "Status", "text"), ("starting_location", "Starting Location", "text"), ("goal", "Goal", "text"), ("level_range", "Level Range", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Premise\n\n## Player Hook\n\n## Objectives\n\n## Scene Sequence\n\n## Key NPCs and Factions\n\n## Locations and Maps\n\n## Branches and Consequences\n\n## GM Secrets\n\n## Rewards",
+        ),
+        built_in(
+            "adventure-scene", "Adventure Scene", "adventure", "adventure", Some("scene"),
+            "Scene with triggers, choices and outcomes.",
+            &["scene_type", "location", "objective", "participants", "status"],
+            &[("image", "Image", "image"), ("scene_type", "Scene Type", "text"), ("location", "Location", "text"), ("objective", "Objective", "text"), ("participants", "Participants", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Read-Aloud Introduction\n\n## What Players Can Learn\n\n## NPCs and Creatures\n\n## Choices and Complications\n\n## Encounter or Map Link\n\n## Possible Outcomes\n\n## GM Notes",
+        ),
+        built_in(
+            "quest-chain", "Quest Chain", "adventure", "adventure", Some("quest-chain"),
+            "Linked quests, prerequisites and consequences.",
+            &["status", "starting_quest", "goal", "reward"],
+            &[("image", "Image", "image"), ("status", "Status", "text"), ("starting_quest", "Starting Quest", "text"), ("goal", "Goal", "text"), ("reward", "Reward", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Quest Sequence\n\n## Prerequisites\n\n## Branch Points\n\n## Dependencies\n\n## Rewards\n\n## Consequences",
+        ),
+        built_in(
+            "puzzle-profile", "Puzzle", "adventure", "adventure", Some("puzzle"),
+            "Playable puzzle with clues and alternate solutions.",
+            &["location", "difficulty", "solution", "status"],
+            &[("image", "Image", "image"), ("location", "Location", "text"), ("difficulty", "Difficulty", "text"), ("solution", "Solution", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Setup\n\n## Player-Facing Clues\n\n## Solution\n\n## Hints\n\n## Alternative Approaches\n\n## Consequences",
+        ),
+        built_in(
+            "trap-hazard", "Trap & Hazard", "adventure", "adventure", Some("hazard"),
+            "Terrain or constructed hazard with ruleset optional.",
+            &["location", "trigger", "effect", "detection", "difficulty"],
+            &[("image", "Image", "image"), ("location", "Location", "text"), ("trigger", "Trigger", "text"), ("effect", "Effect", "text"), ("detection", "Detection", "text"), ("difficulty", "Difficulty", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Description\n\n## Trigger\n\n## Detection and Warnings\n\n## Effects\n\n## Countermeasures\n\n## Ruleset Mechanics Reference",
+        ),
+        built_in(
+            "secret-clue", "Secret & Clue", "gm", "note", Some("clue"),
+            "Track hidden information and discovery.",
+            &["source", "location", "revealed_to", "status"],
+            &[("image", "Image", "image"), ("source", "Source", "text"), ("location", "Location", "text"), ("revealed_to", "Revealed To", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## GM-Only Truth\n\n## Clue Presentation\n\n## Discovery Conditions\n\n## Player Knowledge\n\n## Related Mysteries\n\n## Follow-Up",
+        ),
+        built_in(
+            "handout", "Player Handout", "gm", "note", Some("handout"),
+            "Player-facing document or artifact.",
+            &["audience", "status", "related_location"],
+            &[("image", "Image", "image"), ("audience", "Audience", "text"), ("status", "Status", "text"), ("related_location", "Related Location", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Handout Content\n\n## When to Distribute\n\n## GM Notes",
+        ),
+        built_in(
+            "loot-treasure", "Loot & Treasure", "item", "object", Some("loot"),
+            "Treasure distribution and inventory references.",
+            &["location", "owner", "value", "status"],
+            &[("image", "Image", "image"), ("location", "Location", "text"), ("owner", "Owner", "text"), ("value", "Value", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Contents\n\n## Discovery and Ownership\n\n## Distribution\n\n## Ruleset Item References\n\n## Notes",
+        ),
+        built_in(
+            "campaign-event", "Campaign State Event", "campaign", "event", Some("campaign-event"),
+            "Record events that change ongoing campaign state.",
+            &["session", "location", "participants", "status"],
+            &[("image", "Image", "image"), ("session", "Session", "text"), ("location", "Location", "text"), ("participants", "Participants", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## What Happened\n\n## Player Decisions\n\n## NPC and Faction Consequences\n\n## World Changes\n\n## Open Threads",
+        ),
+        built_in(
+            "session-zero", "Session Zero & Table Agreement", "session", "note", Some("session-zero"),
+            "Play expectations and safety agreements.",
+            &["session_date", "play_mode", "status"],
+            &[("image", "Image", "image"), ("session_date", "Session Date", "text"), ("play_mode", "Play Mode", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Campaign Pitch\n\n## Player Expectations\n\n## Lines and Veils\n\n## Table Safety and Respect\n\n## Scheduling and Attendance\n\n## House Rules\n\n## Agreement and Follow-Up",
+        ),
+        built_in(
+            "nation-kingdom", "Kingdom & Nation", "location", "location", Some("nation"),
+            "Nation, government, culture and political relationships.",
+            &["capital", "leader", "government", "population", "region"],
+            &[("image", "Image", "image"), ("capital", "Capital", "text"), ("leader", "Leader", "text"), ("government", "Government", "text"), ("population", "Population", "text"), ("region", "Region", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Overview\n\n## History\n\n## Territory and Borders\n\n## Government\n\n## Peoples and Cultures\n\n## Settlements\n\n## Allies and Rivals\n\n## Adventure Hooks",
+        ),
+        built_in(
+            "deity-profile", "Deity & Divine Figure", "worldbuilding", "worldbuilding", Some("deity"),
+            "Deities, faith and cultural influence.",
+            &["pantheon", "domains", "followers", "symbols", "status"],
+            &[("image", "Image", "image"), ("pantheon", "Pantheon", "text"), ("domains", "Domains", "text"), ("followers", "Followers", "text"), ("symbols", "Symbols", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Origin and Lore\n\n## Beliefs and Worship\n\n## Clergy and Temples\n\n## Relationships\n\n## Campaign Relevance",
+        ),
+        built_in(
+            "economy-currency", "Economy & Currency", "worldbuilding", "worldbuilding", Some("economy"),
+            "Local economies and system-specific currencies.",
+            &["region", "currency", "trade", "status"],
+            &[("image", "Image", "image"), ("region", "Region", "text"), ("currency", "Currency", "text"), ("trade", "Trade", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Currency and Exchange\n\n## Trade Goods\n\n## Markets and Professions\n\n## Scarcity and Resources\n\n## Ruleset Reference",
+        ),
+        built_in(
+            "calendar-system", "Calendar & Timekeeping", "worldbuilding", "worldbuilding", Some("calendar"),
+            "Campaign calendars, festivals and era names.",
+            &["era", "year_length", "calendar_type", "region"],
+            &[("image", "Image", "image"), ("era", "Era", "text"), ("year_length", "Year Length", "text"), ("calendar_type", "Calendar Type", "text"), ("region", "Region", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Time Units\n\n## Months and Seasons\n\n## Holidays\n\n## Historical Eras\n\n## Campaign Dates",
+        ),
+        built_in(
+            "flora-plant", "Plant & Flora", "worldbuilding", "worldbuilding", Some("flora"),
+            "Fantasy or realistic flora with lore and uses.",
+            &["habitat", "rarity", "properties", "hazards"],
+            &[("image", "Image", "image"), ("habitat", "Habitat", "text"), ("rarity", "Rarity", "text"), ("properties", "Properties", "text"), ("hazards", "Hazards", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Description\n\n## Habitat\n\n## Harvest and Uses\n\n## Hazards\n\n## Lore\n\n## Ruleset Reference",
+        ),
+        built_in(
+            "tavern-shop", "Tavern, Inn & Shop", "location", "location", Some("business"),
+            "Establishment and its services.",
+            &["location", "owner", "services", "status"],
+            &[("image", "Image", "image"), ("location", "Location", "text"), ("owner", "Owner", "text"), ("services", "Services", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Overview\n\n## Rooms and Layout\n\n## NPCs\n\n## Goods and Services\n\n## Rumors\n\n## Events and Hooks",
+        ),
+        built_in(
+            "dungeon-site", "Dungeon & Adventure Site", "location", "location", Some("dungeon"),
+            "Explorable site with rooms and encounters.",
+            &["region", "entrance", "site_type", "status"],
+            &[("image", "Image", "image"), ("region", "Region", "text"), ("entrance", "Entrance", "text"), ("site_type", "Site Type", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Approach\n\n## Site Background\n\n## Rooms and Areas\n\n## Encounters\n\n## Traps and Hazards\n\n## Treasure\n\n## Maps\n\n## Consequences",
+        ),
+        built_in(
+            "equipment-reference", "Equipment Reference", "item", "object", Some("equipment"),
+            "Item lore and linked ruleset equipment definition.",
+            &["item_type", "ruleset_ref", "weight", "value", "rarity"],
+            &[("image", "Image", "image"), ("item_type", "Item Type", "text"), ("ruleset_ref", "Ruleset Ref", "text"), ("weight", "Weight", "text"), ("value", "Value", "text"), ("rarity", "Rarity", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Description\n\n## Usage\n\n## Ruleset Item Reference\n\n## Location and Ownership\n\n## Campaign Notes",
+        ),
+        built_in(
+            "consumable-reference", "Consumable Reference", "item", "object", Some("consumable"),
+            "Consumables and their in-world effects.",
+            &["item_type", "ruleset_ref", "charges", "rarity"],
+            &[("image", "Image", "image"), ("item_type", "Item Type", "text"), ("ruleset_ref", "Ruleset Ref", "text"), ("charges", "Charges", "text"), ("rarity", "Rarity", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Description\n\n## Availability\n\n## Usage\n\n## Ruleset Effect Reference\n\n## Campaign Notes",
+        ),
+        built_in(
+            "spell-power-lore", "Spell & Power Lore", "worldbuilding", "worldbuilding", Some("spell-lore"),
+            "Spell lore separate from mechanics.",
+            &["tradition", "origin", "ruleset_ref", "availability"],
+            &[("image", "Image", "image"), ("tradition", "Tradition", "text"), ("origin", "Origin", "text"), ("ruleset_ref", "Ruleset Ref", "text"), ("availability", "Availability", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Lore and Origins\n\n## How It Appears in the World\n\n## Restrictions\n\n## Ruleset Spell Reference",
+        ),
+        built_in(
+            "crafting-recipe", "Crafting Recipe", "item", "object", Some("crafting"),
+            "Ingredients, instructions and system-linked crafting.",
+            &["product", "materials", "tools", "time", "ruleset_ref"],
+            &[("image", "Image", "image"), ("product", "Product", "text"), ("materials", "Materials", "text"), ("tools", "Tools", "text"), ("time", "Time", "text"), ("ruleset_ref", "Ruleset Ref", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Requirements\n\n## Process\n\n## Outcome\n\n## Availability\n\n## Ruleset Crafting Reference",
+        ),
+        built_in(
+            "gm-screen-reference", "GM Screen Reference", "gm", "note", Some("screen-reference"),
+            "Local quick-reference sheet for a GM.",
+            &["ruleset_ref", "topic", "status"],
+            &[("image", "Image", "image"), ("ruleset_ref", "Ruleset Ref", "text"), ("topic", "Topic", "text"), ("status", "Status", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Quick Reference\n\n## Procedures\n\n## Tables\n\n## Ruleset Citations\n\n## Notes",
+        ),
+        built_in(
+            "rpg-print-profile", "RPG Print Profile", "campaign", "note", Some("print-profile"),
+            "Preset for character, map, handout and campaign report printing.",
+            &["output_type", "paper_size", "orientation", "ruleset_ref"],
+            &[("image", "Image", "image"), ("output_type", "Output Type", "text"), ("paper_size", "Paper Size", "text"), ("orientation", "Orientation", "text"), ("ruleset_ref", "Ruleset Ref", "text"), ("visibility", "Visibility", "text"), ("tags", "Tags", "list")],
+            "## Print Purpose\n\n## Included Sections\n\n## Layout and Paper\n\n## Ruleset Citations\n\n## Notes",
+        ),
+    ]
+}
+
 fn built_in_scoped(
     id: &str,
     name: &str,
@@ -1879,5 +2057,32 @@ lithomark_template:
         .unwrap_err();
 
         assert!(error.contains("built-in"));
+    }
+}
+
+#[cfg(test)]
+mod catalyst_template_catalog_tests {
+    use super::*;
+    #[test]
+    fn novel_only_templates_are_retired_but_legacy_ids_resolve() {
+        let root = tempfile::tempdir().unwrap();
+        let registry = load_registry(&root.path().join("Templates")).unwrap();
+        assert!(!registry.templates.iter().any(|t| t.manifest.id == "project-novel"));
+        assert!(!registry.templates.iter().any(|t| t.manifest.id == "manuscript-chapter"));
+        assert!(built_in_template("project-novel").is_some());
+        assert!(built_in_template("character-profile").is_some());
+    }
+    #[test]
+    fn rpg_templates_have_unique_ids_and_valid_manifests() {
+        let root = tempfile::tempdir().unwrap();
+        let registry = load_registry(&root.path().join("Templates")).unwrap();
+        let mut ids = std::collections::BTreeSet::new();
+        for t in &registry.templates {
+            assert!(ids.insert(t.manifest.id.as_str()), "duplicate {}", t.manifest.id);
+            validate_manifest(&t.manifest).unwrap();
+        }
+        for id in ["campaign-overview", "quest-adventure", "adventure-scene", "dungeon-site", "secret-clue", "rpg-print-profile"] {
+            assert!(ids.contains(id), "missing {id}");
+        }
     }
 }
