@@ -128,7 +128,7 @@ describe("StartScreen", () => {
   });
 
   it("does not offer the obsolete review package importer", () => {
-    render(StartScreen, { recentProjects: [], onOpenEditorial: vi.fn() });
+    render(StartScreen, { recentProjects: [] });
     expect(screen.queryByRole("button", { name: /Import Review/ })).toBeNull();
     expect(screen.getByRole("button", { name: /Import RPG Content/ })).toBeTruthy();
   });
