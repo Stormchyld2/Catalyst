@@ -288,7 +288,7 @@
               <BookOpen class="w-5 h-5" aria-hidden="true" />
               <span>
                 {startingSample ? "Opening The Hollow Crown..." : "The Hollow Crown — D&D 5e Demo"}
-                <small>Explore a playable level-3 D&D 5e adventure</small>
+                <small>Explore a playable level-1 D&D 5e adventure</small>
               </span>
             </button>
             {/if}
