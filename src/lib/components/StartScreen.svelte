@@ -147,9 +147,8 @@
   let rpgImportResult = $state<RpgResult | null>(null);
   let selectedRpgFormat = $state<RpgFormat>("markdown");
 
-  async function selectRpgImport(type: RpgFormat) {
-    const config = RPG_IMPORTS.find((v) => v.type === type);
-    if (!config) return;
+  async function selectRpgImport(config: (typeof RPG_IMPORTS)[number]) {
+    const type = config.type;
     rpgImportError = "";
     rpgImportResult = null;
     rpgImportPreview = null;
@@ -561,7 +560,7 @@
           <ul class="import-list">
             {#each RPG_IMPORTS as format (format.label)}
               <li><button type="button" class="ka-button ka-button--ghost import-format"
-                disabled={rpgImportBusy} onclick={() => selectRpgImport(format.type)}>
+                disabled={rpgImportBusy} onclick={() => selectRpgImport(format)}>
                 {format.label}<small>{format.hint}</small>
               </button></li>
             {/each}
