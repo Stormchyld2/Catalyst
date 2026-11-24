@@ -14,6 +14,7 @@
   } from "lucide-svelte";
   import { WORKSPACES, type WorkspaceId } from "../workspaces";
   import { workspace } from "../stores/workspace.svelte";
+  import catalystIcon from "../../assets/catalyst-icon.png";
 
   let {
     hasActiveProject,
@@ -90,7 +91,9 @@
 </script>
 
 <nav class="module-rail" aria-label="LithoMark workspaces">
-  <div class="module-rail__brand" aria-hidden="true">L</div>
+  <div class="module-rail__brand" role="img" aria-label="Catalyst">
+    <img class="module-rail__brand-image" src={catalystIcon} alt="" />
+  </div>
 
   <div class="module-rail__modules">
     {#each WORKSPACES.filter((item) => item.stage !== "optional-first-party") as item (item.id)}
@@ -140,6 +143,15 @@
     border-bottom: 1px solid var(--color-border);
     color: var(--color-accent-text);
     font: 700 22px/1 var(--font-display);
+  }
+
+  .module-rail__brand-image {
+    display: block;
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
   }
 
   .module-rail__modules {
