@@ -1,215 +1,47 @@
-<!--
-  QuickStartDialog.svelte - In-app Quick Start guide
-
-  Accessible from Help → Quick Start. Covers:
-  - Import formats
-  - Sidebar (chapters & scenes)
-  - Scene panel (synopsis, beats, discovery notes)
-  - References panel
--->
 <script lang="ts">
   import DialogHeader from "./DialogHeader.svelte";
-  import { shortcuts } from "../stores/shortcuts.svelte";
   import { modalFocus } from "../utils/modalFocus";
-  import {
-    BookOpen,
-    ChevronDown,
-    FileText,
-    Kanban,
-    MapPin,
-    PenTool,
-    User,
-    Users,
-    Zap,
-  } from "lucide-svelte";
-
   let { onClose }: { onClose: () => void } = $props();
 </script>
 
-<div
-  class="dialog-scrim"
-  use:modalFocus={{ onEscape: onClose }}
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="quick-start-title"
-  tabindex="-1"
->
-  <div
-    class="app-dialog-surface ka-dialog-default dialog-shell quick-start"
-    data-testid="quick-start-dialog"
-  >
-    <DialogHeader
-      title="Quick start"
-      titleId="quick-start-title"
-      {onClose}
-      closeLabel="Close"
-      closeTestId="quick-start-close"
-    />
-
-    <div class="ka-dialog-body quick-start-body">
-      <!-- Import -->
-      <section class="ka-group">
-        <h3 class="ka-group-title">Import your outline</h3>
-        <p class="font-press-ui text-press-base text-press-text mb-3 max-w-press-measure">
-          Catalyst works with your existing outline. Import from the Start Screen or File → Import.
-        </p>
-        <ul class="space-y-2 text-press-ui text-press-muted">
-          <li class="flex items-start gap-2">
-            <Kanban class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span><strong class="text-press-text">Plottr</strong> — .pltr files</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <PenTool class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span><strong class="text-press-text">yWriter 7</strong> — .yw7 files</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <FileText class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span
-              ><strong class="text-press-text">Markdown</strong> — Single .md file with # Chapter, ##
-              Scene, - Beat structure</span
-            >
-          </li>
-          <li class="flex items-start gap-2">
-            <BookOpen class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span
-              ><strong class="text-press-text">Longform</strong> — Obsidian vault or index file</span
-            >
-          </li>
-          <li class="flex items-start gap-2">
-            <FileText class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span
-              ><strong class="text-press-text">Scrivener 3</strong> — .scriv project bundles</span
-            >
-          </li>
-        </ul>
+<div class="dialog-scrim" use:modalFocus={{ onEscape: onClose }}
+  role="dialog" aria-modal="true" aria-labelledby="quick-start-title" tabindex="-1">
+  <div class="app-dialog-surface ka-dialog-default dialog-shell quick-start" data-testid="quick-start-dialog">
+    <DialogHeader title="Catalyst RPG quick start" titleId="quick-start-title"
+      {onClose} closeLabel="Close" closeTestId="quick-start-close" />
+    <div class="body">
+      <section>
+        <h3>1. Start a campaign</h3>
+        <p>Choose <strong>New Campaign</strong> on Home. Quick Start creates the essential campaign folders; Guided Setup lets you define the ruleset, world, party, NPCs, factions and starting session before creating files.</p>
       </section>
-
-      <!-- Sidebar -->
-      <section class="ka-group">
-        <h3 class="ka-group-title">Sidebar — chapters and scenes</h3>
-        <p class="font-press-ui text-press-base text-press-text mb-3 max-w-press-measure">
-          The left sidebar shows your project structure. Click a chapter to expand or collapse its
-          scenes. Click a scene to load it in the editor.
-        </p>
-        <ul class="space-y-2 text-press-ui text-press-muted">
-          <li class="flex items-start gap-2">
-            <ChevronDown class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span>Chapters group related scenes together</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <FileText class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span>Scenes are your primary writing units — each has a synopsis and beats</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-press-accent-text shrink-0">•</span>
-            <span>Right-click chapters or scenes for more options (reorder, archive, lock)</span>
-          </li>
-        </ul>
+      <section>
+        <h3>2. Open The Hollow Crown</h3>
+        <p>Use <strong>The Hollow Crown — D&D 5e Demo</strong> on Home for a complete introductory level-one adventure, including GM notes, player reference cards, clues, encounters and offline maps.</p>
       </section>
-
-      <!-- Scene Panel -->
-      <section class="ka-group">
-        <h3 class="ka-group-title">Scene panel — synopsis and beats</h3>
-        <p class="font-press-ui text-press-base text-press-text mb-3 max-w-press-measure">
-          When you select a scene, the main area shows its synopsis and beats. Beats are the key
-          story moments — expand each to write prose.
-        </p>
-        <ul class="space-y-2 text-press-ui text-press-muted">
-          <li class="flex items-start gap-2">
-            <Zap class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span
-              ><strong class="text-press-text">Synopsis</strong> — Brief overview of the scene (from your
-              outline)</span
-            >
-          </li>
-          <li class="flex items-start gap-2">
-            <Zap class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span
-              ><strong class="text-press-text">Beats</strong> — Key moments; click to expand and write
-              prose</span
-            >
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-press-accent-text shrink-0">•</span>
-            <span>Right-click beats to split, merge, or delete. Drag to reorder.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-press-accent-text shrink-0">•</span>
-            <span
-              ><strong class="text-press-text">Discovery Notes</strong
-              >{#if shortcuts.label("toggle_discovery_notes")}
-                ({shortcuts.label("toggle_discovery_notes")}){/if} — Capture ideas as you write; promote
-              to beats when ready</span
-            >
-          </li>
-        </ul>
+      <section>
+        <h3>3. Build your world and adventure</h3>
+        <p><strong>World Builder</strong> contains your file-backed wiki, NPCs, locations, items and lore. <strong>Adventures</strong> organizes playable quests, arcs and scenes. <strong>Campaign Notes</strong> is for session plans, logs, handouts and read-aloud material.</p>
       </section>
-
-      <!-- References -->
-      <section class="ka-group">
-        <h3 class="ka-group-title">References panel</h3>
-        <p class="font-press-ui text-press-base text-press-text mb-3 max-w-press-measure">
-          The right panel shows characters and locations linked to the current scene. Use it to keep
-          track of who appears where.
-        </p>
-        <ul class="space-y-2 text-press-ui text-press-muted">
-          <li class="flex items-start gap-2">
-            <User class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span
-              ><strong class="text-press-text">Characters</strong> — Who appears in this scene</span
-            >
-          </li>
-          <li class="flex items-start gap-2">
-            <MapPin class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span
-              ><strong class="text-press-text">Locations</strong> — Where the scene takes place</span
-            >
-          </li>
-          <li class="flex items-start gap-2">
-            <Users class="w-4 h-4 shrink-0 mt-0.5 quick-start-icon" />
-            <span>Link characters and locations from your outline, or add them in Catalyst</span>
-          </li>
-        </ul>
+      <section>
+        <h3>4. Import existing material</h3>
+        <p>Home → <strong>Import RPG Content</strong> accepts Markdown, Obsidian vaults, maps, portraits, tokens, Foundry/ Roll20 exports, Fantasy Grounds modules and PDFs. Select an existing campaign and preview the import. Some VTT data stays in preserved source files until full format adapters exist.</p>
       </section>
-
-      <!-- Tips -->
-      <section class="ka-group">
-        <h3 class="ka-group-title">Tips</h3>
-        <ul class="space-y-2 text-press-ui text-press-muted">
-          <li>
-            <strong class="text-press-text">{shortcuts.label("export") || "Export"}</strong> — Export
-            your project
-          </li>
-          <li>
-            <strong class="text-press-text"
-              >{shortcuts.label("toggle_discovery_notes") || "Discovery Notes"}</strong
-            > — Toggle Discovery Notes in the scene panel
-          </li>
-          <li>
-            <strong class="text-press-text">Snapshots</strong> — Create version checkpoints before big
-            changes (sidebar)
-          </li>
-        </ul>
+      <section>
+        <h3>5. At the table</h3>
+        <p>Open your campaign dashboard to view ruleset, party and actual saved records. Use the Dice Roller for rolls, and update session logs and campaign state after play. Data is stored locally in your campaign folder.</p>
       </section>
     </div>
-
-    <footer class="ka-dialog-footer">
-      <button type="button" onclick={onClose} class="ka-button">Got it</button>
-    </footer>
+    <footer><button class="ka-button" type="button" onclick={onClose}>Done</button></footer>
   </div>
 </div>
 
 <style>
-  .quick-start {
-    height: min(720px, calc(100dvh - 48px));
-  }
-  .quick-start-body h3 {
-    margin: 0 0 var(--space-3xs);
-  }
-  .quick-start-body p {
-    margin: 0;
-  }
-  .quick-start-body :global(.quick-start-icon) {
-    color: var(--color-text-muted);
-  }
+  .dialog-scrim{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.65)}
+  .quick-start{width:min(720px,100%);max-height:min(90vh,900px);overflow:auto;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-l);color:var(--color-text)}
+  .body{padding:12px 26px 20px;display:grid;gap:16px}
+  section{border-top:1px solid var(--color-border);padding-top:14px}
+  h3{margin:0;font-size:1rem}
+  p{color:var(--color-text-muted);font-size:.89rem;line-height:1.65}
+  footer{padding:12px 26px 24px;display:flex;justify-content:flex-end}
+  .ka-button{padding:10px 18px;border:1px solid var(--color-accent);background:var(--color-surface);border-radius:var(--radius-m);color:var(--color-text);cursor:pointer}
 </style>
