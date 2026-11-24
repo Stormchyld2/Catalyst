@@ -142,16 +142,16 @@
 
   async function trySampleProject() {
     startingSample = true;
-    ui.startImport("Opening sample project", "Creating the sample project...");
+    ui.startImport("Opening D&D 5e adventure demo", "Opening the adventure campaign...");
     try {
       const project = await invoke<Project>("create_sample_project");
       currentProject.setProject(project);
       ui.setView("editor");
-      workspace.enterProject("story-development");
+      workspace.enterProject("home");
       onProjectActivated?.();
     } catch (e) {
-      console.error("Failed to open The Glass Meridian sample:", e);
-      ui.showError(`Failed to open The Glass Meridian sample: ${e}`);
+      console.error("Failed to open The Hollow Crown adventure demo:", e);
+      ui.showError(`Failed to open The Hollow Crown adventure demo: ${e}`);
     } finally {
       ui.finishImport();
       startingSample = false;
@@ -287,8 +287,8 @@
             >
               <BookOpen class="w-5 h-5" aria-hidden="true" />
               <span>
-                {startingSample ? "Opening The Glass Meridian..." : "The Glass Meridian Sample"}
-                <small>Explore Catalyst with the bundled demo novel</small>
+                {startingSample ? "Opening The Hollow Crown..." : "The Hollow Crown — D&D 5e Demo"}
+                <small>Explore a playable level-3 D&D 5e adventure</small>
               </span>
             </button>
             {/if}
