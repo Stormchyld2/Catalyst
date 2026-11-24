@@ -946,7 +946,7 @@ const PREMADE_ENTRIES: &[DemoEntry] = &[
 **Human Fighter • Level 1 • Background: custom narrative adventurer • Proficiency +2**
 
 ## Fast stats
-Armor Class **16** (chain mail), Hit Points **12**, Speed **30 ft.**, Initiative **+1**, Proficiency **+2**.
+Armor Class **17** (chain mail and Defense style; 19 when carrying shield), Hit Points **12**, Speed **30 ft.**, Initiative **+1**, Proficiency **+2**.
 
 ## Ability scores
 STR 16 (+3), DEX 12 (+1), CON 14 (+2), INT 8 (−1), WIS 10 (+0), CHA 13 (+1)
@@ -961,10 +961,10 @@ Athletics +5, Perception +2, Survival +2, Persuasion +3
 Longsword: **+5 to hit**, 1d8+3 slashing (one-handed); light crossbow: **+3**, 1d8+1 piercing, ammunition/range per your 5e source.
 
 ## Equipment
-Chain mail, shield, longsword, light crossbow and 20 bolts, backpack, rope, torch and rations. Shield is included in AC 18 **if equipped**; listed AC 16 assumes no shield equipped.
+Chain mail, shield, longsword, light crossbow and 20 bolts, backpack, rope, torch and rations. Armor Class 17 assumes Defense style and no equipped shield; carrying the shield increases it to 19.
 
 ## Features and resources
-**Fighting Style—Defense:** +1 AC while wearing armor (thus AC 17 with chain mail, AC 19 with shield). **Second Wind:** once per short or long rest, bonus action regain 1d10+1 HP. These are brief prompts; refer to your 5e rules for exact details.
+**Fighting Style—Defense:** +1 AC while wearing armor (included above). **Second Wind:** once per short or long rest, bonus action regain 1d10+1 HP. These are brief prompts; refer to your 5e rules for exact details.
 
 ## Personality and adventure hook
 You learned that your family once maintained the road to Briarwatch. You want to protect the villagers without destroying the old tower.
@@ -994,7 +994,7 @@ STR 8 (−1), DEX 16 (+3), CON 12 (+1), INT 13 (+1), WIS 14 (+2), CHA 12 (+1)
 Dexterity +5, Intelligence +3
 
 ## Skills
-Acrobatics +5, Sleight of Hand +5, Stealth +5, Investigation +3, Perception +4, Insight +4
+Acrobatics +5, Sleight of Hand +5, Stealth +7, Investigation +3, Perception +6, Insight +4
 
 ## Attacks and spells
 Shortbow: **+5 to hit**, 1d6+3 piercing; dagger: **+5 to hit**, 1d4+3 piercing. **Sneak Attack:** +1d6 damage once per turn when the standard 5e conditions apply.
@@ -1220,11 +1220,27 @@ fn seed_entry(root: &Path, entry: &DemoEntry) -> Result<(), String> {
     save_document(root, &document, Some(&document.source_hash))
 }
 
+/// Versioned content additions only: preserve every existing user edit and ID.
+fn seed_expansion_if_missing(root: &Path) -> Result<(), String> {
+    for entry in EXPANDED_ENTRIES.iter().chain(PREMADE_ENTRIES.iter()) {
+        let target = root.join(entry.path);
+        if target.exists() {
+            continue;
+        }
+        // The canonical campaign tree contains all of these destination roots.
+        seed_entry(root, entry)?;
+    }
+    Ok(())
+}
+
 /// A successful re-open never overwrites user edits, rolls or local session data.
 /// First creation is staged in a sibling directory before being published.
 fn ensure_demo(root: &Path) -> Result<(), String> {
     if root.exists() {
+        // Upgrade previously opened demo copies additively. Never replace any
+        // document, map, character or user-edited contents already on disk.
         campaign_wizard::read_campaign_manifest(root)?;
+        seed_expansion_if_missing(root)?;
         return Ok(());
     }
     let parent = root.parent().ok_or("Missing demo parent folder")?;
@@ -1236,6 +1252,7 @@ fn ensure_demo(root: &Path) -> Result<(), String> {
         for entry in ENTRIES {
             seed_entry(&staging, entry)?;
         }
+        seed_expansion_if_missing(&staging)?;
         seed_entry(&staging, &DemoEntry {
             path: "Maps/Dungeons/Briarwatch Tower - Text Map.md",
             template: "map-reference",
@@ -1308,12 +1325,33 @@ mod tests {
         assert!(root.join("Encounters/Social/The Witness at the Well.md").exists());
         assert!(root.join("Game Master/Handouts/Fragment from the Bell.md").exists());
         assert!(root.join("Sessions/Session Plans/Session 1 - The Silent Bell.md").exists());
+        assert!(root.join("Adventures/Main Campaign/COMPLETE ADVENTURE - Run from Start to Finish.md").exists());
+        assert!(root.join("Characters/Player Characters/Rowan Ash - Level 1 Premade.md").exists());
+        assert!(root.join("Characters/Player Characters/Nyra Vale - Level 1 Premade.md").exists());
+        assert!(root.join("Characters/Player Characters/Sera Dawn - Level 1 Premade.md").exists());
+        assert!(root.join("Characters/Player Characters/Calder Reed - Level 1 Premade.md").exists());
+        assert!(root.join("Maps/Dungeons/Crown Vault - Keyed Map.md").exists());
         assert!(!root.join("Manuscript").exists());
         let notes = root.join("Sessions/Session Logs/Actual play.md");
         fs::write(&notes, "The party chose to restore the seal.").unwrap();
         ensure_demo(&root).unwrap();
         assert_eq!(fs::read_to_string(&notes).unwrap(), "The party chose to restore the seal.");
         assert_eq!(load_demo_project(&root).unwrap().id, project.id);
+    }
+
+    #[test]
+    fn expanded_demo_installs_missing_documents_without_touching_existing_ones() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join(DEMO_SUBDIR).join(DEMO_TITLE);
+        ensure_demo(&root).unwrap();
+        let guide = root.join("Adventures/Main Campaign/COMPLETE ADVENTURE - Run from Start to Finish.md");
+        let owner_content = "USER CHANGED THIS GUIDE";
+        fs::write(&guide, owner_content).unwrap();
+        let missing = root.join("Maps/Dungeons/Crown Vault - Keyed Map.md");
+        fs::remove_file(&missing).unwrap();
+        ensure_demo(&root).unwrap();
+        assert_eq!(fs::read_to_string(&guide).unwrap(), owner_content);
+        assert!(missing.is_file());
     }
 
     #[test]
@@ -1329,7 +1367,7 @@ mod tests {
     #[test]
     fn all_demo_entries_use_registered_templates_and_unique_paths() {
         let mut paths = std::collections::BTreeSet::new();
-        for entry in ENTRIES {
+        for entry in ENTRIES.iter().chain(EXPANDED_ENTRIES.iter()).chain(PREMADE_ENTRIES.iter()) {
             assert!(paths.insert(entry.path));
             let template = built_in_template(entry.template).expect("registered template");
             assert!(!template.manifest.document_type.is_empty());
