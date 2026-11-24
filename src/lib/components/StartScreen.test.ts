@@ -85,7 +85,7 @@ describe("StartScreen", () => {
     render(StartScreen, { recentProjects: [project()], onNewProject: vi.fn() });
 
     const list = screen.getByTestId("recent-projects");
-    expect(within(list).getByRole("heading", { name: "Recent Projects" })).toBeTruthy();
+    expect(within(list).getByRole("heading", { name: "Recent Campaigns" })).toBeTruthy();
     const row = within(list).getByTestId("project-card");
     expect(row.textContent).toContain("The Letter");
     // The importer id reads as sentence-case metadata, not "(markdown)".
@@ -124,7 +124,7 @@ describe("StartScreen", () => {
     expect(invoke).toHaveBeenCalledWith("get_all_projects");
 
     await fireEvent.click(screen.getByRole("button", { name: "Close project library" }));
-    expect(screen.getByRole("heading", { name: "Recent Projects" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Recent Campaigns" })).toBeTruthy();
     expect(screen.queryByText("Book 6")).toBeNull();
     expect(invoke).toHaveBeenCalledWith("get_all_projects");
   });
@@ -146,9 +146,18 @@ describe("StartScreen", () => {
     expect(within(dialog).queryByRole("button", { name: /Scrivener/ })).toBeNull();
   });
 
+  it("closes the import dialog with Escape", async () => {
+    render(StartScreen, { recentProjects: [], onNewProject: vi.fn() });
+    await fireEvent.click(screen.getByRole("button", { name: /Import RPG Content/ }));
+    const dialog = screen.getByRole("dialog", { name: "Import RPG Content" });
+    expect(within(dialog).getByRole("button", { name: /Foundry VTT Folder/ })).toBeTruthy();
+    await fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Import RPG Content" })).toBeNull();
+  });
+
   it("explains the empty library", () => {
     render(StartScreen, { recentProjects: [] });
-    expect(screen.getByText("Your projects will appear here")).toBeTruthy();
+    expect(screen.getByText("Your campaigns will appear here")).toBeTruthy();
     expect(screen.queryByTestId("recent-projects")).toBeNull();
     expect(screen.getByRole("button", { name: /Import RPG Content/ })).toBeTruthy();
   });
@@ -199,7 +208,7 @@ describe("StartScreen", () => {
     render(StartScreen, { recentProjects: many(6) });
     await fireEvent.click(screen.getByRole("button", { name: "View All" }));
     await waitFor(() => expect(ui.toast?.message).toContain("Failed to load projects"));
-    expect(screen.getByRole("heading", { name: "Recent Projects" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Recent Campaigns" })).toBeTruthy();
   });
 
   it("names the consequence when confirming a delete", async () => {

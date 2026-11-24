@@ -1048,7 +1048,7 @@ it("settles startup even if initial content requests fail", async () => {
   const onReady = vi.fn();
   render(App, { onReady });
   await waitFor(() => expect(onReady).toHaveBeenCalledOnce());
-  expect(screen.getByText("Your projects will appear here")).toBeTruthy();
+  expect(screen.getByText("Your campaigns will appear here")).toBeTruthy();
 });
 
 it("waits for a native file drain that starts before the listener handshake finishes", async () => {

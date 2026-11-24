@@ -29,7 +29,6 @@
     recentProjects = $bindable(),
     onNewProject,
     onOpenProjectFolder,
-    onOpenEditorial,
     onProjectActivated,
   }: Props = $props();
 
@@ -77,15 +76,17 @@
     warnings: string[];
     behavior: string;
   };
-  type RpgResult = { imported: number; documents_created: number; copied_assets: number; destination: string; notes: string[] };
+  type RpgResult = { imported: number; skipped: string[]; documents_created: number; copied_assets: number; destination: string; notes: string[] };
   const RPG_IMPORTS: { type: RpgFormat; label: string; hint: string; directory: boolean; filters?: { name: string; extensions: string[] }[] }[] = [
     { type: "markdown", label: "Markdown File", hint: "Single Markdown document", directory: false, filters: [{ name: "Markdown", extensions: ["md", "markdown"] }] },
     { type: "markdown", label: "Markdown Folder", hint: "Import a folder of editable Markdown notes", directory: true },
     { type: "obsidian", label: "Obsidian Vault", hint: "Markdown vault folder", directory: true },
     { type: "assets", label: "Images / Maps / Tokens", hint: "Image folder (PNG, JPG, SVG, WebP, GIF)", directory: true },
     { type: "assets", label: "Single Image / Map / Token", hint: "Import one image asset", directory: false, filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "gif", "svg"] }] },
-    { type: "foundry", label: "Foundry VTT", hint: "Exported JSON data / folder", directory: false, filters: [{ name: "Foundry Export", extensions: ["json", "zip"] }] },
-    { type: "roll20", label: "Roll20", hint: "Supported JSON export (not a live campaign connection)", directory: false, filters: [{ name: "Roll20 Export", extensions: ["json", "zip"] }] },
+    { type: "foundry", label: "Foundry VTT File", hint: "Exported JSON or ZIP, kept as a reference", directory: false, filters: [{ name: "Foundry Export", extensions: ["json", "zip"] }] },
+    { type: "foundry", label: "Foundry VTT Folder", hint: "Folder of exported JSON or ZIP files", directory: true },
+    { type: "roll20", label: "Roll20 File", hint: "JSON or ZIP export, kept as a reference", directory: false, filters: [{ name: "Roll20 Export", extensions: ["json", "zip"] }] },
+    { type: "roll20", label: "Roll20 Folder", hint: "Folder of exported JSON or ZIP files", directory: true },
     { type: "fantasy_grounds", label: "Fantasy Grounds", hint: ".mod module or exported XML", directory: false, filters: [{ name: "Fantasy Grounds", extensions: ["mod", "xml"] }] },
     { type: "pdf", label: "PDF Reference", hint: "Original PDF preserved offline; no OCR", directory: false, filters: [{ name: "PDF", extensions: ["pdf"] }] },
   ];
@@ -181,8 +182,7 @@
       ui.setView("editor");
       workspace.enterProject(destination === "dashboard" ? "home" : "write");
       onProjectActivated?.();
-      // Sidebar $effect will run loadChapters
-    } catch (e) {
+          } catch (e) {
       console.error("Failed to open project:", e);
       openError = { name: project.name, message: String(e) };
     } finally {
@@ -325,7 +325,7 @@
         <section class="dashboard-card" data-testid="recent-projects" aria-labelledby="recent-projects-heading">
           <div class="section-head">
             <h2 id="recent-projects-heading" class="section-title">
-              Recent Projects
+              Recent Campaigns
             </h2>
             {#if hasMoreProjects}
               <button
@@ -435,7 +435,7 @@
         <section class="dashboard-card empty-dashboard" aria-label="Projects">
           <FileText class="w-7 h-7" aria-hidden="true" />
           <div>
-            <h2 class="section-title">Your projects will appear here</h2>
+            <h2 class="section-title">Your campaigns will appear here</h2>
             <p>Start a campaign, explore the demo adventure, or import existing tabletop material.</p>
           </div>
         </section>
@@ -445,17 +445,20 @@
 </div>
 
 {#if showImportFormats}
-  <div class="import-backdrop" role="presentation" onclick={() => (showImportFormats = false)}>
+  <div class="import-backdrop" role="presentation" onclick={() => { if (!rpgImportBusy) showImportFormats = false; }}>
     <div class="import-dialog" tabindex="-1" role="dialog" aria-modal="true"
       aria-labelledby="import-dialog-heading" onclick={(event) => event.stopPropagation()}
-      onkeydown={(event) => event.stopPropagation()}>
+      onkeydown={(event) => {
+        event.stopPropagation();
+        if (event.key === "Escape" && !rpgImportBusy) showImportFormats = false;
+      }}>
       <header class="import-dialog__header">
         <div>
           <span class="dashboard-eyebrow">Offline campaign importer</span>
           <h2 id="import-dialog-heading">Import RPG Content</h2>
         </div>
         <button type="button" class="ka-button ka-button--ghost" onclick={() => (showImportFormats = false)}
-          aria-label="Close import dialog">Close</button>
+          disabled={rpgImportBusy} aria-label="Close import dialog">Close</button>
       </header>
       <div class="import-dialog__body">
         <p class="ka-help import-help">Select an export, preview the files, and choose an existing Catalyst campaign. Originals are preserved where appropriate. No imported content overwrites existing records.</p>
@@ -468,6 +471,11 @@
             <p>{rpgImportResult.imported} source file(s); {rpgImportResult.documents_created} notes and {rpgImportResult.copied_assets} original assets.</p>
             <p>Destination: {rpgImportResult.destination}</p>
             {#each rpgImportResult.notes as note}<p>{note}</p>{/each}
+            {#if rpgImportResult.skipped?.length}
+              <details open><summary>{rpgImportResult.skipped.length} file(s) skipped</summary>
+                <ul>{#each rpgImportResult.skipped as item}<li>{item}</li>{/each}</ul>
+              </details>
+            {/if}
           </div>
           <button type="button" class="ka-button" onclick={() => { rpgImportResult = null; rpgImportPreview = null; }}>Import more</button>
         {:else if rpgImportPreview}
