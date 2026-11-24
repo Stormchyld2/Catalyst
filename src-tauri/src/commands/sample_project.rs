@@ -1441,7 +1441,7 @@ fn ensure_demo(root: &Path) -> Result<(), String> {
     }
     let parent = root.parent().ok_or("Missing demo parent folder")?;
     fs::create_dir_all(parent).map_err(|e| format!("Could not make demo folder: {e}"))?;
-    let staging = parent.join(format!(".hollow-crown-demo-{}", Uuid::new_v4().simple()));
+    let staging = parent.join(format!(".hc-{}", Uuid::new_v4().simple()));
     let result = (|| {
         let input = input_for(&staging)?;
         campaign_wizard::create_campaign(&input)?;
