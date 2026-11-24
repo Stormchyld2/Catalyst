@@ -247,6 +247,8 @@ pub fn run() {
             commands::import_novelwriter,
             commands::preview_import,
             commands::create_sample_project,
+            commands::preview_rpg_content_import,
+            commands::apply_rpg_content_import,
             #[cfg(debug_assertions)]
             commands::create_demo_fixture,
             commands::create_blank_project,
