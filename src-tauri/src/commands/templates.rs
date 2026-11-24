@@ -10,23 +10,11 @@ use crate::models::{
 
 use super::AppState;
 
-const BUNDLED_TEMPLATES: &[&str] = &[
-    include_str!("../../templates/save-the-cat.json"),
-    include_str!("../../templates/three-act-structure.json"),
-    include_str!("../../templates/heros-journey.json"),
-    include_str!("../../templates/story-circle.json"),
-    include_str!("../../templates/seven-point.json"),
-];
-
+// The five inherited novel/story structure presets have been retired from Catalyst.
+// Keep the command for older clients, but do not advertise bundled chapter outlines.
+// User-created templates remain available through get_user_templates and are never deleted.
 fn load_bundled_templates() -> Vec<StoryTemplate> {
-    BUNDLED_TEMPLATES
-        .iter()
-        .filter_map(|json| {
-            let mut t: StoryTemplate = serde_json::from_str(json).ok()?;
-            t.bundled = true;
-            Some(t)
-        })
-        .collect()
+    Vec::new()
 }
 
 #[tauri::command]
