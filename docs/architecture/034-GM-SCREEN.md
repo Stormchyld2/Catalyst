@@ -1,6 +1,6 @@
 # 034 — GM Screen
 
-**Status:** Proposed. Nothing here is built yet. Code starts only after Jason approves this doc.
+**Status:** Approved by Jason 2026-11-24 with the decisions in section 9. Phase 1 in progress.
 **Date:** 2026-11-24
 **Depends on:** 020 (campaign tree), 025 (design system), 027/030 (dice), 033 (soundboard).
 
@@ -43,16 +43,17 @@ Default layout (16:9 screen, three columns):
 └───────────────────────────────────┴──────────────────────────┘
 ```
 
-Phase 1 ships this one layout with show/hide per panel. Moving and resizing panels, and saved
-layout presets, come in phase 3 (section 8), so the first version stays small.
+Phase 1 ships this one fixed layout with show/hide per panel, for testing. A drag-and-drop,
+canvas-style layout (move and resize panels) and saved presets come in phase 4.
 
-### Scrolling (all panels)
+### Scrolling (whole app)
 
-One shared CSS class, added once to the existing Catalyst stylesheet:
+Scrollbars are hidden **everywhere in Catalyst**, not just here. One global rule in the existing
+base stylesheet:
 
 ```css
-.cat-quiet-scroll { overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; }
-.cat-quiet-scroll::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
 ```
 
 - The wheel and trackpad scroll normally; the scrollbar is never drawn (WebView2 honours both rules).
@@ -67,9 +68,14 @@ Reuses doc 033. No second audio store and no copy of `soundboard.json`.
 
 - **Frozen strip:** master fader, the three channel faders (Music, Ambience, Effects) and **Stop all**.
   These write the same `master_volume` and `channels` values the Soundboard workspace writes.
-- **Body:** a compact grid of the pads in `soundboard.json`, same play/stop behaviour and channel
-  rules. Missing-file pads show as missing. Editing pads (import, rename, channel) stays in the
-  Soundboard workspace; the panel has a link to it.
+- **Pad set:** pads gain optional **tags** (for example `combat`, `tavern`). A dropdown in the
+  panel header picks which tag the screen shows ("All pads" is always an option). The chosen tag is
+  saved in `gm-screen.json`; the tags themselves live on the pads in `soundboard.json`.
+- **Body:** a compact grid of the pads with that tag, same play/stop behaviour and channel rules.
+  Missing-file pads show as missing.
+- **All pads:** a button opens every pad in a modal, so nothing is out of reach mid-session.
+- Tags are edited in the Soundboard workspace, next to channel and loop. Importing and renaming
+  stay there too.
 - **Required change:** `SoundboardWorkspace.svelte` creates its own `SoundboardEngine` and disposes
   it on unmount, so music stops when you leave the workspace. The engine moves to one
   campaign-scoped instance in `src/lib/soundboard/` that both views use, so audio keeps playing
@@ -113,9 +119,12 @@ ID** to an existing campaign record; the content stays in its own file and is ne
 
 Ranked by how much they help at the table. Each is a panel or a card type on the same model.
 
-1. **Initiative / combat tracker.** Turn order, round counter, current-turn highlight, HP with
-   quick +/- damage and heal, conditions with durations that count down each round. Rolls initiative
-   through `initiativeRoll`. Combatants reference character, NPC or creature records by ID.
+1. **Initiative / combat tracker.** Player characters, NPCs and monsters, with everything the GM
+   needs in the moment: initiative, AC, HP (current, max, temporary) with quick damage and heal,
+   conditions with durations that count down each round, concentration, death saves, passive
+   Perception and a short note. Turn order, round counter and current-turn highlight. Rolls
+   initiative through `initiativeRoll`. Combatants reference character, NPC or creature records by
+   ID; values the record doesn't hold are typed in and saved with the fight.
 2. **Session notes / scratchpad.** Fast notes that save into the session's log
    (`Sessions/Session Logs/`), so nothing lives only in the screen.
 3. **Random tables.** Roll on the GM library tables (`Game Master/Random Tables`, plus any campaign
@@ -147,7 +156,7 @@ One small file per campaign holds only the screen's own state:
   "layouts": {
     "default": {
       "panels": [
-        { "id": "soundboard", "visible": true },
+        { "id": "soundboard", "visible": true, "pad_tag": "combat" },
         { "id": "dice", "visible": true },
         { "id": "rolls", "visible": true },
         { "id": "cards", "visible": true, "cards": ["crt-<uuid>", "enc-<uuid>", "session"] },
@@ -160,6 +169,8 @@ One small file per campaign holds only the screen's own state:
 ```
 
 - Cards are stored as record IDs, never paths or titles. `session` means "the active session".
+- Pad tags are stored on each pad in `soundboard.json` as `"tags": ["combat"]` (optional, left out
+  when empty, so the format stays version 1).
 - Not stored here: pad levels (`soundboard.json`), rolls (dice session files), notes (session log),
   card content (the records). One value, one file.
 - Combat state (phase 2) goes in `Sessions/Campaign State/combat.json` so it belongs to the
@@ -175,21 +186,20 @@ Each phase is one PR, with tests, after the previous one merges.
 
 | Phase | Scope |
 |---|---|
-| 1 | Workspace and grid, quiet-scroll class, Soundboard panel (shared engine), Dice panel + Rolls box, `gm-screen.json` with show/hide |
-| 2 | Reference cards (creature, NPC, encounter, session, note), initiative/combat tracker with HP and conditions |
-| 3 | Move/resize panels, layout presets, scratchpad, random tables, conditions cards |
-| 4 | Party roster, clocks/timers, handout display; player display with doc 026 |
+| 1 | Workspace and fixed grid, scrollbars hidden app-wide, Soundboard panel (shared engine, pad tags, tag dropdown, all-pads modal), Dice panel + Rolls box, `gm-screen.json` with show/hide |
+| 2 | Initiative/combat tracker (PCs included), session scratchpad |
+| 3 | Random tables, reference cards (creature, NPC, encounter, session, note), conditions reference |
+| 4 | Drag-and-drop canvas layout, layout presets per campaign |
+| 5 | Party roster, clocks/timers, handout display, pinned wiki entries; player display with doc 026 |
 
 Phase 1 depends on the soundboard (PR #9) and dice (PR #2) being on the target branch
 (`test/combined-build-v3` today) and on the rail rework for the At the table group.
 
-## 9. Open questions for Jason
+## 9. Decisions (Jason, 2026-11-24)
 
-1. **Scrollbars:** hide them only inside the GM Screen, or across the whole app?
-2. **Pads:** show every pad, or let you pick a subset of pads for the screen?
-3. **Dice:** is "Open tray" (the existing floating tray, centred) enough, or do you want the tray
-   docked inside the screen? Docking moves the one 3D table into the panel; it cannot be two copies.
-4. **Additions:** which of section 6 do you want, and in what order? The plan assumes the tracker and
-   cards first.
-5. **Combat tracker HP:** track HP for PCs too, or only monsters and NPCs?
-6. **Layout freedom:** is a fixed layout with show/hide fine for phase 1?
+1. Scrollbars are hidden across the whole app.
+2. The screen shows a chosen set of pads, picked by tag from a dropdown, plus an All pads modal.
+3. Dice use the existing floating tray from an Open tray button.
+4. Build order: initiative tracker, session scratchpad, random tables, then the rest of section 6.
+5. The tracker covers player characters too, with everything a GM needs for a session.
+6. Fixed layout first, for testing; drag-and-drop canvas layout follows.
