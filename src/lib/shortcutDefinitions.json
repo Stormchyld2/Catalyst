@@ -1,25 +1,13 @@
 [
   {
-    "id": "editorial_open",
-    "label": "Open review or feedback file",
-    "category": "File",
-    "keywords": ["editor", "package"],
-    "binding": "Mod+O"
-  },
-  {
-    "id": "editorial_project",
-    "label": "Editorial review and packages",
-    "category": "Project",
-    "requiresProject": true,
-    "keywords": ["editor", "feedback", "revisions"],
-    "binding": ""
-  },
-  {
     "id": "find",
     "label": "Find in scene",
     "category": "Edit",
     "requiresProject": true,
-    "keywords": ["search", "prose"],
+    "keywords": [
+      "search",
+      "prose"
+    ],
     "binding": "Mod+F"
   },
   {
@@ -27,7 +15,11 @@
     "label": "Find and replace",
     "category": "Edit",
     "requiresProject": true,
-    "keywords": ["search", "replace", "prose"],
+    "keywords": [
+      "search",
+      "replace",
+      "prose"
+    ],
     "binding": "Mod+Alt+F"
   },
   {
@@ -35,23 +27,21 @@
     "label": "Find and replace in project",
     "category": "Edit",
     "requiresProject": true,
-    "keywords": ["search", "replace", "all"],
+    "keywords": [
+      "search",
+      "replace",
+      "all"
+    ],
     "binding": "Mod+Shift+F"
-  },
-  {
-    "id": "export",
-    "label": "Export project",
-    "category": "File",
-    "requiresProject": true,
-    "keywords": ["export", "docx", "manuscript"],
-    "binding": "Mod+E"
   },
   {
     "id": "close_project",
     "label": "Close project",
     "category": "File",
     "requiresProject": true,
-    "keywords": ["close"],
+    "keywords": [
+      "close"
+    ],
     "binding": "Mod+W"
   },
   {
@@ -59,56 +49,11 @@
     "label": "Quit Catalyst",
     "category": "File",
     "requiresProject": false,
-    "keywords": ["quit", "exit"],
+    "keywords": [
+      "quit",
+      "exit"
+    ],
     "binding": "Mod+Q"
-  },
-  {
-    "id": "import_plottr",
-    "label": "Import Plottr (.pltr)",
-    "category": "File",
-    "requiresProject": false,
-    "keywords": ["import", "plottr"],
-    "binding": "Mod+Shift+O"
-  },
-  {
-    "id": "import_markdown",
-    "label": "Import Markdown (.md)",
-    "category": "File",
-    "requiresProject": false,
-    "keywords": ["import", "markdown", "md"],
-    "binding": "Mod+Shift+M"
-  },
-  {
-    "id": "import_longform",
-    "label": "Import Longform",
-    "category": "File",
-    "requiresProject": false,
-    "keywords": ["import", "longform", "obsidian"],
-    "binding": "Mod+Shift+L"
-  },
-  {
-    "id": "import_ywriter",
-    "label": "Import yWriter 7 (.yw7)",
-    "category": "File",
-    "requiresProject": false,
-    "keywords": ["import", "ywriter", "yw7"],
-    "binding": "Mod+Shift+Y"
-  },
-  {
-    "id": "import_scrivener",
-    "label": "Import Scrivener 3 (.scriv)",
-    "category": "File",
-    "requiresProject": false,
-    "keywords": ["import", "scrivener", "scriv"],
-    "binding": "Mod+Shift+I"
-  },
-  {
-    "id": "import_novelwriter",
-    "label": "Import novelWriter",
-    "category": "File",
-    "requiresProject": false,
-    "keywords": ["import", "novelwriter", "nwx"],
-    "binding": ""
   },
   {
     "id": "sync",
@@ -116,7 +61,12 @@
     "category": "Project",
     "requiresProject": true,
     "requiresSourcePath": true,
-    "keywords": ["sync", "reimport", "refresh", "reload"],
+    "keywords": [
+      "sync",
+      "reimport",
+      "refresh",
+      "reload"
+    ],
     "binding": "Mod+Shift+S"
   },
   {
@@ -124,7 +74,12 @@
     "label": "Toggle sidebar",
     "category": "View",
     "requiresProject": true,
-    "keywords": ["sidebar", "outline", "collapse", "expand"],
+    "keywords": [
+      "sidebar",
+      "outline",
+      "collapse",
+      "expand"
+    ],
     "binding": "Mod+Backslash"
   },
   {
@@ -132,7 +87,13 @@
     "label": "Toggle references panel",
     "category": "View",
     "requiresProject": true,
-    "keywords": ["references", "characters", "panel", "collapse", "expand"],
+    "keywords": [
+      "references",
+      "characters",
+      "panel",
+      "collapse",
+      "expand"
+    ],
     "binding": "Mod+Shift+R"
   },
   {
@@ -140,7 +101,11 @@
     "label": "Toggle discovery notes",
     "category": "View",
     "requiresProject": true,
-    "keywords": ["discovery", "notes", "draft"],
+    "keywords": [
+      "discovery",
+      "notes",
+      "draft"
+    ],
     "binding": "Mod+D"
   },
   {
@@ -148,7 +113,14 @@
     "label": "Toggle beat/page view",
     "category": "View",
     "requiresProject": true,
-    "keywords": ["page", "beat", "view", "mode", "prose", "editor"],
+    "keywords": [
+      "page",
+      "beat",
+      "view",
+      "mode",
+      "prose",
+      "editor"
+    ],
     "binding": "Mod+Alt+V"
   },
   {
@@ -156,7 +128,13 @@
     "label": "Detect references in scene",
     "category": "Project",
     "requiresProject": true,
-    "keywords": ["detect", "references", "scan", "suggest", "smart"],
+    "keywords": [
+      "detect",
+      "references",
+      "scan",
+      "suggest",
+      "smart"
+    ],
     "binding": ""
   },
   {
@@ -164,7 +142,14 @@
     "label": "Detect references in all scenes",
     "category": "Project",
     "requiresProject": true,
-    "keywords": ["detect", "all", "references", "scan", "suggest", "bulk"],
+    "keywords": [
+      "detect",
+      "all",
+      "references",
+      "scan",
+      "suggest",
+      "bulk"
+    ],
     "binding": ""
   },
   {
@@ -172,7 +157,13 @@
     "label": "Dice roller",
     "category": "View",
     "requiresProject": false,
-    "keywords": ["dice", "roll", "d20", "tray", "rpg"],
+    "keywords": [
+      "dice",
+      "roll",
+      "d20",
+      "tray",
+      "rpg"
+    ],
     "binding": "Mod+Shift+D"
   },
   {
@@ -180,7 +171,11 @@
     "label": "About Catalyst",
     "category": "Help",
     "requiresProject": false,
-    "keywords": ["about", "version", "info"],
+    "keywords": [
+      "about",
+      "version",
+      "info"
+    ],
     "binding": ""
   },
   {
@@ -188,7 +183,13 @@
     "label": "Quick start guide",
     "category": "Help",
     "requiresProject": false,
-    "keywords": ["help", "quick", "start", "guide", "docs"],
+    "keywords": [
+      "help",
+      "quick",
+      "start",
+      "guide",
+      "docs"
+    ],
     "binding": "Mod+Shift+H"
   },
   {
@@ -210,9 +211,15 @@
   },
   {
     "id": "new_project",
-    "label": "New project",
+    "label": "New campaign",
     "binding": "Mod+N",
-    "category": "File"
+    "category": "File",
+    "keywords": [
+      "campaign",
+      "new",
+      "create",
+      "rpg"
+    ]
   },
   {
     "id": "command_palette",
@@ -225,12 +232,6 @@
     "label": "Send feedback",
     "binding": "",
     "category": "Help"
-  },
-  {
-    "id": "editorial_comment",
-    "label": "Add editorial comment",
-    "binding": "Mod+Alt+M",
-    "category": "Editor"
   },
   {
     "id": "bold",
