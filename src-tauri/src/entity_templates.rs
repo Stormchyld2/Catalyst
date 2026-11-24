@@ -442,7 +442,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("last_appearance", "Last Appearance", "text"),
                 ("tags", "Tags", "list"),
             ],
-            "# Character Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Full name |  |\n| Birth year |  |\n| Age at campaign start |  |\n| Occupation |  |\n| Campaign role |  |\n\n## Core Character Concept\n\n## Family & Background\n\n## Education & Career\n\n## Important Life Events\n\n## Key Relationships\n\n## Professional & Practical Strengths\n\n## Personality\n\n### Strengths\n\n### Flaws\n\n### Contradictions\n\n## Psychological & Behavioral Habits\n\n## Life Beyond Adventuring\n\n## Character Development & Campaign History\n\n### Stage One\n\n### Stage Two\n\n### Stage Three\n\n### Stage Four\n\n### Stage Five\n\n## Voice & Dialogue Notes\n\n## Continuity Notes",
+            "# Character Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Full name |  |\n| Birth year |  |\n| Age at campaign start |  |\n| Occupation |  |\n| Campaign role |  |\n\n## Core Character Concept\n\n## Family & Background\n\n## Education & Career\n\n## Important Life Events\n\n## Key Relationships\n\n## Professional & Practical Strengths\n\n## Personality\n\n### Strengths\n\n### Flaws\n\n### Contradictions\n\n## Psychological & Behavioral Habits\n\n## Life Beyond Adventuring\n\n## Character Development & Campaign History\n\n### Stage One\n\n### Stage Two\n\n### Stage Three\n\n### Stage Four\n\n### Stage Five\n\n## Voice & Dialogue Notes\n\n## Party and NPC Connections\n\n## Current Campaign Status\n\n## Session Changes\n\n## GM-Only Notes",
         ),
         built_in(
             "character-relationship",
@@ -494,7 +494,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "character",
             "character",
             Some("profession"),
-            "Profession reference for duties, expertise, workplace culture, career path, and story-relevant practical details.",
+            "Profession reference for duties, expertise, workplace culture, career path, and campaign-relevant practical details.",
             &["profession", "industry", "organization", "rank", "status", "tags"],
             &[
                 ("image", "Image", "image"),
@@ -549,7 +549,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("story_role", "Campaign Role", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Location Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Name |  |\n| Type |  |\n| Region |  |\n| Story role |  |\n\n## Physical Description\n\n## Geography & Layout\n\n## Atmosphere & Sensory Details\n\n## History\n\n## Culture & Population\n\n## Important Areas\n\n## Connected Characters\n\n## Connected Organizations\n\n## Campaign Use\n\n## Events & Scenes\n\n## Continuity Notes",
+            "# Location Summary\n\n## Canonical Identity\n\n| Field | Canon |\n| --- | --- |\n| Name |  |\n| Type |  |\n| Region |  |\n| Campaign role |  |\n\n## Physical Description\n\n## Geography & Layout\n\n## Atmosphere & Sensory Details\n\n## History\n\n## Culture & Population\n\n## Important Areas\n\n## Connected Characters\n\n## Connected Organizations\n\n## Campaign Use\n\n## Events & Scenes\n\n## Connected Locations\n\n## Map and Encounter References\n\n## Player Discoveries\n\n## GM-Only Notes",
         ),
         built_in(
             "settlement-city",
@@ -601,7 +601,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "location",
             "location",
             Some("landmark"),
-            "Natural feature or landmark profile for terrain, environment, access, hazards, resources, and narrative significance.",
+            "Natural feature or landmark profile for terrain, environment, access, hazards, resources, and campaign significance.",
             &["subtitle", "feature_type", "region", "climate", "status", "tags"],
             &[
                 ("image", "Image", "image"),
@@ -761,7 +761,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "worldbuilding",
             "note",
             Some("magic"),
-            "Rules-first supernatural system covering source, access, costs, limits, techniques, institutions, and narrative constraints.",
+            "Rules-first supernatural system covering source, access, costs, limits, techniques, institutions, and campaign constraints.",
             &["subtitle", "system_name", "source", "availability", "cost", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("system_name","System Name","text"),("source","Source of Power","text"),("availability","Who Can Use It","text"),("cost","Cost / Price","text"),("status","Status","text"),("disciplines","Disciplines / Schools","list"),("limitations","Key Limitations","list"),("tags","Tags","list")],
             "# Magic System Summary\n\n## Canonical Principles\n\n## Source of Power\n\n## Access & Eligibility\n\n## Rules & Mechanics\n\n## Costs & Consequences\n\n## Limits & Failure Conditions\n\n## Disciplines, Schools & Techniques\n\n## Learning & Mastery\n\n## Tools, Materials & Foci\n\n## Institutions & Practitioners\n\n## Social & Political Effects\n\n## Interaction With Technology / Nature\n\n## Known Exceptions & Edge Cases\n\n## Story-Relevant Applications\n\n## Continuity Rules",
@@ -890,7 +890,7 @@ fn built_in_templates() -> Vec<EntityTemplate> {
                 ("importance", "Importance", "multiline"),
                 ("tags", "Tags", "list"),
             ],
-            "# Event Summary\n\n## Canonical Date & Place\n\n## Participants\n\n## What Happened\n\n## Causes\n\n## Immediate Consequences\n\n## Long-Term Consequences\n\n## Character Impact\n\n## Evidence / Sources\n\n## Campaign Use\n\n## Continuity Notes",
+            "# Event Summary\n\n## Canonical Date & Place\n\n## Participants\n\n## What Happened\n\n## Causes\n\n## Immediate Consequences\n\n## Long-Term Consequences\n\n## Player and NPC Impact\n\n## Evidence / Sources\n\n## Campaign Use\n\n## Continuity Notes",
         ),
         built_in(
             "general-reference",
@@ -898,10 +898,10 @@ fn built_in_templates() -> Vec<EntityTemplate> {
             "general",
             "note",
             Some("reference"),
-            "Flexible reference article for canon that does not fit a specialized Story Development template.",
+            "Flexible reference article for canon that does not fit a specialized Campaign Development template.",
             &["subtitle", "reference_type", "status", "tags"],
             &[("image","Image","image"),("subtitle","Subtitle","text"),("reference_type","Reference Type","text"),("status","Canon Status","text"),("aliases","Aliases / Alternate Names","list"),("related_entries","Related Entries","list"),("tags","Tags","list")],
-            "# Reference Summary\n\n## Canonical Definition\n\n## Description\n\n## Background & Context\n\n## History\n\n## Important Details\n\n## Rules & Constraints\n\n## Related People, Places & Organizations\n\n## Related Events & Concepts\n\n## Story Relevance\n\n## Open Questions\n\n## Sources & Research Notes\n\n## Continuity Notes",
+            "# Reference Summary\n\n## Canonical Definition\n\n## Description\n\n## Background & Context\n\n## History\n\n## Important Details\n\n## Rules & Constraints\n\n## Related People, Places & Organizations\n\n## Related Events & Concepts\n\n## Campaign Relevance\n\n## Open Questions\n\n## Sources & Research Notes\n\n## Continuity Notes",
         ),
         built_in(
             "in-world-document",
