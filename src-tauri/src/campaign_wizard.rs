@@ -202,6 +202,16 @@ pub struct CampaignRules {
     pub starting_level: String,
     pub difficulty: String,
     pub house_rules: String,
+    /// Edition or ruleset offered by the selected pack.
+    pub edition: String,
+    /// The pack's progression terminology: level, rank, tier, experience or other.
+    pub progression_type: String,
+    /// "standard", "modified" or "custom" (empty when unanswered).
+    pub house_rules_mode: String,
+    /// Character-creation restrictions, stored for future Character Studio
+    /// validation. Catalyst does not enforce them itself.
+    pub allowed_content: Vec<String>,
+    pub creation_notes: String,
 }
 
 impl Default for CampaignRules {
@@ -213,6 +223,11 @@ impl Default for CampaignRules {
             starting_level: String::new(),
             difficulty: String::new(),
             house_rules: String::new(),
+            edition: String::new(),
+            progression_type: String::new(),
+            house_rules_mode: String::new(),
+            allowed_content: Vec::new(),
+            creation_notes: String::new(),
         }
     }
 }
@@ -227,7 +242,12 @@ pub struct CampaignWorld {
     pub era: String,
     pub calendar: String,
     pub geography: String,
+    /// What makes the setting distinctive.
     pub notes: String,
+    /// "original", "published", "adapted" or "undecided". Published settings
+    /// are recorded by name only; no setting content is imported.
+    pub origin: String,
+    pub scale: String,
 }
 
 impl Default for CampaignWorld {
@@ -239,6 +259,8 @@ impl Default for CampaignWorld {
             calendar: String::new(),
             geography: String::new(),
             notes: String::new(),
+            origin: String::new(),
+            scale: String::new(),
         }
     }
 }
@@ -247,8 +269,21 @@ impl Default for CampaignWorld {
 #[serde(default)]
 pub struct WorldCategoryInput {
     pub id: String,
+    /// Plain names (older payloads). Each becomes a record.
     pub names: Vec<String>,
     pub notes: String,
+    /// The category's structured questions and the GM's answers.
+    pub answers: Vec<CategoryAnswer>,
+    /// Named records with details (a settlement's purpose and location, a
+    /// nation's ruler). The description is Markdown composed by the wizard.
+    pub entries: Vec<NamedEntryInput>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(default)]
+pub struct CategoryAnswer {
+    pub question: String,
+    pub answer: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -256,6 +291,8 @@ pub struct WorldCategoryInput {
 pub struct PlayerInput {
     pub player_name: String,
     pub character_name: String,
+    /// A one-line character concept until Character Studio exists.
+    pub concept: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -264,6 +301,10 @@ pub struct PartyInput {
     pub name: String,
     pub starting_progression: String,
     pub players: Vec<PlayerInput>,
+    /// Expected number of players (free text so "4-5" works).
+    pub expected_players: String,
+    /// "together", "first-session" or "mixed" (empty when unanswered).
+    pub origin: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -285,11 +326,17 @@ pub struct NamedEntryInput {
     pub name: String,
     pub kind: String,
     pub description: String,
+    /// Creature threat level, or a faction's attitude toward the party.
+    pub detail: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct StoryInput {
+    /// "sandbox", "episodic", "linear" or "mixed".
+    pub structure: String,
+    /// "one-shot", "short", "medium", "long" or "ongoing".
+    pub length: String,
     pub central_conflict: String,
     pub starting_adventure: String,
     pub starting_adventure_summary: String,
@@ -316,6 +363,10 @@ pub struct SessionInput {
     /// "physical" or "digital".
     pub dice: String,
     pub player_display: bool,
+    pub schedule: String,
+    pub session_length: String,
+    /// The first session is a Session Zero.
+    pub session_zero: bool,
 }
 
 impl Default for SessionInput {
@@ -327,6 +378,9 @@ impl Default for SessionInput {
             play_mode: "physical".into(),
             dice: "physical".into(),
             player_display: false,
+            schedule: String::new(),
+            session_length: String::new(),
+            session_zero: false,
         }
     }
 }
@@ -379,6 +433,23 @@ pub struct CampaignRulesManifest {
     pub starting_level: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub difficulty: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub edition: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub progression_type: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub house_rules_mode: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub character_creation: Option<CharacterCreationManifest>,
+}
+
+/// Restrictions for a future Character Studio to validate against.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CharacterCreationManifest {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub allowed_content: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notes: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -386,6 +457,10 @@ pub struct CampaignWorldManifest {
     pub mode: String,
     pub reference_id: Option<String>,
     pub local_state_path: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub setting_origin: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scale: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -393,6 +468,10 @@ pub struct CampaignPlayManifest {
     pub mode: String,
     pub dice: String,
     pub player_display: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schedule: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session_length: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -403,6 +482,10 @@ pub struct CampaignPartyManifest {
     pub starting_progression: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub players: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_players: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
 }
 
 /// RPG-only campaign metadata. Identity (title, timestamps) stays in
@@ -458,6 +541,9 @@ pub struct NewCampaignProject {
     pub overview_path: String,
     pub overview_id: String,
 }
+
+/// Agenda added to a first session marked as Session Zero.
+const SESSION_ZERO_AGENDA: &str = "## Session Zero Agenda\n\n- [ ] Pitch the campaign: genre, tone and premise\n- [ ] Agree on lines and veils, and how anyone can pause a scene\n- [ ] Confirm schedule, session length and what happens when someone is absent\n- [ ] Explain house rules and character-creation restrictions\n- [ ] Build characters together and tie each one to the group\n- [ ] Decide how the party knows each other";
 
 pub const OVERVIEW_PATH: &str = "Adventures/Main Campaign/Campaign Overview.md";
 
@@ -544,16 +630,41 @@ fn validate(input: &NewCampaignInput, root: &Path) -> Result<(), String> {
     {
         return Err("Name your custom or homebrew system.".into());
     }
+    if !matches!(input.setup_mode.trim(), "quick-start" | "guided" | "blank") {
+        return Err(format!("Unknown setup mode '{}'.", input.setup_mode));
+    }
     if !matches!(input.world.mode.trim(), "new" | "blank") {
         return Err("Only a new or blank world is available in this version.".into());
+    }
+    if !matches!(input.world.origin.trim(), "" | "original" | "published" | "adapted" | "undecided") {
+        return Err(format!("Unknown setting origin '{}'.", input.world.origin));
+    }
+    if !matches!(input.rules.house_rules_mode.trim(), "" | "standard" | "modified" | "custom") {
+        return Err(format!("Unknown house rules choice '{}'.", input.rules.house_rules_mode));
     }
     for category in &input.worldbuilding {
         if world_category(category.id.trim()).is_none() {
             return Err(format!("Unknown worldbuilding category '{}'.", category.id));
         }
     }
+    if !matches!(input.party.origin.trim(), "" | "together" | "first-session" | "mixed") {
+        return Err(format!("Unknown party start '{}'.", input.party.origin));
+    }
+    if !matches!(input.story.structure.trim(), "" | "sandbox" | "episodic" | "linear" | "mixed") {
+        return Err(format!("Unknown campaign structure '{}'.", input.story.structure));
+    }
+    if !matches!(input.story.length.trim(), "" | "one-shot" | "short" | "medium" | "long" | "ongoing") {
+        return Err(format!("Unknown campaign length '{}'.", input.story.length));
+    }
     if input.npcs.iter().any(|n| n.name.trim().is_empty()) {
         return Err("NPC names must not be empty.".into());
+    }
+    if input
+        .worldbuilding
+        .iter()
+        .any(|c| c.entries.iter().any(|e| e.name.trim().is_empty()))
+    {
+        return Err("Worldbuilding entries need a name.".into());
     }
     for (label, list) in [
         ("Creature", &input.creatures),
@@ -590,12 +701,7 @@ fn build_in_staging(
     let campaign = CampaignManifest {
         schema_version: CAMPAIGN_SCHEMA_VERSION,
         project_id: manifest.project_id.clone(),
-        setup_mode: if input.setup_mode == "guided" {
-            "guided"
-        } else {
-            "quick-start"
-        }
-        .into(),
+        setup_mode: input.setup_mode.trim().into(),
         rules: CampaignRulesManifest {
             pack_version: rules_pack_version(&pack_id).expect("validated").into(),
             pack_id,
@@ -603,16 +709,35 @@ fn build_in_staging(
             advancement: non_empty(&input.rules.advancement),
             starting_level: non_empty(&input.rules.starting_level),
             difficulty: non_empty(&input.rules.difficulty),
+            edition: non_empty(&input.rules.edition),
+            progression_type: non_empty(&input.rules.progression_type),
+            house_rules_mode: non_empty(&input.rules.house_rules_mode),
+            character_creation: {
+                let allowed_content: Vec<String> = input
+                    .rules
+                    .allowed_content
+                    .iter()
+                    .map(|c| c.trim().to_string())
+                    .filter(|c| !c.is_empty())
+                    .collect();
+                let notes = non_empty(&input.rules.creation_notes);
+                (!allowed_content.is_empty() || notes.is_some())
+                    .then_some(CharacterCreationManifest { allowed_content, notes })
+            },
         },
         world: CampaignWorldManifest {
             mode: input.world.mode.trim().into(),
             reference_id: None,
             local_state_path: CAMPAIGN_STATE_PATH.into(),
+            setting_origin: non_empty(&input.world.origin),
+            scale: non_empty(&input.world.scale),
         },
         play: CampaignPlayManifest {
             mode: input.session.play_mode.trim().into(),
             dice: input.session.dice.trim().into(),
             player_display: input.session.player_display,
+            schedule: non_empty(&input.session.schedule),
+            session_length: non_empty(&input.session.session_length),
         },
         party: CampaignPartyManifest {
             name: non_empty(&input.party.name),
@@ -624,6 +749,8 @@ fn build_in_staging(
                 .map(|p| p.player_name.trim().to_string())
                 .filter(|p| !p.is_empty())
                 .collect(),
+            expected_players: non_empty(&input.party.expected_players),
+            origin: non_empty(&input.party.origin),
         },
         starting_session_id: seeded.first_session_id,
     };
@@ -807,6 +934,8 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             ("gm_name", s(&b.gm_name)),
             ("start_date", s(&b.start_date)),
             ("central_conflict", s(&story.central_conflict)),
+            ("campaign_structure", s(&story.structure)),
+            ("campaign_length", s(&story.length)),
             ("status", s("planning")),
         ],
     )?;
@@ -830,7 +959,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
     }
 
     let w = &input.world;
-    if [&w.name, &w.era, &w.calendar, &w.geography, &w.notes]
+    if [&w.name, &w.era, &w.calendar, &w.geography, &w.notes, &w.origin, &w.scale]
         .iter()
         .any(|v| !v.trim().is_empty())
     {
@@ -850,6 +979,8 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
                 ("time_period", s(&w.era)),
                 ("calendar", s(&w.calendar)),
                 ("geography", s(&w.geography)),
+                ("setting_origin", s(&w.origin)),
+                ("scale", s(&w.scale)),
             ],
         )?;
     }
@@ -860,17 +991,29 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
         if !seen.insert(id) {
             continue;
         }
+        let label = folder;
         let folder = format!("Worldbuilding/{folder}");
+        let mut overview: Vec<String> = category
+            .answers
+            .iter()
+            .filter(|a| !a.answer.trim().is_empty() && !a.question.trim().is_empty())
+            .map(|a| format!("## {}\n\n{}", a.question.trim(), a.answer.trim()))
+            .collect();
         if !category.notes.trim().is_empty() {
-            let title = format!("{} Notes", folder.trim_start_matches("Worldbuilding/"));
+            overview.push(format!("## Notes\n\n{}", category.notes.trim()));
+        }
+        if !overview.is_empty() {
             seeder.record(
                 root,
                 &folder,
-                &title,
+                &format!("{label} Overview"),
                 "worldbuilding-profile",
-                &category.notes,
+                &overview.join("\n\n"),
                 &[],
             )?;
+        }
+        for entry in &category.entries {
+            seeder.record(root, &folder, entry.name.trim(), template, &entry.description, &[])?;
         }
         for name in category
             .names
@@ -893,7 +1036,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             "Characters/Player Characters",
             character,
             "player-character-placeholder",
-            "",
+            &player.concept,
             &[
                 ("player", s(&player.player_name)),
                 ("status", s("placeholder")),
@@ -904,7 +1047,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
 
     for npc in &input.npcs {
         let disposition = match npc.disposition.trim() {
-            d @ ("ally" | "villain" | "neutral") => d,
+            d @ ("ally" | "neutral" | "rival" | "villain" | "unknown") => d,
             _ => "neutral",
         };
         seeder.record(
@@ -928,7 +1071,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             &creature.name,
             "creature-profile",
             &creature.description,
-            &[("creature_type", s(&creature.kind))],
+            &[("creature_type", s(&creature.kind)), ("threat", s(&creature.detail))],
         )?;
     }
 
@@ -939,7 +1082,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             &faction.name,
             "faction-secret-society",
             &faction.description,
-            &[("agenda", s(&faction.kind))],
+            &[("agenda", s(&faction.kind)), ("attitude", s(&faction.detail))],
         )?;
     }
 
@@ -1036,18 +1179,26 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
     let mut first_session_id = None;
     if !session.first_session_title.trim().is_empty()
         || !session.first_session_notes.trim().is_empty()
+        || session.session_zero
     {
-        let title = if session.first_session_title.trim().is_empty() {
-            "Session 1"
-        } else {
-            session.first_session_title.trim()
+        let title = match session.first_session_title.trim() {
+            "" if session.session_zero => "Session Zero",
+            "" => "Session 1",
+            t => t,
         };
+        let mut prose = session.first_session_notes.trim().to_string();
+        if session.session_zero {
+            if !prose.is_empty() {
+                prose.push_str("\n\n");
+            }
+            prose.push_str(SESSION_ZERO_AGENDA);
+        }
         let doc = seeder.record(
             root,
             "Sessions/Session Plans",
             title,
             "session-plan",
-            &session.first_session_notes,
+            &prose,
             &[
                 ("session_number", Value::Number(1.into())),
                 ("status", s("planned")),
@@ -1066,7 +1217,10 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
         )?;
     }
 
-    seed_gm_library(root, &mut seeder)?;
+    // A Blank Campaign gets only the required anchor record.
+    if input.setup_mode.trim() != "blank" {
+        seed_gm_library(root, &mut seeder)?;
+    }
 
     Ok(Seeded {
         overview_id: overview.identity.id,
@@ -1337,7 +1491,9 @@ mod tests {
             CampaignPlayManifest {
                 mode: "hybrid".into(),
                 dice: "digital".into(),
-                player_display: true
+                player_display: true,
+                schedule: None,
+                session_length: None,
             }
         );
         assert_eq!(c.party.players, vec!["Sam".to_string(), "Ari".to_string()]);
@@ -1356,7 +1512,7 @@ mod tests {
             md_files(&root, "Worldbuilding/Organizations & Factions"),
             vec![
                 "Iron Navy.md",
-                "Organizations & Factions Notes.md",
+                "Organizations & Factions Overview.md",
                 "The Tide Court 2.md",
                 "The Tide Court.md"
             ]
@@ -1475,6 +1631,110 @@ mod tests {
             .entries
             .iter()
             .any(|e| e.id == id && e.relative_path == moved.to_string_lossy()));
+    }
+
+    #[test]
+    fn blank_campaign_seeds_only_the_overview_and_defaults_to_system_neutral() {
+        let parent = tempfile::tempdir().unwrap();
+        let root = parent.path().join("Empty");
+        let input: NewCampaignInput = serde_json::from_value(serde_json::json!({
+            "project_root": root.to_string_lossy(), "name": "Empty", "setup_mode": "blank",
+        }))
+        .unwrap();
+        create_campaign(&input).unwrap();
+        let campaign = read_campaign_manifest(&root).unwrap();
+        assert_eq!(campaign.setup_mode, "blank");
+        assert_eq!(campaign.rules.pack_id, "system-neutral");
+        let docs: Vec<_> = build_index(&root).unwrap().entries.into_iter()
+            .filter(|e| e.entry_kind == "document").map(|e| e.relative_path).collect();
+        assert_eq!(docs, vec![OVERVIEW_PATH.to_string()]);
+        for dir in CAMPAIGN_DIRECTORIES {
+            assert!(root.join(dir).is_dir());
+        }
+    }
+
+    #[test]
+    fn campaign_builder_answers_reach_campaign_yaml_and_wiki_pages() {
+        let parent = tempfile::tempdir().unwrap();
+        let root = parent.path().join("Builder");
+        let input: NewCampaignInput = serde_json::from_value(serde_json::json!({
+            "project_root": root.to_string_lossy(), "name": "Builder", "setup_mode": "guided",
+            "rules": {
+                "pack_id": "system-neutral", "edition": "Any / not specified", "progression_type": "tier",
+                "starting_level": "Tier 2", "advancement": "Milestones", "house_rules_mode": "modified",
+                "house_rules": "No fumbles.", "allowed_content": ["Core rules"], "creation_notes": "Humans only."
+            },
+            "world": { "mode": "new", "name": "Ember Marches", "origin": "original", "scale": "Region", "era": "Medieval", "notes": "Ash falls." },
+            "worldbuilding": [
+                { "id": "geography", "answers": [ { "question": "What is the general climate?", "answer": "Cold" } ] },
+                { "id": "settlements", "entries": [ { "name": "Cinderford", "description": "**What purpose does it serve?** Trade" } ] }
+            ],
+            "party": { "expected_players": "4", "origin": "first-session", "players": [ { "player_name": "Sam", "character_name": "Kestrel", "concept": "A scout who lost her watch." } ] },
+            "npcs": [ { "name": "Vey", "disposition": "rival", "role": "Rival" } ],
+            "creatures": [ { "name": "Cinder Hound", "kind": "Beast", "detail": "Elite" } ],
+            "factions": [ { "name": "Ash Council", "kind": "Rule", "detail": "Hostile" } ],
+            "story": { "structure": "sandbox", "length": "long" },
+            "session": { "play_mode": "hybrid", "dice": "physical", "schedule": "Weekly", "session_length": "3 hours", "session_zero": true }
+        }))
+        .unwrap();
+        create_campaign(&input).unwrap();
+        let campaign = read_campaign_manifest(&root).unwrap();
+        assert_eq!(campaign.rules.progression_type.as_deref(), Some("tier"));
+        assert_eq!(campaign.rules.starting_level.as_deref(), Some("Tier 2"));
+        assert_eq!(campaign.rules.house_rules_mode.as_deref(), Some("modified"));
+        assert_eq!(
+            campaign.rules.character_creation,
+            Some(CharacterCreationManifest { allowed_content: vec!["Core rules".into()], notes: Some("Humans only.".into()) })
+        );
+        assert_eq!(campaign.world.setting_origin.as_deref(), Some("original"));
+        assert_eq!(campaign.world.scale.as_deref(), Some("Region"));
+
+        let geo = read_document(&root, Path::new("Worldbuilding/Geography & Climate/Geography & Climate Overview.md")).unwrap();
+        assert!(geo.body.contains("## What is the general climate?\n\nCold"));
+        let town = read_document(&root, Path::new("Worldbuilding/Settlements & Locations/Cinderford.md")).unwrap();
+        assert_eq!(meta(&town, "template_id").and_then(Value::as_str), Some("settlement-city"));
+        assert!(town.body.starts_with("**What purpose does it serve?** Trade"));
+        let world = read_document(&root, Path::new("Worldbuilding/Ember Marches.md")).unwrap();
+        assert_eq!(meta(&world, "scale").and_then(Value::as_str), Some("Region"));
+        assert_eq!(campaign.party.expected_players.as_deref(), Some("4"));
+        assert_eq!(campaign.party.origin.as_deref(), Some("first-session"));
+        assert_eq!(campaign.play.schedule.as_deref(), Some("Weekly"));
+        assert_eq!(campaign.play.session_length.as_deref(), Some("3 hours"));
+        let text = |path: &str, key: &str| {
+            let doc = read_document(&root, Path::new(path)).unwrap();
+            meta(&doc, key).and_then(Value::as_str).map(str::to_string)
+        };
+        assert_eq!(text("Characters/Non-Player Characters/Vey.md", "disposition").as_deref(), Some("rival"));
+        assert_eq!(text("Creatures & Monsters/Custom Creatures/Cinder Hound.md", "threat").as_deref(), Some("Elite"));
+        assert_eq!(text("Worldbuilding/Organizations & Factions/Ash Council.md", "attitude").as_deref(), Some("Hostile"));
+        assert_eq!(text(OVERVIEW_PATH, "campaign_structure").as_deref(), Some("sandbox"));
+        let pc = read_document(&root, Path::new("Characters/Player Characters/Kestrel.md")).unwrap();
+        assert!(pc.body.starts_with("A scout who lost her watch."));
+        let zero = read_document(&root, Path::new("Sessions/Session Plans/Session Zero.md")).unwrap();
+        assert!(zero.body.contains("## Session Zero Agenda"));
+        assert_eq!(campaign.starting_session_id.as_deref(), Some(zero.identity.id.as_str()));
+    }
+
+    #[test]
+    fn unknown_builder_choices_are_rejected() {
+        let parent = tempfile::tempdir().unwrap();
+        let root = parent.path().join("Bad");
+        for patch in [
+            serde_json::json!({ "setup_mode": "wizard" }),
+            serde_json::json!({ "world": { "mode": "new", "origin": "stolen" } }),
+            serde_json::json!({ "rules": { "pack_id": "system-neutral", "house_rules_mode": "chaos" } }),
+            serde_json::json!({ "worldbuilding": [ { "id": "nations", "entries": [ { "name": " " } ] } ] }),
+            serde_json::json!({ "party": { "origin": "teleported" } }),
+            serde_json::json!({ "story": { "structure": "railroad" } }),
+        ] {
+            let mut value = serde_json::json!({ "project_root": root.to_string_lossy(), "name": "Bad", "setup_mode": "guided" });
+            for (k, v) in patch.as_object().unwrap() {
+                value[k] = v.clone();
+            }
+            let input: NewCampaignInput = serde_json::from_value(value).unwrap();
+            assert!(create_campaign(&input).is_err(), "{patch}");
+            assert!(!root.exists());
+        }
     }
 
     #[test]
