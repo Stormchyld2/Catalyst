@@ -19,11 +19,12 @@
     world_entries: number;
     latest_session_plan: string | null;
   };
-  let { project, onOpenWrite, onOpenStoryDevelopment, onOpenAdventures }: {
+  let { project, onOpenWrite, onOpenStoryDevelopment, onOpenAdventures, onOpenCampaignOverview }: {
     project: Project;
     onOpenWrite: () => void;
     onOpenStoryDevelopment: () => void;
     onOpenAdventures: () => void;
+    onOpenCampaignOverview: () => void;
   } = $props();
 
   let summary = $state<CampaignSummary | null>(null);
@@ -58,9 +59,14 @@
       <h1 id="dashboard-title">{project.name}</h1>
       <p class="meta">{project.genre ?? "Tabletop RPG campaign"} · Updated {modifiedDate}</p>
     </div>
-    <button class="primary" type="button" onclick={onOpenWrite}>
-      Open Campaign Notes <ArrowRight size={17} aria-hidden="true" />
-    </button>
+    <div class="hero-actions">
+      <button class="primary" type="button" onclick={onOpenCampaignOverview}>
+        Edit Campaign Overview <ArrowRight size={17} aria-hidden="true" />
+      </button>
+      <button class="link-button" type="button" onclick={onOpenWrite}>
+        Open Campaign Notes <ArrowRight size={17} aria-hidden="true" />
+      </button>
+    </div>
   </header>
 
   {#if loading}
@@ -112,6 +118,7 @@
   .command-center{box-sizing:border-box;width:100%;height:100%;overflow:auto;padding:clamp(24px,4vw,58px);background:var(--color-bg);color:var(--color-text)}
   .hero,.dashboard-card,.metrics-grid,.actions-grid{width:min(1160px,100%);margin-inline:auto}
   .hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px}
+  .hero-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
   .eyebrow{margin:0 0 8px;color:var(--color-accent-text);font:700 .72rem var(--font-ui);text-transform:uppercase;letter-spacing:.09em}
   h1,h2{font-family:var(--font-display);margin:0}
   h1{font-size:clamp(2rem,4vw,3.1rem)}
