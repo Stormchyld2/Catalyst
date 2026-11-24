@@ -36,7 +36,7 @@
   import GitWorkspace from "./lib/components/GitWorkspace.svelte";
   import SoundboardWorkspace from "./lib/components/SoundboardWorkspace.svelte";
   import GmScreenWorkspace from "./lib/components/GmScreenWorkspace.svelte";
-  import { soundboard } from "./lib/soundboard/board.svelte";
+  import { soundboard } from "./lib/soundboardBoard.svelte";
   import OutlineWorkspace from "./lib/components/OutlineWorkspace.svelte";
   import { captureWritingFocus } from "./lib/utils/writingFocus";
   import CampaignWizardDialog from "./lib/components/CampaignWizardDialog.svelte";

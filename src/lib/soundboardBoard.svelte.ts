@@ -5,13 +5,12 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
-import { emptyLayout, type AudioFile, type SoundboardLayout } from "./layout";
-import { SoundboardEngine } from "./engine.svelte";
+import { SoundboardEngine, defaultLayout, type AudioFile, type SoundboardLayout } from "./soundboard.svelte";
 
 const SAVE_DELAY_MS = 400;
 
 export class SoundboardBoard {
-  layout = $state<SoundboardLayout>(emptyLayout());
+  layout = $state<SoundboardLayout>({ ...defaultLayout(), pads: [] });
   files = $state<AudioFile[]>([]);
   loading = $state(false);
   error = $state<string | null>(null);
@@ -22,12 +21,10 @@ export class SoundboardBoard {
   #saveTimer: ReturnType<typeof setTimeout> | null = null;
   #invoke: typeof invoke;
 
-  constructor(call: typeof invoke = invoke, createAudio?: () => HTMLAudioElement) {
+  constructor(call: typeof invoke = invoke) {
     this.#invoke = call;
-    this.engine = new SoundboardEngine(
-      emptyLayout(),
-      (file) => this.#invoke<ArrayBuffer>("read_soundboard_audio", { projectRoot: this.root, path: file }),
-      createAudio,
+    this.engine = new SoundboardEngine(defaultLayout(), (file) =>
+      this.#invoke<ArrayBuffer>("read_soundboard_audio", { projectRoot: this.root, path: file }),
     );
   }
 
@@ -42,11 +39,12 @@ export class SoundboardBoard {
     this.error = null;
     try {
       const [layout, files] = await Promise.all([
-        this.#invoke<SoundboardLayout>("load_soundboard_layout", { projectRoot }),
+        this.#invoke<SoundboardLayout | null>("load_soundboard_layout", { projectRoot }),
         this.#invoke<AudioFile[]>("list_soundboard_audio", { projectRoot }),
       ]);
       if (projectRoot !== this.root) return;
-      this.layout = layout;
+      // No soundboard.json yet: start with the built-in pads (doc 033).
+      this.layout = layout ?? defaultLayout();
       this.files = files;
       this.engine.setLayout(layout);
       this.saveState = "idle";
@@ -63,7 +61,7 @@ export class SoundboardBoard {
     this.engine.stopAll();
     for (const pad of this.layout.pads) this.engine.forget(pad.file);
     this.root = "";
-    this.layout = emptyLayout();
+    this.layout = { ...defaultLayout(), pads: [] };
     this.files = [];
     this.error = null;
     this.saveState = "idle";

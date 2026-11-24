@@ -5,8 +5,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/sve
 import { invoke } from "@tauri-apps/api/core";
 import GmScreenWorkspace from "./GmScreenWorkspace.svelte";
 import type { Project } from "../types";
-import { emptyLayout, type SoundboardLayout } from "../soundboard/layout";
-import { soundboard } from "../soundboard/board.svelte";
+import { defaultLayout, type SoundboardLayout } from "../soundboard.svelte";
+import { soundboard } from "../soundboardBoard.svelte";
 import { diceTray } from "../dice";
 import type { GmScreenLayout } from "../gmScreen";
 
@@ -20,7 +20,7 @@ let screenFile: GmScreenLayout | null;
 beforeEach(async () => {
   await soundboard.close();
   diceTray.history.clear();
-  board = emptyLayout();
+  board = defaultLayout();
   board.pads = [
     { id: "pad-1", label: "Battle drums", file: "drums.ogg", channel: "music", loop: true, volume: 1, tags: ["Combat"] },
     { id: "pad-2", label: "Tavern", file: "tavern.ogg", channel: "ambient", loop: true, volume: 1, tags: ["Town"] },

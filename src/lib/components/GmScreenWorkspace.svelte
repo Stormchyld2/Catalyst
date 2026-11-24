@@ -3,8 +3,8 @@
   import { onDestroy } from "svelte";
   import { Dices, Eye, EyeOff, Lock, PanelsTopLeft, Square, X } from "lucide-svelte";
   import type { Project } from "../types";
-  import { CHANNELS, clampVolume, padTags, padsWithTag, type SoundChannel, type SoundPad } from "../soundboard/layout";
-  import { soundboard } from "../soundboard/board.svelte";
+  import { BUILTIN_SOUNDS, CHANNELS, clampVolume, padTags, padsWithTag, type SoundChannel, type SoundPad } from "../soundboard.svelte";
+  import { soundboard } from "../soundboardBoard.svelte";
   import { diceTray, type RollMode, type RollRecord, type RollVisibility } from "../dice";
   import { GM_PANELS, defaultGmScreen, gmPanel, updateGmPanel, type GmPanelId, type GmScreenLayout } from "../gmScreen";
 
@@ -24,7 +24,7 @@
 
   const engine = soundboard.engine;
   const board = $derived(soundboard.layout);
-  const fileSet = $derived(new Set(soundboard.files.map((f) => f.path)));
+  const fileSet = $derived(new Set([...BUILTIN_SOUNDS.map((s) => s.file), ...soundboard.files.map((f) => f.path)]));
   const tags = $derived(padTags(board));
   const padTag = $derived(gmPanel(screenLayout, "soundboard").pad_tag ?? null);
   const shownPads = $derived(padsWithTag(board, padTag));

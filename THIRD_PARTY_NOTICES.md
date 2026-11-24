@@ -1,5 +1,11 @@
 # Third-party notices
 
+## Soundboard built-in sounds
+
+The audio in `static/soundboard/` is not third-party: every file is synthesized by
+`scripts/make-soundboard-sounds.py` from noise and sine tones and is released under CC0 1.0
+(public domain dedication) as part of Catalyst. No samples or recordings are used.
+
 ## Campaign soundboard — design reference
 
 The Catalyst soundboard (`docs/architecture/033-CAMPAIGN-SOUNDBOARD.md`) was designed after reviewing
