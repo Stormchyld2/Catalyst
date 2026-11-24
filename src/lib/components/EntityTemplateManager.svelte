@@ -53,6 +53,7 @@
   let id = $state("");
   let name = $state("");
   let category = $state("character");
+  let scope = $state("story-development");
   let documentType = $state("character");
   let subtype = $state("");
   let description = $state("");
@@ -96,6 +97,7 @@
     id = template.id;
     name = template.name;
     category = template.category;
+    scope = template.scope;
     documentType = template.document_type;
     subtype = template.subtype ?? "";
     description = template.description ?? "";
@@ -114,6 +116,7 @@
     id = "";
     name = "";
     category = "character";
+    scope = "story-development";
     documentType = "character";
     subtype = "";
     description = "";
@@ -158,6 +161,7 @@
           id: id.trim(),
           name: name.trim(),
           category: category.trim(),
+          scope: scope.trim(),
           document_type: documentType.trim(),
           subtype: subtype.trim() || null,
           version: 1,
@@ -252,6 +256,7 @@
           <label>ID<input bind:value={id} disabled={!canEdit} placeholder="custom-character" /></label>
           <label>Name<input bind:value={name} disabled={!canEdit} placeholder="Custom Character" /></label>
           <label>Category<input bind:value={category} disabled={!canEdit} /></label>
+          <label>Template scope<select bind:value={scope} disabled={!canEdit} aria-label="Template scope"><option value="story-development">World Builder (legacy-compatible)</option><option value="worldbuilding">Worldbuilding</option><option value="campaign">Campaign</option><option value="adventure">Adventure</option><option value="encounter">Encounter</option><option value="session">Session</option><option value="gm">Game Master</option><option value="project">Legacy project</option><option value="outline">Legacy outline</option><option value="manuscript">Legacy manuscript</option><option value="review">Legacy review</option><option value="publishing">Legacy publishing</option></select></label>
           <label>Document type<input bind:value={documentType} disabled={!canEdit} /></label>
           <label>Subtype<input bind:value={subtype} disabled={!canEdit} placeholder="optional" /></label>
           <label>Image field<input bind:value={imageField} disabled={!canEdit} /></label>
