@@ -526,3 +526,13 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod bundled_template_retirement_tests {
+    use super::*;
+
+    #[test]
+    fn novel_structure_presets_are_not_bundled() {
+        assert!(load_bundled_templates().is_empty());
+    }
+}
