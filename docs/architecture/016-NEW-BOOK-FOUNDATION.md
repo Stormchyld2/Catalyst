@@ -1,4 +1,4 @@
-# LithoMark New Book Foundation
+# Catalyst New Book Foundation
 
 **Status:** Locked architecture  
 **Scope:** New-book creation, initial Story Development seeding, and handoff into the normal project workspace  
@@ -6,16 +6,16 @@
 
 ## 1. Purpose
 
-Creating a new book should not drop the writer into an empty file tree or require the writer to understand LithoMark's internal folder structure before beginning.
+Creating a new book should not drop the writer into an empty file tree or require the writer to understand Catalyst's internal folder structure before beginning.
 
-LithoMark therefore provides a guided **New Book Foundation** flow from Home. The flow gathers enough initial story-development information to seed the project, then creates normal Markdown/YAML/JSON files and opens the project in the **Story Development Wiki**.
+Catalyst therefore provides a guided **New Book Foundation** flow from Home. The flow gathers enough initial story-development information to seed the project, then creates normal Markdown/YAML/JSON files and opens the project in the **Story Development Wiki**.
 
 The setup form is temporary. After project creation, the generated files become authoritative.
 
 ## 2. User flow
 
 ```text
-LithoMark Home
+Catalyst Home
     ↓
 New Book
     ↓
@@ -126,7 +126,7 @@ May include:
 
 ### Brainstorming
 
-**Brainstorming** is the preferred LithoMark term. Do not use "Braindump" as the product label.
+**Brainstorming** is the preferred Catalyst term. Do not use "Braindump" as the product label.
 
 Brainstorming occurs after the structured entity/setup sections so the setup session already knows the names entered for characters, locations, organizations, and similar entities.
 
@@ -158,11 +158,11 @@ Temporary setup state may be discarded if the writer cancels project creation.
 
 Pressing **Create Book** is the persistence boundary.
 
-At that point LithoMark:
+At that point Catalyst:
 
 1. validates the destination/project root;
-2. creates the normal LithoMark project structure;
-3. assigns stable LithoMark IDs;
+2. creates the normal Catalyst project structure;
+3. assigns stable Catalyst IDs;
 4. creates the initial Markdown/YAML/JSON files;
 5. populates those files from the setup data;
 6. creates any required project metadata;
@@ -196,7 +196,7 @@ Book/
 └── Planning/
 ```
 
-Existing LithoMark templates should be used to create entity files where practical. Setup values populate the appropriate initial template fields; the writer completes the richer files afterward in the Wiki.
+Existing Catalyst templates should be used to create entity files where practical. Setup values populate the appropriate initial template fields; the writer completes the richer files afterward in the Wiki.
 
 ## 7. Entity recognition during setup
 
@@ -236,7 +236,7 @@ Outline answers:
 
 > How does this story unfold?
 
-When the writer chooses **Start Outline**, LithoMark may ask the writer to choose a structure/template such as:
+When the writer chooses **Start Outline**, Catalyst may ask the writer to choose a structure/template such as:
 
 - Blank Outline;
 - Three-Act;
@@ -301,7 +301,7 @@ Current behavior:
 - creates a validated `project.yaml` without requiring SQLite project state;
 - creates the canonical local project directories, including Story Development and Planning;
 - seeds Foundation, Brainstorming, Synopsis, Style & Voice, Themes, and Worldbuilding files;
-- creates Character and Location files with stable LithoMark IDs;
+- creates Character and Location files with stable Catalyst IDs;
 - stores structured setup values in YAML frontmatter and prose notes in Markdown bodies;
 - sanitizes unsafe filename characters while preserving the human-facing document title;
 - handles duplicate entity names by creating distinct normal files;
@@ -314,9 +314,9 @@ The guided frontend is now implemented. It holds setup state only in the New Boo
 
 Entity/file templates are distinct from outline/structure templates.
 
-LithoMark maintains one logical entity-template registry assembled from:
+Catalyst maintains one logical entity-template registry assembled from:
 
-- built-in entity templates shipped with LithoMark;
+- built-in entity templates shipped with Catalyst;
 - user-authored Markdown template files discovered recursively from the local `Templates` folder.
 
 A user template is a normal Markdown file with YAML frontmatter under a `lithomark_template` root key. The template metadata declares its stable template id, display name, category, target document type, optional subtype, version, description, and structured fields. The Markdown body supplies the initial document body/section scaffold.
@@ -331,7 +331,7 @@ User template discovery rules:
 - adding a valid Markdown template to the local `Templates` folder makes it available after registry refresh/reload;
 - no database import step is required.
 
-LithoMark provides a **Manage Templates** UI for creating, editing, renaming, and deleting user templates. It writes the same ordinary Markdown/YAML template files that advanced users can create or edit manually. Built-in templates remain read-only.
+Catalyst provides a **Manage Templates** UI for creating, editing, renaming, and deleting user templates. It writes the same ordinary Markdown/YAML template files that advanced users can create or edit manually. Built-in templates remain read-only.
 
 ### Foundation assignment behavior
 
@@ -352,7 +352,7 @@ Automatic assignment is a convenience, not an irreversible classification.
 
 ## 16. Demo project
 
-LithoMark will include an explicit sample/demo project containing synthetic material created specifically for the application. It should demonstrate the normal project model with, at minimum:
+Catalyst will include an explicit sample/demo project containing synthetic material created specifically for the application. It should demonstrate the normal project model with, at minimum:
 
 - a small fictional world;
 - multiple characters;
@@ -363,7 +363,7 @@ LithoMark will include an explicit sample/demo project containing synthetic mate
 - a small outline/planning example;
 - approximately two short manuscript chapters with scenes.
 
-The demo is not fallback runtime data. Opening the demo copies or creates a normal local LithoMark project folder, after which it behaves exactly like a user-created project and all content remains file-authoritative.
+The demo is not fallback runtime data. Opening the demo copies or creates a normal local Catalyst project folder, after which it behaves exactly like a user-created project and all content remains file-authoritative.
 
 
 ## 17. Story Development workspace presentation

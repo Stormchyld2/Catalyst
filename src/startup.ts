@@ -67,10 +67,10 @@ async function start() {
     document.getElementById("startup-loading")?.remove();
     focusAfterStartup();
   } catch (error) {
-    console.error("LithoMark could not start:", error);
+    console.error("Catalyst could not start:", error);
     document.getElementById("startup-loading")?.setAttribute("role", "alert");
     const message = document.getElementById("startup-message");
-    if (message) message.textContent = "LithoMark could not start. Please try again.";
+    if (message) message.textContent = "Catalyst could not start. Please try again.";
     const spinner = document.querySelector<HTMLElement>(".startup-spinner");
     if (spinner) spinner.hidden = true;
     const retry = document.getElementById("startup-retry");

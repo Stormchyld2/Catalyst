@@ -1,12 +1,12 @@
 [package]
-name = "lithomark"
+name = "catalyst"
 version = "0.1.0"
-description = "LithoMark Writer OS - a local-first writing and story development environment"
+description = "Catalyst - a local-first writing and story development environment"
 authors = ["Josh Smith"]
 edition = "2021"
 
 [lib]
-name = "lithomark_lib"
+name = "catalyst_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

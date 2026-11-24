@@ -1,4 +1,5 @@
 <script lang="ts">
+  import catalystLogo from "../../assets/catalyst-logo.png";
   import { invoke } from "@tauri-apps/api/core";
   import type { ImportType } from "../utils/import";
   import { open as openNative } from "../utils/nativeDialog";
@@ -308,11 +309,11 @@ ortLongform ?? importLongform;
 <div class="start">
   <div class="start-body">
     <div class="start-intro">
-      <h1 class="ka-sr">LithoMark Writer OS</h1>
+      <h1 class="ka-sr">Catalyst</h1>
 
       <div class="signature">
         <figure class="brand">
-          <img src="/lithomark-logo.png" alt="LithoMark Writer OS" />
+          <img src={catalystLogo} alt="Catalyst" />
         </figure>
         <p class="tagline">Write the story. Know the story.</p>
       </div>
@@ -343,7 +344,7 @@ ortLongform ?? importLongform;
               <BookOpen class="w-5 h-5" aria-hidden="true" />
               <span>
                 {startingSample ? "Opening The Glass Meridian..." : "The Glass Meridian Sample"}
-                <small>Explore LithoMark with the bundled demo novel</small>
+                <small>Explore Catalyst with the bundled demo novel</small>
               </span>
             </button>
             {/if}
@@ -352,7 +353,7 @@ ortLongform ?? importLongform;
           {#if onOpenProjectFolder}
             <button type="button" onclick={onOpenProjectFolder} class="ka-button ka-button--secondary start-action">
               <FolderOpen class="w-5 h-5" aria-hidden="true" />
-              <span>Open Project Folder <small>Open an existing LithoMark project folder</small></span>
+              <span>Open Project Folder <small>Open an existing Catalyst project folder</small></span>
             </button>
           {/if}
 
@@ -439,8 +440,8 @@ ortLongform ?? importLongform;
                   disabled={deletingProjectId === project.id || openingProjectId === project.id}
                   class="ka-button ka-button--ghost ka-icon-button recent-delete"
                   class:is-busy={deletingProjectId === project.id}
-                  aria-label={`Remove ${project.name} from LithoMark`}
-                  title="Remove from LithoMark"
+                  aria-label={`Remove ${project.name} from Catalyst`}
+                  title="Remove from Catalyst"
                 >
                   {#if deletingProjectId === project.id}
                     <Loader2 class="w-5 h-5 animate-spin" aria-hidden="true" />
@@ -603,8 +604,8 @@ ortLongform ?? importLongform;
               type="button"
               class="ka-button ka-button--ghost ka-icon-button recent-delete"
               onclick={(event) => showDeleteConfirmation(event, project)}
-              aria-label={`Remove ${project.name} from LithoMark`}
-              title="Remove from LithoMark"
+              aria-label={`Remove ${project.name} from Catalyst`}
+              title="Remove from Catalyst"
             >
               <Trash2 class="w-5 h-5" aria-hidden="true" />
             </button>
@@ -618,8 +619,8 @@ ortLongform ?? importLongform;
 <!-- Delete Project Confirmation -->
 {#if projectToDelete}
   <ConfirmDialog
-    title={`Remove "${projectToDelete.name}" from LithoMark?`}
-    message="This removes the book from your LithoMark project list only. Your manuscript, project folder, and all local files remain untouched. You can reopen the folder later."
+    title={`Remove "${projectToDelete.name}" from Catalyst?`}
+    message="This removes the book from your Catalyst project list only. Your manuscript, project folder, and all local files remain untouched. You can reopen the folder later."
     confirmLabel="Remove from list"
     onConfirm={confirmDeleteProject}
     onCancel={cancelDeleteProject}

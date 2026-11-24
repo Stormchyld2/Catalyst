@@ -71,7 +71,7 @@ impl DistributionRecord {
 
         if self.format_version != DISTRIBUTION_RECORD_FORMAT_VERSION {
             return Err(format!(
-                "Unsupported LithoMark distribution record version {}.",
+                "Unsupported Catalyst distribution record version {}.",
                 self.format_version
             ));
         }

@@ -393,7 +393,7 @@ fn resolve_in_vault(
         return Ok(resolved);
     }
     Err(LongformError::InvalidStructure(format!(
-        "{} is outside the vault ({}), so kindling did not import it.",
+        "{} is outside the vault ({}), so Catalyst did not import it.",
         describe(),
         vault.display()
     )))
@@ -414,7 +414,7 @@ fn stays_in_vault(vault: &Path, entry: &walkdir::DirEntry) -> bool {
         Ok(resolved) if resolved.starts_with(vault) => true,
         Ok(_) => {
             eprintln!(
-                "[kindling] Longform import skipped {}: it links outside the vault ({}).",
+                "[catalyst] Longform import skipped {}: it links outside the vault ({}).",
                 entry.path().display(),
                 vault.display()
             );

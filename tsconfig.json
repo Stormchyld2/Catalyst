@@ -20,7 +20,7 @@
     "baseUrl": ".",
     "paths": {
       "$lib/*": ["src/lib/*"],
-      "$press/*": ["src/styles/lithomark/*"]
+      "$press/*": ["src/styles/catalyst/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.svelte"]

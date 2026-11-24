@@ -89,7 +89,7 @@
   }
 </script>
 
-<nav class="module-rail" aria-label="LithoMark workspaces">
+<nav class="module-rail" aria-label="Catalyst workspaces">
   <div class="module-rail__brand" aria-hidden="true">L</div>
 
   <div class="module-rail__modules">

@@ -15,7 +15,7 @@ const project = {
   name: "Test Novel",
   source_type: "Blank",
   source_path: null,
-  project_root: "C:/Temp/LithoMark/Test Novel",
+  project_root: "C:/Temp/Catalyst/Test Novel",
   created_at: "2026-10-13T12:00:00Z",
   modified_at: "2026-10-13T12:00:00Z",
   author_pen_name: null,

@@ -1,4 +1,4 @@
-//! Tauri commands for the authoritative LithoMark project filesystem root.
+//! Tauri commands for the authoritative Catalyst project filesystem root.
 
 use std::path::PathBuf;
 
@@ -61,7 +61,7 @@ pub async fn initialize_project_root(
     // do not invent their identity or overwrite legacy content.
     let project = project_discovery::project_from_root(&root)?;
     if project.id != project_id {
-        return Err("Selected folder belongs to a different LithoMark project.".into());
+        return Err("Selected folder belongs to a different Catalyst project.".into());
     }
     let paths = native_project_root::initialize_project_root(&root, &project)?;
     project_registry::remember(&state.app_data_dir, project_id, &root)?;
@@ -91,7 +91,7 @@ pub async fn get_project_paths(
 ) -> Result<ProjectPaths, String> {
     let id = Uuid::parse_str(&project_id).map_err(|e| e.to_string())?;
     let root = resolve_registered_root(&state, id)?
-        .ok_or_else(|| "Project does not have a registered LithoMark project root yet.".to_string())?;
+        .ok_or_else(|| "Project does not have a registered Catalyst project root yet.".to_string())?;
     let project = project_discovery::project_from_root(&root)?;
     native_project_root::resolve_project_paths(&root, &project)
 }
@@ -240,10 +240,10 @@ pub async fn reset_file_writing_session(project_root: String) -> Result<(), Stri
 /// than accepting an arbitrary filesystem path from the frontend.
 fn registered_outline_root(state: &AppState, project_id: Uuid) -> Result<PathBuf, String> {
     let root = resolve_registered_root(state, project_id)?
-        .ok_or_else(|| "Open the LithoMark project folder before editing its outline.".to_string())?;
+        .ok_or_else(|| "Open the Catalyst project folder before editing its outline.".to_string())?;
     let project = project_discovery::project_from_root(&root)?;
     if project.id != project_id {
-        return Err("Registered folder belongs to a different LithoMark project.".into());
+        return Err("Registered folder belongs to a different Catalyst project.".into());
     }
     Ok(root)
 }

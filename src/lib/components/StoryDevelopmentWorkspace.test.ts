@@ -281,7 +281,7 @@ describe("Story Development trash restoration", () => {
 const project = {
   id: "11111111-1111-4111-8111-111111111111",
   name: "Test Novel",
-  project_root: "C:/Temp/LithoMark/Test Novel",
+  project_root: "C:/Temp/Catalyst/Test Novel",
 };
 
 let testProjectSequence = 0;

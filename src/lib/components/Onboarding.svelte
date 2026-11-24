@@ -1,5 +1,5 @@
 <script lang="ts">
-  import lithomarkLogo from "../../assets/lithomark-logo.png";
+  import catalystLogo from "../../assets/catalyst-logo.png";
   import { IMPORT_FORMATS, type ImportType } from "../importFormats";
   import { invoke } from "@tauri-apps/api/core";
   import { open } from "../utils/nativeDialog";
@@ -43,7 +43,7 @@
   ];
 
   const STEP_HEADINGS: Record<OnboardingStep, { title: string; subtitle?: string }> = {
-    welcome: { title: "Welcome to LithoMark" },
+    welcome: { title: "Welcome to Catalyst" },
     "tour-sidebar": { title: "Chapters and scenes", subtitle: "The left sidebar" },
     "tour-editor": { title: "Synopsis and beats", subtitle: "The main editor" },
     "tour-references": { title: "References", subtitle: "The right panel" },
@@ -211,7 +211,7 @@
 
       <div class="ka-dialog-body onboarding-body">
         {#if ui.onboardingStep === "welcome"}
-          <img class="onboarding-mark" src={lithomarkLogo} alt="LithoMark Writer OS" />
+          <img class="onboarding-mark" src={catalystLogo} alt="Catalyst" />
           <p class="onboarding-lede">
             Transform your outline into a finished draft. Import your story structure and start
             writing scene by scene.
@@ -281,7 +281,7 @@
             </li>
             <li>
               In screenplays, scene titles are <strong>sluglines</strong> (for example,
-              <code>INT. CASTLE - NIGHT</code>). LithoMark suggests locations from your references.
+              <code>INT. CASTLE - NIGHT</code>). Catalyst suggests locations from your references.
             </li>
           </ul>
         {:else if ui.onboardingStep === "tour-references"}
@@ -316,7 +316,7 @@
             </li>
             <li>Use <strong>Add</strong> to search and link references to a scene.</li>
             <li>
-              LithoMark can <strong>detect</strong> character and location mentions in your prose.
+              Catalyst can <strong>detect</strong> character and location mentions in your prose.
               Look for the <strong>Suggested</strong> group.
             </li>
             <li><strong>Hide panel</strong> collapses the sidebar so you can focus on writing.</li>
@@ -365,7 +365,7 @@
             </div>
           {:else}
             <p class="onboarding-lede">
-              Choose your outline format. LithoMark previews it before importing.
+              Choose your outline format. Catalyst previews it before importing.
             </p>
             <ul class="import-list">
               {#each IMPORTS as format (format.label)}

@@ -51,20 +51,20 @@ impl AppState {
                 Ok(path) => backup = Some(path),
                 // A failed copy must not stop the app from opening; the migration is additive.
                 Err(e) => {
-                    eprintln!("[kindling] could not back up kindling.db before upgrading: {e}")
+                    eprintln!("[catalyst] could not back up kindling.db before upgrading: {e}")
                 }
             }
         }
 
         initialize_schema(&conn).map_err(|e| match &backup {
             Some(path) => format!(
-                "Failed to prepare the LithoMark database: {e}. A copy made before this upgrade is at {}",
+                "Failed to prepare the Catalyst database: {e}. A copy made before this upgrade is at {}",
                 path.display()
             ),
-            None => format!("Failed to prepare the LithoMark database: {e}"),
+            None => format!("Failed to prepare the Catalyst database: {e}"),
         })?;
         if let Err(e) = std::fs::write(&version_path, app_version) {
-            eprintln!("[kindling] could not record the database version: {e}");
+            eprintln!("[catalyst] could not record the database version: {e}");
         }
 
         Ok(Self {

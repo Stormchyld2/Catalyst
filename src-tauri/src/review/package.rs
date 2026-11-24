@@ -10,7 +10,7 @@ use super::yaml::to_yaml;
 
 pub const REVIEW_MANIFEST_FILENAME: &str = "review.yaml";
 
-/// Writes a complete LithoMark review package to a new directory.
+/// Writes a complete Catalyst review package to a new directory.
 ///
 /// The package is assembled in a sibling staging directory and renamed into
 /// place only after every file has been written successfully. Existing target
@@ -70,7 +70,7 @@ pub fn write_review_package(
         let normalized = normalize_relative_path(&copy.integrity.path)?;
         if normalized.eq_ignore_ascii_case(REVIEW_MANIFEST_FILENAME) {
             return Err(format!(
-                "'{REVIEW_MANIFEST_FILENAME}' is reserved for the LithoMark review manifest."
+                "'{REVIEW_MANIFEST_FILENAME}' is reserved for the Catalyst review manifest."
             ));
         }
     }

@@ -1,17 +1,17 @@
-# LithoMark Writer OS — Ecosystem Registry & Website Architecture
+# Catalyst — Ecosystem Registry & Website Architecture
 
 **Document:** 014-ECOSYSTEM-REGISTRY-WEBSITE.md
 **Status:** Architectural Direction
-**Project:** LithoMark Writer OS
+**Project:** Catalyst
 **Related:** 005-PLUGIN-ARCHITECTURE.md, 013-VSCODE-PLUGIN-ARCHITECTURE-MAPPING.md
 
 ---
 
 # 1. Purpose
 
-LithoMark needs one official ecosystem catalog serving two clients:
+Catalyst needs one official ecosystem catalog serving two clients:
 
-1. the public LithoMark website;
+1. the public Catalyst website;
 2. the in-app Plugins & Themes browser.
 
 The website and desktop application must not maintain separate catalogs.
@@ -21,7 +21,7 @@ Plugin/Theme Authors
         ↓
 Submission + Validation
         ↓
-Official LithoMark Registry
+Official Catalyst Registry
        ↙             ↘
 Public Website      Writer OS
 Browse/Docs         Install/Update
@@ -29,7 +29,7 @@ Browse/Docs         Install/Update
 
 # 2. Website Roles
 
-The public LithoMark site should eventually provide:
+The public Catalyst site should eventually provide:
 
 - Writer OS download/release information;
 - documentation;
@@ -45,7 +45,7 @@ The public LithoMark site should eventually provide:
 - permissions disclosure;
 - source-code/homepage links;
 - author/publisher information;
-- install/open-in-LithoMark actions where supported;
+- install/open-in-Catalyst actions where supported;
 - submission/publishing guidance;
 - security/reporting information.
 
@@ -67,7 +67,7 @@ The registry record should include at minimum:
 - current version;
 - available versions;
 - Plugin API/theme API compatibility;
-- minimum LithoMark version;
+- minimum Catalyst version;
 - package artifact location;
 - package integrity hash;
 - source repository where provided;
@@ -115,7 +115,7 @@ Browse
 
 Theme installation omits executable permission grants.
 
-The browser website may support an `Open in LithoMark` deep link later, but the desktop host remains responsible for validation and installation.
+The browser website may support an `Open in Catalyst` deep link later, but the desktop host remains responsible for validation and installation.
 
 # 6. Updates
 
@@ -176,7 +176,7 @@ The website should house canonical developer documentation and starter material:
 ```text
 Developers
 ├── Plugin Quick Start
-├── VS Code → LithoMark Mapping
+├── VS Code → Catalyst Mapping
 ├── Plugin API
 ├── Manifest Reference
 ├── Permissions
@@ -205,7 +205,7 @@ Publisher status can be displayed, but first-party plugins still obey the public
 
 # 13. Offline Behavior
 
-LithoMark remains local-first.
+Catalyst remains local-first.
 
 Registry or website unavailability must not prevent:
 
@@ -227,7 +227,7 @@ A static JSON catalog is acceptable for the first implementation if it follows t
 
 # 15. Domain / Deployment Direction
 
-The ecosystem should have a dedicated official LithoMark web presence. Exact domain/subdomain and hosting are deployment decisions, not package identity.
+The ecosystem should have a dedicated official Catalyst web presence. Exact domain/subdomain and hosting are deployment decisions, not package identity.
 
 Package IDs must therefore not depend on the current website hostname.
 
@@ -241,7 +241,7 @@ Recommended sequence:
 2. ship local plugin/theme installation during development;
 3. build canonical developer docs and sample packages;
 4. define registry schema;
-5. build public LithoMark website/download/docs;
+5. build public Catalyst website/download/docs;
 6. add theme gallery and plugin catalog;
 7. add in-app registry browser;
 8. add community submission/moderation;
@@ -249,4 +249,4 @@ Recommended sequence:
 
 ---
 
-**Governing rule:** one ecosystem catalog, two clients — the website and LithoMark Writer OS.
+**Governing rule:** one ecosystem catalog, two clients — the website and Catalyst.

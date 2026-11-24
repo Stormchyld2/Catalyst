@@ -1,33 +1,21 @@
 ﻿<script lang="ts">
+  import catalystLogo from "../../assets/catalyst-logo.png";
+
   let { height = 22 }: { height?: number } = $props();
 </script>
 
-<span
+<img
   class="brand-wordmark"
-  role="img"
-  aria-label="LithoMark"
-  style:font-size={`${height}px`}
->
-  <span class="litho">Litho</span><span class="mark">Mark</span>
-</span>
+  src={catalystLogo}
+  alt="Catalyst"
+  style:height={`${height}px`}
+/>
 
 <style>
   .brand-wordmark {
-    display: inline-flex;
-    align-items: center;
+    display: block;
     flex: none;
-    font-family: "Libre Baskerville", Georgia, serif;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.035em;
-    white-space: nowrap;
-  }
-
-  .litho {
-    color: #b88a44;
-  }
-
-  .mark {
-    color: #4e6a85;
+    width: auto;
+    user-select: none;
   }
 </style>

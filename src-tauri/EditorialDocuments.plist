@@ -12,14 +12,14 @@
 			<key>CFBundleTypeIconFile</key>
 			<string>icon.icns</string>
 			<key>CFBundleTypeName</key>
-			<string>Kindling Review</string>
+			<string>Catalyst Review</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.lithomark.writer.lithomark-review</string>
+				<string>com.catalyst.writer.lithomark-review</string>
 			</array>
 		</dict>
 		<dict>
@@ -30,14 +30,14 @@
 			<key>CFBundleTypeIconFile</key>
 			<string>icon.icns</string>
 			<key>CFBundleTypeName</key>
-			<string>Kindling Feedback</string>
+			<string>Catalyst Feedback</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.lithomark.writer.lithomark-feedback</string>
+				<string>com.catalyst.writer.lithomark-feedback</string>
 			</array>
 		</dict>
 	</array>

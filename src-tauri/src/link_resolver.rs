@@ -1,4 +1,4 @@
-//! File-derived, project-scoped link resolution for LithoMark.
+//! File-derived, project-scoped link resolution for Catalyst.
 //!
 //! Authoritative Markdown/YAML files remain project truth. This module builds an
 //! in-memory projection on demand; callers may cache it, but the cache is always
@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_yaml::Value;
 
-use crate::document::service::{read_document, LithoMarkDocument};
+use crate::document::service::{read_document, CatalystDocument};
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct LinkTarget {
@@ -63,7 +63,7 @@ pub fn build_project_link_index(project_root: &Path) -> Result<ProjectLinkIndex,
     let mut index = ProjectLinkIndex::default();
     for relative_path in paths {
         // Unknown/plain Markdown is allowed in a project. Only structured
-        // LithoMark documents participate as stable link targets.
+        // Catalyst documents participate as stable link targets.
         let document = match read_document(project_root, &relative_path) {
             Ok(document) => document,
             Err(_) => continue,
@@ -74,7 +74,7 @@ pub fn build_project_link_index(project_root: &Path) -> Result<ProjectLinkIndex,
 }
 
 impl ProjectLinkIndex {
-    fn insert(&mut self, document: LithoMarkDocument) -> Result<(), String> {
+    fn insert(&mut self, document: CatalystDocument) -> Result<(), String> {
         let target = LinkTarget {
             id: document.identity.id.clone(),
             document_type: document.identity.document_type.clone(),
@@ -164,7 +164,7 @@ fn aliases(metadata: &BTreeMap<String, Value>) -> Vec<String> {
     }
 }
 
-fn display_title(document: &LithoMarkDocument) -> String {
+fn display_title(document: &CatalystDocument) -> String {
     document.title.clone().unwrap_or_else(|| {
         document.relative_path.file_stem().and_then(|v| v.to_str()).unwrap_or(&document.identity.id).to_string()
     })
@@ -204,7 +204,7 @@ mod tests {
     use super::*;
     use crate::document::service::{create_document, save_document};
 
-    fn add(root: &Path, path: &str, kind: &str, title: &str, body: &str, aliases: &[&str]) -> LithoMarkDocument {
+    fn add(root: &Path, path: &str, kind: &str, title: &str, body: &str, aliases: &[&str]) -> CatalystDocument {
         let mut doc = create_document(root, Path::new(path), kind, Some(title), body).unwrap();
         if !aliases.is_empty() {
             doc.metadata.insert("aliases".into(), Value::Sequence(aliases.iter().map(|v| Value::String((*v).into())).collect()));

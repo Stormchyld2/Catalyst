@@ -28,7 +28,7 @@ and will be adapted in later stages.
 
 | File | Handling | Reason |
 |---|---|---|
-| `README.md` (LithoMark) | Moved to `docs/lithomark/LITHOMARK-README.md` | Catalyst's own README is kept at the root. |
+| `README.md` (LithoMark) | Moved to `docs/lithomark/LITHOMARK-README.md` (renamed to `docs/catalyst/CATALYST-README.md` in the rebrand) | Catalyst's own README is kept at the root. |
 | `.draft-script/analytics-cache.json` | Excluded | 9.5 MB generated editor analytics cache (file list, mtimes, word counts of docs). Not referenced by the application, build or tests. |
 | LithoMark `.git` history | Excluded | Catalyst must remain independent. |
 

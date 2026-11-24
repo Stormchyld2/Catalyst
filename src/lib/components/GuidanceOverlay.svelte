@@ -29,7 +29,7 @@
     },
     references: {
       message:
-        "Link characters, locations, and items to scenes. Use the + button to search and add references, or accept the suggested references LithoMark finds in your prose.",
+        "Link characters, locations, and items to scenes. Use the + button to search and add references, or accept the suggested references Catalyst finds in your prose.",
       position: "right",
     },
     sync: {

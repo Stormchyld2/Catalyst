@@ -3,7 +3,7 @@
   import { onDestroy, untrack } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { Loader2, Pencil, Plus, Trash2, X, Check } from "lucide-svelte";
-  import lithomarkTokens from "../../styles/lithomark/tokens.json";
+  import catalystTokens from "../../styles/catalyst/tokens.json";
   import type { Tag } from "../types";
 
   let {
@@ -35,7 +35,7 @@
   });
   onDestroy(() => onState?.({ dirty: false, busy: false }));
 
-  const PRESET_COLOR_TOKENS: Array<[string, keyof typeof lithomarkTokens.light]> = [
+  const PRESET_COLOR_TOKENS: Array<[string, keyof typeof catalystTokens.light]> = [
     ["Red", "--tag-red"],
     ["Orange", "--tag-orange"],
     ["Yellow", "--tag-yellow"],
@@ -49,7 +49,7 @@
   ];
   const PRESET_COLORS = PRESET_COLOR_TOKENS.map(([name, token]) => ({
     name,
-    color: lithomarkTokens.light[token],
+    color: catalystTokens.light[token],
   }));
 
   async function loadTags() {

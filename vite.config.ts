@@ -21,7 +21,7 @@ export default defineConfig(({ command, mode }) => {
       conditions: mode === "test" ? ["browser"] : undefined,
       alias: {
         $lib: path.resolve("./src/lib"),
-        $press: path.resolve("./src/styles/lithomark"),
+        $press: path.resolve("./src/styles/catalyst"),
         ...(useMocks
           ? {
               "@tauri-apps/api/core": path.resolve("./src/dev/mock-tauri.ts"),
@@ -34,7 +34,7 @@ export default defineConfig(({ command, mode }) => {
     },
     clearScreen: false,
     test: {
-      // LithoMark frontend tests exercise browser APIs such as DOMParser,
+      // Catalyst frontend tests exercise browser APIs such as DOMParser,
       // localStorage, window, and component mounting. Keep Vitest in jsdom by
       // default so `npm test` matches the environment these modules require.
       environment: "jsdom",

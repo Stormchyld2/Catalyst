@@ -1,4 +1,4 @@
-//! Stable plugin contracts for LithoMark.
+//! Stable plugin contracts for Catalyst.
 //!
 //! This module defines host-facing plugin metadata and capability validation.
 //! It does not execute third-party code yet. Keeping these contracts in Core
@@ -399,7 +399,7 @@ impl PluginManifest {
         }
         if self.api_version != PLUGIN_API_VERSION {
             return Err(format!(
-                "Unsupported LithoMark Plugin API version '{}'. Expected '{}'.",
+                "Unsupported Catalyst Plugin API version '{}'. Expected '{}'.",
                 self.api_version, PLUGIN_API_VERSION
             ));
         }
@@ -407,7 +407,7 @@ impl PluginManifest {
         require_text("plugin name", &self.name)?;
         require_text("plugin version", &self.version)?;
         require_text("plugin author", &self.author)?;
-        require_text("minimum LithoMark version", &self.minimum_lithomark_version)?;
+        require_text("minimum Catalyst version", &self.minimum_lithomark_version)?;
         validate_entry(&self.entry)?;
         self.validate_contributions()?;
         Ok(())
@@ -492,7 +492,7 @@ fn validate_plugin_id(id: &str) -> Result<(), String> {
         })
     {
         return Err(
-            "Plugin id must use a reverse-domain-style identifier such as 'app.lithomark.git'."
+            "Plugin id must use a reverse-domain-style identifier such as 'app.catalyst.git'."
                 .into(),
         );
     }

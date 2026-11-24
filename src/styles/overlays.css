@@ -1,5 +1,5 @@
 /* Press overlay & dialog layer — PROPOSED UPSTREAM to press/design-system/application.css.
-   Designed in Open Design (kindling Reskin — Dialogs & Settings, press-overlays.css).
+   Designed in Open Design (Catalyst Reskin — Dialogs & Settings, press-overlays.css).
    Semantic tokens only. When Press ships these selectors, delete this file and
    re-run npm run sync:design-system; nothing else in the app should change. */
 /* ===== Dialog shell ===================================================== */

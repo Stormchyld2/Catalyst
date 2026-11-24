@@ -879,7 +879,7 @@ fn reconcile_markdown(
                     })
             })
         {
-            return Err("Ambiguous Markdown scene move. Move the existing scene in kindling to match the source before syncing. No changes were applied.".into());
+            return Err("Ambiguous Markdown scene move. Move the existing scene in Catalyst to match the source before syncing. No changes were applied.".into());
         }
     }
     for old in beats
@@ -894,7 +894,7 @@ fn reconcile_markdown(
                     })
             })
         {
-            return Err("Ambiguous Markdown beat move. Align the beat's scene in kindling and the source before syncing. No changes were applied.".into());
+            return Err("Ambiguous Markdown beat move. Align the beat's scene in Catalyst and the source before syncing. No changes were applied.".into());
         }
     }
     // Metadata repair is atomic and only follows successful matching. Cancelling
@@ -974,7 +974,7 @@ fn match_markdown_labels(
 ) -> Result<Vec<String>, String> {
     let ambiguous = || {
         format!(
-        "Ambiguous Markdown {kind} matching. Give sibling chapters/scenes unique titles and beats unique text, and align renamed labels in kindling and the source before syncing. No changes were applied."
+        "Ambiguous Markdown {kind} matching. Give sibling chapters/scenes unique titles and beats unique text, and align renamed labels in Catalyst and the source before syncing. No changes were applied."
     )
     };
     let mut seen = HashSet::new();
