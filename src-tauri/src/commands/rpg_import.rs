@@ -216,21 +216,26 @@ fn copy_original(root: &Path, candidate: &Candidate, category: &str) -> Result<S
 }
 
 fn json_record(path: &Path) -> Result<(String, String), String> {
+    let meta = fs::metadata(path).map_err(|e| format!("Cannot read JSON source: {e}"))?;
+    let fallback = safe_name(path.file_stem().and_then(|s| s.to_str()).unwrap_or("VTT export"));
+    if meta.len() > MAX_TEXT as u64 {
+        return Ok((fallback, "## Large VTT export\n\nOriginal JSON source is preserved intact, but its contents exceed the current inline preview limit. No rule mechanics are converted.".into()));
+    }
     let raw = text_from_source(path)?;
     let value: Json = serde_json::from_str(&raw).map_err(|e| format!("Invalid JSON export: {e}"))?;
-    let obj = value.as_object().ok_or("JSON export must contain an object.")?;
-    let title = obj.get("name").or_else(|| obj.get("title"))
-        .and_then(Json::as_str).unwrap_or("Imported tabletop export");
-    let kind = obj.get("type").or_else(|| obj.get("_type"))
-        .and_then(Json::as_str).unwrap_or("record");
-    let mut summary = format!("## Source record\\n\\n**Name:** {}\\n\\n**Export type:** {}\\n\\nOriginal JSON is preserved under Assets/Imports; use the source file when rebuilding mechanics or links.", title, kind);
-    if raw.len() <= 16_384 {
-        summary.push_str("\\n\\n## Export data (reference only)\\n\\n");
-        summary.push_str("```json\\n");
-        summary.push_str(&raw.replace("```", "`` `"));
-        summary.push_str("\\n```");
-    }
-    Ok((title.into(), summary))
+    let (title, kind) = if let Some(obj) = value.as_object() {
+        let title = obj.get("name").or_else(|| obj.get("title"))
+            .and_then(Json::as_str).map(safe_name).unwrap_or_else(|| fallback.clone());
+        let kind = obj.get("type").or_else(|| obj.get("_type"))
+            .and_then(Json::as_str).unwrap_or("record").to_string();
+        (title, kind)
+    } else if let Some(items) = value.as_array() {
+        (fallback, format!("array with {} records", items.len()))
+    } else {
+        return Err("JSON export must contain a record or array of records.".into());
+    };
+    let summary = format!("## Source record\n\n**Name:** {title}\n\n**Export type:** {kind}\n\nOriginal JSON is preserved under Assets/Imports. Mechanics, linked IDs and rule dependencies are not converted.");
+    Ok((title, summary))
 }
 
 fn copy_one(root: &Path, candidate: &Candidate, format: &RpgFormat, notes: &mut Vec<String>) -> Result<(usize, usize), String> {
