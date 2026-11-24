@@ -223,13 +223,13 @@ fn copy_one(root: &Path, candidate: &Candidate, format: &RpgFormat, notes: &mut 
                 .read_exact(&mut head).map_err(|e| e.to_string())?;
             if &head != b"%PDF-" { return Err("Selected PDF has no valid PDF header.".into()); }
             let stored = copy_original(root, candidate, "PDF References")?;
-            write_note(root, &safe_name(candidate.relative.file_stem().and_then(|s| s.to_str()).unwrap_or("PDF")), &format!("## PDF reference\n\nSource file: \`{}\`\n\nOriginal PDF preserved. No OCR or automatic content extraction performed.",stored), "imported-pdf")?;
+            write_note(root, &safe_name(candidate.relative.file_stem().and_then(|s| s.to_str()).unwrap_or("PDF")), &format!("## PDF reference\n\nSource file: `{}`\n\nOriginal PDF preserved. No OCR or automatic content extraction performed.",stored), "imported-pdf")?;
             Ok((1,1))
         }
         RpgFormat::Foundry | RpgFormat::Roll20 => {
             let (title, summary) = json_record(&candidate.path)?;
             let stored = copy_original(root, candidate, "VTT Exports")?;
-            write_note(root, &safe_name(&title), &format!("{summary}\n\n**Saved source:** \`{stored}\`"), "imported-vtt")?;
+            write_note(root, &safe_name(&title), &format!("{summary}\n\n**Saved source:** `{stored}`"), "imported-vtt")?;
             notes.push("JSON mechanics and linked object references were not converted.".into());
             Ok((1,1))
         }
@@ -244,7 +244,7 @@ fn copy_one(root: &Path, candidate: &Candidate, format: &RpgFormat, notes: &mut 
             }
             let stored = copy_original(root, candidate, "Fantasy Grounds")?;
             let title = safe_name(candidate.relative.file_stem().and_then(|s| s.to_str()).unwrap_or("FG Module"));
-            write_note(root, &title, &format!("## Fantasy Grounds module\n\nSource file: \`{stored}\`\n\nThe original .mod/XML is preserved. Its ruleset-dependent records are not automatically converted."), "imported-fantasy-grounds")?;
+            write_note(root, &title, &format!("## Fantasy Grounds module\n\nSource file: `{stored}`\n\nThe original .mod/XML is preserved. Its ruleset-dependent records are not automatically converted."), "imported-fantasy-grounds")?;
             Ok((1,1))
         }
     }
