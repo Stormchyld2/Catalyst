@@ -170,7 +170,7 @@ mod tests {
     #[test]
     fn rejects_conflicts_reserved_keys_and_invalid_input() {
         for binding in [
-            "Mod+E",
+            "Mod+K",
             "Mod+C",
             "Q",
             "Mod+Shift+Alt+Q",
