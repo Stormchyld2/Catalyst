@@ -38,7 +38,7 @@ const ENTRIES: &[DemoEntry] = &[
         title: "START HERE - GM Guide",
         visibility: "gm-only",
         body: r#"# Welcome to The Hollow Crown
-This **original **Dungeons & Dragons 5th Edition (2014-style)** one-shot introduces World Builder, quests, encounters, sessions, clues and reusable templates. Allow roughly 2–3 hours. It is written for **four 3rd-level D&D 5e characters** (adjustable for three to five PCs). Players supply their own fifth-edition rules; no proprietary rules pack is bundled. This is an independent original adventure, not an official D&D product.
+This **original Dungeons & Dragons 5th Edition (2014-style)** one-shot introduces World Builder, quests, encounters, sessions, clues and reusable templates. Allow roughly 2–3 hours. It is written for **four 1st-level D&D 5e characters** (adjustable for three to five PCs). Players supply their own fifth-edition rules; no proprietary rules pack is bundled. This is an independent original adventure, not an official D&D product.
 
 ## Your opening
 The village of Briar Glen has lost its bell and three residents have begun sleepwalking toward Briarwatch Tower. The players are asked to investigate before sunset.
@@ -207,7 +207,7 @@ Old Jessa saw one of the sleepers carrying a bronze weight toward the tower. She
 Jessa (witness), Mira Fen (ally), player characters.
 
 ## Approaches
-Kindness, evidence, a promise of protection or a perceptive question will reveal the information. Suggested checks: Charisma (Persuasion) DC 12 to gain Jessa's confidence, Wisdom (Insight) DC 11 to notice her fear, or Intelligence (Investigation) DC 12 to examine tracks. An honest promise of protection succeeds without a roll.
+Kindness, evidence, a promise of protection or a perceptive question will reveal the information. Suggested checks: Charisma (Persuasion) DC 10 to gain Jessa's confidence, Wisdom (Insight) DC 10 to notice her fear, or Intelligence (Investigation) DC 11 to examine tracks. An honest promise of protection succeeds without a roll.
 
 ## Outcome
 The party learns the weight is hidden in the collapsed signal shed.
@@ -368,7 +368,7 @@ Use Catalyst dice when available, or physical dice. The Markdown table is not wi
         title: "Session 1 - The Silent Bell",
         visibility: "gm-only",
         body: r#"# Opening Session
-**Play time:** roughly 2–3 hours. **Rules:** D&D 5e, four 3rd-level characters, 2014-style encounter assumptions.
+**Play time:** roughly 2–3 hours. **Rules:** D&D 5e, four 1st-level characters, 2014-style encounter assumptions.
 
 ## Strong Start
 The village bell is silent at sunset. Mira Fen asks the party to find the missing villagers.
@@ -394,22 +394,22 @@ Use the Session Log template after play. The demo intentionally contains no fabr
         title: "Thornbound Sentinel - 5e Stat Block",
         visibility: "gm-only",
         body: r#"# Thornbound Sentinel
-*Medium plant construct, unaligned* — **Armor Class 13** (woven bark), **Hit Points 27** (5d8+5), **Speed 25 ft.**
+*Medium plant construct, unaligned* — **Armor Class 12** (woven bark), **Hit Points 12** (3d8−1), **Speed 25 ft.**
 
 | STR | DEX | CON | INT | WIS | CHA |
 | --- | --- | --- | --- | --- | --- |
 | 14 (+2) | 10 (+0) | 12 (+1) | 3 (−4) | 11 (+0) | 5 (−3) |
 
-**Damage Vulnerabilities:** fire. **Condition Immunities:** charmed, frightened. **Senses:** passive Perception 10. **Languages:** understands the old watchword but cannot speak. **Challenge:** approximately CR 1/2 (100 XP), GM-adjustable; this is an original example creature, not a published D&D monster.
+**Condition Immunities:** charmed, frightened. **Senses:** passive Perception 10. **Languages:** understands the old watchword but cannot speak. **Challenge:** approximately CR 1/8 (25 XP), GM-adjustable; this is an original example creature, not a published D&D monster.
 
 ## Traits
-**Warden's Purpose.** The sentinel attacks only creatures deliberately damaging the protective ward symbols. A creature can use an action and succeed on a DC 12 Intelligence (Arcana) or Wisdom (Religion) check to show the sentinel that it is repairing a ward. A player who correctly restores a fallen symbol succeeds automatically.
+**Warden's Purpose.** The sentinel attacks only creatures deliberately damaging the protective ward symbols. A creature can use an action and succeed on a DC 10 Intelligence (Arcana) or Wisdom (Religion) check to show the sentinel that it is repairing a ward. A player who correctly restores a fallen symbol succeeds automatically.
 
 ## Actions
-**Thorn Strike.** Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8+2) piercing damage.
+**Thorn Strike.** Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 3 (1d4+1) piercing damage.
 
 ## Encounter Scaling
-For a party of three level-3 characters, use 19 hit points; for five level-3 characters use 36. The sentinel can be bypassed without fighting. Do not treat the rough challenge estimate as an officially calculated CR.
+For a party of three level-1 characters, use 9 hit points; for five level-1 characters use 15. The sentinel can be bypassed without fighting. Do not treat the rough challenge estimate as an officially calculated CR.
 "#,
     },
     DemoEntry {
@@ -418,41 +418,41 @@ For a party of three level-3 characters, use 19 hit points; for five level-3 cha
         title: "Hollow Echo - 5e Stat Block",
         visibility: "gm-only",
         body: r#"# Hollow Echo
-*Small undead manifestation, neutral* — **Armor Class 12**, **Hit Points 14** (4d6), **Speed 0 ft., fly 30 ft. (hover).**
+*Small undead manifestation, neutral* — **Armor Class 12**, **Hit Points 7** (2d6), **Speed 0 ft., fly 30 ft. (hover).**
 
 | STR | DEX | CON | INT | WIS | CHA |
 | --- | --- | --- | --- | --- | --- |
 | 4 (−3) | 14 (+2) | 10 (+0) | 8 (−1) | 12 (+1) | 11 (+0) |
 
-**Condition Immunities:** prone. **Senses:** darkvision 60 ft., passive Perception 11. **Languages:** understands Common; communicates with fragments of remembered words. **Challenge:** approximately CR 1/4 (50 XP), GM-adjustable; original example, not published material.
+**Condition Immunities:** prone. **Senses:** darkvision 60 ft., passive Perception 11. **Languages:** understands Common; communicates with fragments of remembered words. **Challenge:** approximately CR 1/8 (25 XP), GM-adjustable; original example, not published material.
 
 ## Actions
-**Echo Touch.** Melee Spell Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6+2) psychic damage.
+**Echo Touch.** Melee Spell Attack: +3 to hit, reach 5 ft., one target. Hit: 3 (1d4+1) psychic damage.
 
 ## Fractured Memory (Recharge 5–6)
-One creature within 30 feet must succeed on a DC 12 Wisdom saving throw or have disadvantage on its next ability check before the end of its next turn. This does not remove memories or control player characters.
+One creature within 30 feet must succeed on a DC 10 Wisdom saving throw or have disadvantage on its next ability check before the end of its next turn. This does not remove memories or control player characters.
 
 ## Encounter Scaling
-Use one echo only for three level-3 PCs; two for four to five PCs if the party wants combat. The echo can also disperse automatically when the seal is restored.
+Use at most one echo at a time for a 1st-level party; avoid running it immediately after the sentinel. The echo disperses when the seal is restored. The echo can also disperse automatically when the seal is restored.
 "#,
     },
     DemoEntry {
-        path: "Game Master/Screen References/D&D 5e Quick Rules for The Hollow Crown.md",
+        path: "Game Master/Screen References/D&D 5e Beginner Rules for The Hollow Crown.md",
         template: "gm-screen-reference",
-        title: "D&D 5e Quick Rules for The Hollow Crown",
+        title: "D&D 5e Beginner Rules for The Hollow Crown",
         visibility: "gm-only",
         body: r#"# Adventure-Specific D&D 5e Checks
-Designed for four **3rd-level characters**, based on 2014-style fifth edition. The players should have access to their own D&D rules and character sheets.
+Designed for four **1st-level characters**, based on 2014-style fifth edition. The players should have access to their own D&D rules and character sheets.
 
 | Situation | Suggested check | DC | Success |
 | --- | --- | --- | --- |
-| Inspect bell frame | Intelligence (Investigation) | 12 | Notice the missing weight |
-| Follow sleepwalkers' tracks | Wisdom (Survival) | 12 | Find path to signal shed |
-| Calm Jessa | Charisma (Persuasion) | 12 | She reveals a witness account |
-| Recognize the old ward | Intelligence (Arcana) or Wisdom (Religion) | 13 | Learn the ward is protective |
-| Find hidden stair | Wisdom (Perception) | 13 | Discover mechanism |
-| Stabilize bell chimes | Dexterity using suitable tools | 12 | Avoid an echo encounter |
-| Align Crown Seal | Intelligence (Arcana) | 13 | Restore the ward |
+| Inspect bell frame | Intelligence (Investigation) | 10 | Notice the missing weight |
+| Follow sleepwalkers' tracks | Wisdom (Survival) | 10 | Find path to signal shed |
+| Calm Jessa | Charisma (Persuasion) | 10 | She reveals a witness account |
+| Recognize the old ward | Intelligence (Arcana) or Wisdom (Religion) | 11 | Learn the ward is protective |
+| Find hidden stair | Wisdom (Perception) | 11 | Discover mechanism |
+| Stabilize bell chimes | Dexterity using suitable tools | 10 | Avoid an echo encounter |
+| Align Crown Seal | Intelligence (Arcana) | 11 | Restore the ward |
 
 ## Fail-Forward
 A failed check adds time, noise, a complication or a new bargain; it must never permanently block the main story. Strong in-fiction choices may succeed automatically.
@@ -460,11 +460,14 @@ A failed check adds time, noise, a complication or a new bargain; it must never 
 ## Final Chamber
 The seal can be restored by solving the three-marks puzzle, repaired through an appropriate creative method, destroyed, or negotiated over. There is no compulsory boss fight.
 
+## Level-One Survival Guidance
+The guardian and echo are alternatives, not a gauntlet. Telegraph danger, allow retreat, and let clear nonviolent solutions work without rolling. Avoid unexpected lethal damage to new players.
+
 ## Combat
 Use the original Thornbound Sentinel and Hollow Echo stat-block documents. All other NPCs are narrative unless the GM chooses to supply suitable legal 5e statistics. Do not assume automatic initiative, HP tracking or character integration in Catalyst.
 
 ## Party Size
-For fewer PCs, reduce hostile creatures and hit points as noted. For five PCs, add an echo or an additional environmental complication, not a forced lethal encounter.
+For three PCs, use 9 hit points for the sentinel; for five PCs use 15. Use only one hostile creature at a time. Never force combat, and avoid an echo battle immediately after the sentinel.
 "#,
     },
     DemoEntry {
@@ -473,8 +476,8 @@ For fewer PCs, reduce hostile creatures and hit points as noted. For five PCs, a
         title: "5e Adventure Rewards",
         visibility: "gm-only",
         body: r#"# Optional D&D 5e Rewards
-Intended for four level-3 adventurers:
-- 60 gp from Mira Fen's village fund, split as the party chooses.
+Intended for four level-1 adventurers:
+- 20 gp from Mira Fen's village fund, split as the party chooses.
 - One potion of healing (standard fifth-edition common item) found in the tower's signal shed, subject to the GM's available rules source.
 - The Crown Shard, a **nonmagical** narrative artifact with a future plot hook.
 - Optional milestone advancement after a satisfactory resolution, at the GM's discretion.
@@ -495,7 +498,7 @@ No reward is granted automatically by the Catalyst inventory system. Add items a
 - **145–180 minutes:** consequences, rewards and session log.
 
 ## Expected Challenges
-One or two low-stakes social DC 12 checks, one short exploration sequence, one puzzle with multiple solutions, and at most one or two modest optional combats. Tune difficulty after seeing the characters' actual capabilities.
+One or two low-stakes social DC 10–12 checks, one short exploration sequence, one puzzle with multiple solutions, and at most one short optional combat. Tune difficulty after seeing the characters' actual capabilities.
 
 ## Character Options
 For a demonstration group, encourage diverse roles (frontline, investigator, healer/support and negotiator). Catalyst does not bundle pre-generated D&D character sheets.
@@ -542,13 +545,13 @@ fn input_for(root: &Path) -> Result<NewCampaignInput, String> {
         "name": DEMO_TITLE,
         "setup_mode": "guided",
         "basics": {
-            "subtitle": "An Original D&D 5e Adventure for Four Level-3 Characters",
+            "subtitle": "An Original D&D 5e Adventure for Four Level-1 Characters",
             "premise": "The bell of Briarwatch Tower has fallen silent, and villagers are walking in their sleep toward an ancient crown-shaped seal.",
             "genre": "Fantasy Mystery",
             "tone": "Mysterious, heroic, choice-driven",
             "gm_name": "Demo Game Master"
         },
-        "rules": { "pack_id": "custom-homebrew", "custom_system_name": "Dungeons & Dragons 5e (2014-style)", "edition": "5e (2014)", "progression_type": "level", "starting_level": "3", "advancement": "Milestone" },
+        "rules": { "pack_id": "custom-homebrew", "custom_system_name": "Dungeons & Dragons 5e (2014-style)", "edition": "5e (2014)", "progression_type": "level", "starting_level": "1", "advancement": "Milestone" },
         "world": {
             "mode": "new", "name": "The Briar Marches",
             "era": "Frontier Age", "origin": "original",
@@ -659,7 +662,7 @@ fn load_demo_project(root: &Path) -> Result<Project, String> {
         modified_at: manifest.modified_at.unwrap_or(manifest.created_at),
         author_pen_name: None,
         genre: Some("D&D 5e Fantasy Mystery".into()),
-        description: Some("An original D&D 5e fantasy adventure for four level-3 characters, with NPCs, encounters, quests, clues, monsters and GM notes.".into()),
+        description: Some("An original D&D 5e fantasy adventure for four level-1 characters, with NPCs, encounters, quests, clues, monsters and GM notes.".into()),
         word_target: None,
         reference_types: Project::default_reference_types(),
         project_type: manifest.project_type,
