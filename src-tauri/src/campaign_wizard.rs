@@ -1445,12 +1445,37 @@ mod tests {
         assert_eq!(docs[0].id, created.overview_id);
         assert_eq!(docs[0].section, "Adventures");
         let overview = read_document(&root, Path::new(OVERVIEW_PATH)).unwrap();
-        assert!(overview
-            .body
-            .starts_with("A border kingdom burns.\n\n## Premise"));
+        assert!(overview.body.starts_with("## Campaign Summary\n\nA border kingdom burns."));
+        assert!(overview.body.contains("## World and Setting"));
+        assert!(overview.body.contains("## Party"));
+        assert!(overview.body.contains("## Main Story Arc"));
+        assert!(overview.body.contains("## GM-Only Notes"));
+        assert!(!overview.body.contains("## Premise"));
+        assert_eq!(overview.metadata.get("template_id").and_then(Value::as_str), Some("campaign-overview"));
         assert!(root
             .join("Characters/Player Characters/README.md")
             .is_file());
+    }
+
+    #[test]
+    fn campaign_overview_uses_wizard_answers_without_copying_mechanical_records() {
+        let parent = tempfile::tempdir().unwrap();
+        let root = parent.path().join("The Drowned Crown");
+        create_campaign(&guided(&root)).unwrap();
+        let overview = read_document(&root, Path::new(OVERVIEW_PATH)).unwrap();
+        assert_eq!(overview.metadata.get("world_name").and_then(Value::as_str), Some("The Shattered Isles"));
+        assert_eq!(overview.metadata.get("party_name").and_then(Value::as_str), Some("The Gullwings"));
+        assert_eq!(overview.metadata.get("ruleset_id").and_then(Value::as_str), Some("custom-homebrew"));
+        assert!(overview.body.contains("Pirates hunt a sunken throne."));
+        assert!(overview.body.contains("The Shattered Isles"));
+        assert!(overview.body.contains("Kestrel"));
+        assert!(overview.body.contains("Captain Mara"));
+        assert!(overview.body.contains("Iron Navy"));
+        assert!(overview.body.contains("Lost cargo"));
+        assert!(overview.body.contains("## Campaign Timeline"));
+        assert_eq!(overview.body.matches("## Campaign Summary").count(), 1);
+        assert!(!overview.body.contains("Flanking grants advantage"));
+        assert!(root.join("Rules & Mechanics/House Rules/House Rules.md").is_file());
     }
 
     #[test]
