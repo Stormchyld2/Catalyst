@@ -3,12 +3,11 @@
 //! use CatalystDocument with stable IDs. No silent manuscript conversion.
 
 use std::fs;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as Json;
-use uuid::Uuid;
 use walkdir::WalkDir;
 
 use crate::document::service::{create_document, save_document};
@@ -53,7 +52,7 @@ fn acceptable_extension(format: &RpgFormat, extension: &str) -> bool {
     match format {
         RpgFormat::Markdown | RpgFormat::Obsidian => matches!(extension, "md" | "markdown"),
         RpgFormat::Assets => matches!(extension, "png" | "jpg" | "jpeg" | "webp" | "gif" | "svg"),
-        RpgFormat::Foundry | RpgFormat::Roll20 => matches!(extension, "json"),
+        RpgFormat::Foundry | RpgFormat::Roll20 => matches!(extension, "json" | "zip"),
         RpgFormat::FantasyGrounds => matches!(extension, "mod" | "xml"),
         RpgFormat::Pdf => extension == "pdf",
     }
@@ -122,8 +121,8 @@ fn behavior(format: &RpgFormat) -> &'static str {
     match format {
         RpgFormat::Markdown | RpgFormat::Obsidian => "Create editable Markdown records in Worldbuilding/Imported, retaining original Markdown. Obsidian wikilinks remain text until reference resolution is supported.",
         RpgFormat::Assets => "Copy images, maps and tokens to Assets/Imports. Files are not converted to VTT scenes.",
-        RpgFormat::Foundry => "Keep original Foundry JSON in Assets/Imports and create a readable record with source metadata. No automated actor mechanics, scene walls or compendium import.",
-        RpgFormat::Roll20 => "Keep available Roll20 JSON exports intact and create a reference record. Roll20 has no universal supported campaign-export schema.",
+        RpgFormat::Foundry => "Preserve Foundry JSON or ZIP exports in Assets/Imports, with a readable source index. Scene walls, actor mechanics and compendium relationships are not converted.",
+        RpgFormat::Roll20 => "Preserve available Roll20 JSON or ZIP exports and create a source index. There is no universal Roll20 campaign export schema.",
         RpgFormat::FantasyGrounds => "Keep .mod or XML intact as reference material. Only a module metadata summary is created; no rule record conversion.",
         RpgFormat::Pdf => "Copy the original PDF as an offline reference asset and create an index note. PDF text extraction/OCR is not part of this importer.",
     }
@@ -153,6 +152,7 @@ fn project_root(root_path: &str) -> Result<PathBuf, String> {
     if !root.is_absolute() || !root.is_dir() { return Err("Choose an existing Catalyst campaign folder.".into()); }
     let manifest = read_project_manifest(&root)?;
     if manifest.project_type != "campaign" { return Err("Import destination must be a Catalyst campaign, not a manuscript project.".into()); }
+    crate::campaign_wizard::read_campaign_manifest(&root)?;
     Ok(root)
 }
 
@@ -165,6 +165,27 @@ fn unique_path(root: &Path, folder: &Path, stem: &str, ext: &str) -> Result<Path
         if !dest.exists() { return Ok(dest); }
     }
     Err("Too many import filename collisions.".into())
+}
+
+fn validate_image_file(path: &Path) -> Result<(), String> {
+    let ext = extension(path);
+    let bytes = fs::read(path).map_err(|e| format!("Could not inspect image: {e}"))?;
+    let valid = match ext.as_str() {
+        "png" => bytes.starts_with(b"\x89PNG\r\n\x1a\n"),
+        "jpg" | "jpeg" => bytes.starts_with(b"\xff\xd8\xff"),
+        "gif" => bytes.starts_with(b"GIF87a") || bytes.starts_with(b"GIF89a"),
+        "webp" => bytes.len() >= 12 && &bytes[0..4] == b"RIFF" && &bytes[8..12] == b"WEBP",
+        "svg" => {
+            let markup = std::str::from_utf8(&bytes)
+                .map_err(|_| "Invalid UTF-8 SVG.".to_string())?
+                .to_ascii_lowercase();
+            markup.contains("<svg")
+                && !["<script", "<foreignobject", "javascript:", "onload=", "onerror=", "href=", "xlink:href", "<iframe", "<image", "<use"]
+                    .iter().any(|tag| markup.contains(tag))
+        }
+        _ => false,
+    };
+    if valid { Ok(()) } else { Err(format!("Image '{}' has an unsupported or unsafe file signature.", path.display())) }
 }
 
 fn text_from_source(path: &Path) -> Result<String, String> {
@@ -202,7 +223,13 @@ fn json_record(path: &Path) -> Result<(String, String), String> {
         .and_then(Json::as_str).unwrap_or("Imported tabletop export");
     let kind = obj.get("type").or_else(|| obj.get("_type"))
         .and_then(Json::as_str).unwrap_or("record");
-    let summary = format!("## Source record\n\n**Name:** {}\n\n**Export type:** {}\n\nOriginal JSON is preserved under Assets/Imports; use the source file when rebuilding mechanics or links.", title, kind);
+    let mut summary = format!("## Source record\\n\\n**Name:** {}\\n\\n**Export type:** {}\\n\\nOriginal JSON is preserved under Assets/Imports; use the source file when rebuilding mechanics or links.", title, kind);
+    if raw.len() <= 16_384 {
+        summary.push_str("\\n\\n## Export data (reference only)\\n\\n");
+        summary.push_str("```json\\n");
+        summary.push_str(&raw.replace("```", "`` `"));
+        summary.push_str("\\n```");
+    }
     Ok((title.into(), summary))
 }
 
@@ -216,7 +243,11 @@ fn copy_one(root: &Path, candidate: &Candidate, format: &RpgFormat, notes: &mut 
             write_note(root, &title, &raw, "imported-markdown")?;
             Ok((1,0))
         }
-        RpgFormat::Assets => { copy_original(root, candidate, "Images Maps Tokens")?; Ok((0,1)) }
+        RpgFormat::Assets => {
+            validate_image_file(&candidate.path)?;
+            copy_original(root, candidate, "Images Maps Tokens")?;
+            Ok((0,1))
+        }
         RpgFormat::Pdf => {
             let mut head = [0u8; 5];
             fs::File::open(&candidate.path).map_err(|e| e.to_string())?
@@ -227,10 +258,20 @@ fn copy_one(root: &Path, candidate: &Candidate, format: &RpgFormat, notes: &mut 
             Ok((1,1))
         }
         RpgFormat::Foundry | RpgFormat::Roll20 => {
-            let (title, summary) = json_record(&candidate.path)?;
+            let (title, summary) = if extension(&candidate.path) == "zip" {
+                let input = fs::File::open(&candidate.path).map_err(|e| e.to_string())?;
+                let archive = zip::ZipArchive::new(input).map_err(|_| "Not a valid ZIP export.".to_string())?;
+                if archive.len() > MAX_FILES { return Err("VTT ZIP contains too many entries.".into()); }
+                (
+                    safe_name(candidate.relative.file_stem().and_then(|s| s.to_str()).unwrap_or("VTT archive")),
+                    format!("## VTT ZIP archive\n\nArchive contains {} entries. Original file preserved intact; linked data, macros and executable mechanics are not converted.", archive.len()),
+                )
+            } else {
+                json_record(&candidate.path)?
+            };
             let stored = copy_original(root, candidate, "VTT Exports")?;
             write_note(root, &safe_name(&title), &format!("{summary}\n\n**Saved source:** `{stored}`"), "imported-vtt")?;
-            notes.push("JSON mechanics and linked object references were not converted.".into());
+            notes.push("VTT mechanics, online assets and linked object references have not been converted.".into());
             Ok((1,1))
         }
         RpgFormat::FantasyGrounds => {
