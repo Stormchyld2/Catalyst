@@ -66,6 +66,7 @@
   let initialProjectsLoaded = $state(false);
   let initialEditorialLoaded = $state(false);
   let showGlobalHome = $state(false);
+  let requestedAdventureDocument = $state<string | null>(null);
 
   $effect(() => {
     if (initialProjectsLoaded && initialEditorialLoaded) onReady?.();
@@ -795,7 +796,7 @@
     {:else if workspace.active === "story-development"}
       <StoryDevelopmentWorkspace />
     {:else if workspace.active === "outline"}
-      <StoryDevelopmentWorkspace focusRoot="Adventures" />
+      <StoryDevelopmentWorkspace focusRoot="Adventures" initialDocumentPath={requestedAdventureDocument} />
     {:else if workspace.active === "home"}
       <ProjectDashboard
         project={currentProject.value}
@@ -803,7 +804,11 @@
         onOpenStoryDevelopment={() => {
           if (canOpenStoryDevelopment()) workspace.setActive("story-development", true);
         }}
-        onOpenAdventures={() => workspace.setActive("outline", true)}
+        onOpenAdventures={() => { requestedAdventureDocument = null; workspace.setActive("outline", true); }}
+        onOpenCampaignOverview={() => {
+          requestedAdventureDocument = "Adventures/Main Campaign/Campaign Overview.md";
+          workspace.setActive("outline", true);
+        }}
       />
     {:else if workspace.active === "git"}
       <GitWorkspace project={currentProject.value} />
