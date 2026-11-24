@@ -1,7 +1,8 @@
 <script lang="ts">
   import catalystLogo from "../../assets/catalyst-logo.png";
   import { invoke } from "@tauri-apps/api/core";
-  import { runImport, type ImportType } from "../utils/import";
+  import type { ImportType } from "../utils/import";
+  import { open as openNative } from "../utils/nativeDialog";
   import {
     BookOpen,
     FileText,
@@ -118,26 +119,89 @@
       ? Math.round((dashboardMetrics.word_count / dashboardMetrics.word_target) * 100)
       : 0
   );
-  async function handleImport(type: ImportType) {
-    const project = await runImport(type);
-    if (!project) return;
-    currentProject.setProject(project);
-    ui.setView("editor");
-    workspace.enterProject();
-    onProjectActivated?.();
-    onImportComplete?.(project, type);
+  type RpgFormat = "markdown" | "obsidian" | "assets" | "foundry" | "roll20" | "fantasy_grounds" | "pdf";
+  type RpgPreview = {
+    format: RpgFormat;
+    source: string;
+    file_count: number;
+    total_bytes: number;
+    sample_files: string[];
+    warnings: string[];
+    behavior: string;
+  };
+  type RpgResult = { imported: number; documents_created: number; copied_assets: number; destination: string; notes: string[] };
+  const RPG_IMPORTS: { type: RpgFormat; label: string; hint: string; directory: boolean; filters?: { name: string; extensions: string[] }[] }[] = [
+    { type: "markdown", label: "Markdown", hint: "Single Markdown file", directory: false, filters: [{ name: "Markdown", extensions: ["md", "markdown"] }] },
+    { type: "obsidian", label: "Obsidian Vault", hint: "Markdown vault folder", directory: true },
+    { type: "assets", label: "Images / Maps / Tokens", hint: "Image folder (PNG, JPG, SVG, WebP, GIF)", directory: true },
+    { type: "foundry", label: "Foundry VTT", hint: "Exported JSON data / folder", directory: false, filters: [{ name: "Foundry JSON", extensions: ["json"] }] },
+    { type: "roll20", label: "Roll20", hint: "Supported JSON export (not a live campaign connection)", directory: false, filters: [{ name: "Roll20 JSON", extensions: ["json"] }] },
+    { type: "fantasy_grounds", label: "Fantasy Grounds", hint: ".mod module or exported XML", directory: false, filters: [{ name: "Fantasy Grounds", extensions: ["mod", "xml"] }] },
+    { type: "pdf", label: "PDF Reference", hint: "Original PDF preserved offline; no OCR", directory: false, filters: [{ name: "PDF", extensions: ["pdf"] }] },
+  ];
+  let rpgImportBusy = $state(false);
+  let rpgImportPreview = $state<RpgPreview | null>(null);
+  let rpgImportSource = $state("");
+  let rpgImportDestination = $state("");
+  let rpgImportError = $state("");
+  let rpgImportResult = $state<RpgResult | null>(null);
+  let selectedRpgFormat = $state<RpgFormat>("markdown");
+
+  async function selectRpgImport(type: RpgFormat) {
+    const config = RPG_IMPORTS.find((v) => v.type === type);
+    if (!config) return;
+    rpgImportError = "";
+    rpgImportResult = null;
+    rpgImportPreview = null;
+    selectedRpgFormat = type;
+    try {
+      const source = await openNative({
+        title: "Choose " + config.label + " source",
+        directory: config.directory,
+        multiple: false,
+        ...(config.filters ? { filters: config.filters } : {}),
+      });
+      if (!source) return;
+      rpgImportSource = source;
+      const campaignRoot = currentProject.value?.project_type === "campaign"
+        ? currentProject.value.project_root
+        : null;
+      if (campaignRoot) {
+        rpgImportDestination = campaignRoot;
+      } else {
+        const folder = await openNative({ title: "Choose an existing Catalyst campaign folder", directory: true, multiple: false });
+        if (!folder) return;
+        rpgImportDestination = folder;
+      }
+      rpgImportBusy = true;
+      rpgImportPreview = await invoke<RpgPreview>("preview_rpg_content_import", { sourcePath: source, format: type });
+    } catch (e) {
+      rpgImportError = String(e);
+    } finally {
+      rpgImportBusy = false;
+    }
   }
 
-  const importPlottr = () => handleImport("plottr");
-  const importMarkdown = () => handleImport("markdown");
-  const importYWriter = () => handleImport("ywriter");
-  const importLongform = () => handleImport("longform");
-  const importScrivener = () => handleImport("scrivener");
-  const importNovelWriter = () => handleImport("novelwriter");
+  async function chooseRpgDestination() {
+    const folder = await openNative({ title: "Choose an existing Catalyst campaign", directory: true, multiple: false });
+    if (folder) rpgImportDestination = folder;
+  }
 
-  function handleLongformImport() {
-    const handler = onImportLongform ?? importLongform;
-    handler();
+  async function applyRpgImport() {
+    if (!rpgImportPreview || !rpgImportDestination || rpgImportBusy) return;
+    rpgImportBusy = true;
+    rpgImportError = "";
+    try {
+      rpgImportResult = await invoke<RpgResult>("apply_rpg_content_import", {
+        sourcePath: rpgImportSource, destinationRoot: rpgImportDestination,
+        format: selectedRpgFormat,
+      });
+      rpgImportPreview = null;
+    } catch (e) {
+      rpgImportError = String(e);
+    } finally {
+      rpgImportBusy = false;
+    }
   }
 
   async function trySampleProject() {
@@ -191,15 +255,6 @@
       long: numeric,
     };
   }
-  const IMPORTS: { label: string; hint: string; run: () => void }[] = [
-    { label: "Plottr", hint: ".pltr", run: () => importPlottr() },
-    { label: "yWriter", hint: ".yw7", run: () => importYWriter() },
-    { label: "Markdown", hint: ".md", run: () => importMarkdown() },
-    { label: "Longform", hint: "Index or vault", run: () => handleLongformImport() },
-    { label: "Scrivener", hint: ".scriv", run: () => importScrivener() },
-    { label: "novelWriter", hint: "Project folder", run: () => importNovelWriter() },
-  ];
-
   let loadingProjectList = $state(false);
 
   async function openProjectLibrary() {
@@ -308,7 +363,7 @@
             onclick={() => (showImportFormats = true)}
           >
             <FolderOpen class="w-5 h-5" aria-hidden="true" />
-            <span>Import <small>Bring in work from another writing app</small></span>
+            <span>Import RPG Content <small>Markdown, Obsidian, maps, VTT exports and PDFs</small></span>
           </button>
 
           {#if onOpenEditorial}
@@ -453,7 +508,7 @@
           <FileText class="w-7 h-7" aria-hidden="true" />
           <div>
             <h2 class="section-title">Your projects will appear here</h2>
-            <p>Start a new project, explore the sample, or import work you already have.</p>
+            <p>Start a campaign, explore the demo adventure, or import existing tabletop material.</p>
           </div>
         </section>
       {/if}
@@ -463,48 +518,56 @@
 
 {#if showImportFormats}
   <div class="import-backdrop" role="presentation" onclick={() => (showImportFormats = false)}>
-    <div
-      class="import-dialog"
-      tabindex="-1"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="import-dialog-heading"
-      onclick={(event) => event.stopPropagation()}
-      onkeydown={(event) => event.stopPropagation()}
-    >
+    <div class="import-dialog" tabindex="-1" role="dialog" aria-modal="true"
+      aria-labelledby="import-dialog-heading" onclick={(event) => event.stopPropagation()}
+      onkeydown={(event) => event.stopPropagation()}>
       <header class="import-dialog__header">
         <div>
-          <span class="dashboard-eyebrow">Import</span>
-          <h2 id="import-dialog-heading">Import from another writing app</h2>
+          <span class="dashboard-eyebrow">Offline campaign importer</span>
+          <h2 id="import-dialog-heading">Import RPG Content</h2>
         </div>
-        <button
-          type="button"
-          class="ka-button ka-button--ghost"
-          onclick={() => (showImportFormats = false)}
-          aria-label="Close import dialog"
-        >Close</button>
+        <button type="button" class="ka-button ka-button--ghost" onclick={() => (showImportFormats = false)}
+          aria-label="Close import dialog">Close</button>
       </header>
       <div class="import-dialog__body">
-        <p class="ka-help import-help">
-          Import chapters, scenes, and story structure from Markdown, Scrivener, novelWriter, Plottr, yWriter, or Longform.
-        </p>
-        <ul class="import-list">
-          {#each IMPORTS as format (format.label)}
-            <li>
-              <button
-                type="button"
-                class="ka-button ka-button--ghost import-format"
-                onclick={() => {
-                  showImportFormats = false;
-                  format.run();
-                }}
-              >
-                {format.label}
-                <small>{format.hint}</small>
-              </button>
-            </li>
-          {/each}
-        </ul>
+        <p class="ka-help import-help">Select an export, preview the files, and choose an existing Catalyst campaign. Originals are preserved where appropriate. No imported content overwrites existing records.</p>
+        {#if rpgImportError}
+          <p role="alert" class="ka-help">{rpgImportError}</p>
+        {/if}
+        {#if rpgImportResult}
+          <div role="status">
+            <strong>Import complete</strong>
+            <p>{rpgImportResult.imported} source file(s); {rpgImportResult.documents_created} notes and {rpgImportResult.copied_assets} original assets.</p>
+            <p>Destination: {rpgImportResult.destination}</p>
+            {#each rpgImportResult.notes as note}<p>{note}</p>{/each}
+          </div>
+          <button type="button" class="ka-button" onclick={() => { rpgImportResult = null; rpgImportPreview = null; }}>Import more</button>
+        {:else if rpgImportPreview}
+          <div class="od-stack">
+            <p><strong>{rpgImportPreview.file_count} file(s)</strong> · {Math.round(rpgImportPreview.total_bytes / 1024)} KB</p>
+            <p>{rpgImportPreview.behavior}</p>
+            {#each rpgImportPreview.warnings as warning}<p class="ka-help">{warning}</p>{/each}
+            <details><summary>Files to import (first {rpgImportPreview.sample_files.length})</summary>
+              <ul>{#each rpgImportPreview.sample_files as file}<li>{file}</li>{/each}</ul>
+            </details>
+            <p><strong>Source:</strong> {rpgImportSource}</p>
+            <p><strong>Campaign:</strong> {rpgImportDestination || "Not selected"}</p>
+            <button type="button" class="ka-button ka-button--ghost" onclick={chooseRpgDestination}>Change destination</button>
+            <button type="button" class="ka-button" disabled={rpgImportBusy || !rpgImportDestination}
+              onclick={applyRpgImport}>{rpgImportBusy ? "Importing…" : "Import into campaign"}</button>
+            <button type="button" class="ka-button ka-button--ghost" onclick={() => rpgImportPreview = null}>Back to formats</button>
+          </div>
+        {:else}
+          <ul class="import-list">
+            {#each RPG_IMPORTS as format (format.type)}
+              <li><button type="button" class="ka-button ka-button--ghost import-format"
+                disabled={rpgImportBusy} onclick={() => selectRpgImport(format.type)}>
+                {format.label}<small>{format.hint}</small>
+              </button></li>
+            {/each}
+          </ul>
+          <p class="ka-help">Foundry, Roll20 and Fantasy Grounds exports are preserved as source references; complete mechanics and VTT automation are not imported.</p>
+        {/if}
       </div>
     </div>
   </div>
