@@ -907,14 +907,7 @@
   <GuidanceOverlay />
 
   <!-- Onboarding overlay (shown on first launch) -->
-  <Onboarding
-    onImportLongform={openLongformImportDialog}
-    onImportComplete={(project: Project, type: string) => {
-      if (isImportType(type) && IMPORT_FORMATS[type].references) {
-        openReferenceClassificationDialog(project);
-      }
-    }}
-  />
+  <Onboarding />
 
   {#if showReferenceClassificationDialog && referenceClassificationProjectId}
     <ReferenceClassificationDialog
