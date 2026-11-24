@@ -28,7 +28,7 @@ afterEach(cleanup);
 describe("ProjectDashboard", () => {
   it("reads and shows actual campaign summary instead of writing goals", async () => {
     render(ProjectDashboard, { props: { project: campaign,
-      onOpenWrite: vi.fn(), onOpenStoryDevelopment: vi.fn(), onOpenAdventures: vi.fn() } });
+      onOpenWrite: vi.fn(), onOpenStoryDevelopment: vi.fn(), onOpenAdventures: vi.fn(), onOpenCampaignOverview: vi.fn() } });
     expect(await screen.findByText(/D&D 5e/)).toBeTruthy();
     expect(screen.getByText("The Bellward Company · 4 expected")).toBeTruthy();
     expect(screen.getByText("Session Plans")).toBeTruthy();
@@ -38,22 +38,24 @@ describe("ProjectDashboard", () => {
   });
 
   it("opens Campaign Notes, World Builder and Adventures", async () => {
-    const onOpenWrite = vi.fn(), onOpenStoryDevelopment = vi.fn(), onOpenAdventures = vi.fn();
+    const onOpenWrite = vi.fn(), onOpenStoryDevelopment = vi.fn(), onOpenAdventures = vi.fn(), onOpenCampaignOverview = vi.fn();
     render(ProjectDashboard, { props: { project: campaign,
-      onOpenWrite, onOpenStoryDevelopment, onOpenAdventures } });
+      onOpenWrite, onOpenStoryDevelopment, onOpenAdventures, onOpenCampaignOverview } });
     await screen.findByText("Session Plans");
     await fireEvent.click(screen.getByRole("button", { name: /Open Campaign Notes/ }));
     await fireEvent.click(screen.getByRole("button", { name: /Open World Builder/ }));
     await fireEvent.click(screen.getByRole("button", { name: /Open Adventures/ }));
+    await fireEvent.click(screen.getByRole("button", { name: /Edit Campaign Overview/ }));
     expect(onOpenWrite).toHaveBeenCalled();
     expect(onOpenStoryDevelopment).toHaveBeenCalledOnce();
     expect(onOpenAdventures).toHaveBeenCalledOnce();
+    expect(onOpenCampaignOverview).toHaveBeenCalledOnce();
   });
 
   it("fails visibly on an invalid campaign rather than showing invented numbers", async () => {
     vi.mocked(invoke).mockRejectedValue("Missing campaign.yaml");
     render(ProjectDashboard, { props: { project: campaign,
-      onOpenWrite: vi.fn(), onOpenStoryDevelopment: vi.fn(), onOpenAdventures: vi.fn() } });
+      onOpenWrite: vi.fn(), onOpenStoryDevelopment: vi.fn(), onOpenAdventures: vi.fn(), onOpenCampaignOverview: vi.fn() } });
     await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("Missing campaign.yaml"));
   });
 });
