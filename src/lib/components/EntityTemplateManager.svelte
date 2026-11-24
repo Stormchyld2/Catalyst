@@ -43,6 +43,13 @@
   } = $props();
 
   let registry = $state<Registry>({ templates: [], issues: [], user_templates_dir: "" });
+  let templateQuery = $state("");
+  let categoryFilter = $state("all");
+  const categories = $derived([...new Set(registry.templates.map((t) => t.category))].sort());
+  const visibleTemplates = $derived(registry.templates.filter((t) =>
+    (categoryFilter === "all" || t.category === categoryFilter) &&
+    (!templateQuery.trim() || [t.name, t.category, t.description ?? ""].some((v) => v.toLowerCase().includes(templateQuery.trim().toLowerCase())))
+  ));
   let selectedId = $state<string | null>(null);
   let loading = $state(false);
   let saving = $state(false);
@@ -208,7 +215,7 @@
   <div class="template-manager" role="dialog" aria-modal="true" aria-label="Entity templates">
     <header class="template-manager__header">
       <div>
-        <p class="eyebrow">Story Development</p>
+        <p class="eyebrow">Catalyst Worldbuilding & Campaign</p>
         <h2>Entity Templates</h2>
       </div>
       <div class="template-manager__header-actions">
@@ -226,7 +233,9 @@
         <button class="new-template" type="button" onclick={newTemplate}>
           <Plus size={14} aria-hidden="true" /> New user template
         </button>
-        {#each registry.templates as template (template.id)}
+        <label class="template-filter-label">Find templates<input aria-label="Search entity templates" bind:value={templateQuery} placeholder="Search name or category" /></label>
+        <label class="template-filter-label">Category<select aria-label="Filter template category" bind:value={categoryFilter}><option value="all">All categories</option>{#each categories as cat}<option value={cat}>{cat}</option>{/each}</select></label>
+        {#each visibleTemplates as template (template.id)}
           <button
             type="button"
             class:active={selectedId === template.id}
@@ -305,6 +314,8 @@
   .template-manager__header-actions button { width:32px; height:32px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:5px; background:var(--color-surface-raised); color:var(--color-text-muted); cursor:pointer; }
   .template-manager__layout { flex:1; min-height:0; display:grid; grid-template-columns:270px minmax(0,1fr); }
   .template-manager__list { min-height:0; overflow:auto; padding:10px; border-right:1px solid var(--color-border); background:var(--color-surface); }
+  .template-filter-label { display:grid; gap:4px; margin:8px 0; font-size:11px; color:var(--color-text-muted); }
+  .template-filter-label input,.template-filter-label select { width:100%; padding:7px; background:var(--color-surface-raised); color:var(--color-text); border:1px solid var(--color-border); border-radius:5px; }
   .new-template,.template-row { width:100%; border:0; border-radius:5px; text-align:left; cursor:pointer; }
   .new-template { display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:8px 9px; background:var(--color-surface-raised); color:var(--color-accent-text); }
   .template-row { display:grid; gap:2px; padding:8px 9px; background:transparent; color:var(--color-text); }
