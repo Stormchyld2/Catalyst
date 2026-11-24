@@ -1543,6 +1543,25 @@ mod tests {
     }
 
     #[test]
+    fn demo_creation_leaves_no_staging_or_recovery_files_in_a_deep_folder() {
+        // Mirrors a long Windows app-data path (e.g. a long user name or a
+        // synced folder). Runs on every OS; on Windows it exercises
+        // ReplaceFileW beyond MAX_PATH.
+        let temp = tempfile::tempdir().unwrap();
+        let deep = temp.path().join("A".repeat(60)).join("B".repeat(60)).join(DEMO_SUBDIR);
+        let root = deep.join(DEMO_TITLE);
+        ensure_demo(&root).unwrap();
+        ensure_demo(&root).unwrap();
+        let siblings: Vec<_> = fs::read_dir(&deep).unwrap().map(|e| e.unwrap().file_name()).collect();
+        assert_eq!(siblings, vec![std::ffi::OsString::from(DEMO_TITLE)], "staging residue");
+        let leftovers: Vec<_> = walkdir::WalkDir::new(&root).into_iter().filter_map(Result::ok)
+            .filter(|e| e.file_name().to_string_lossy().starts_with(".catalyst-save-"))
+            .map(|e| e.path().display().to_string())
+            .collect();
+        assert!(leftovers.is_empty(), "{leftovers:?}");
+    }
+
+    #[test]
     fn expanded_demo_installs_missing_documents_without_touching_existing_ones() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join(DEMO_SUBDIR).join(DEMO_TITLE);

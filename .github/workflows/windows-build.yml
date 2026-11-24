@@ -43,3 +43,9 @@ jobs:
           name: Catalyst-windows-x64-${{ github.sha }}
           path: src-tauri/target/release/catalyst.exe
           if-no-files-found: error
+
+      # Windows-only file behavior (ReplaceFileW, long paths, demo staging) is
+      # covered by #[cfg(windows)] tests that only run here.
+      - name: Windows document, demo and campaign tests
+        working-directory: src-tauri
+        run: cargo test --no-default-features --lib -- document:: sample_project campaign_wizard
