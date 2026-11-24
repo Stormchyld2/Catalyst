@@ -9,13 +9,24 @@
   import DialogHeader from "./DialogHeader.svelte";
   import { modalFocus } from "../utils/modalFocus";
   import {
+    CAMPAIGN_LENGTHS,
+    CAMPAIGN_STRUCTURES,
+    CREATURE_TYPES,
     ERAS,
+    FACTION_ATTITUDES,
     GENRES,
     GUIDED_STEPS,
     HOUSE_RULE_MODES,
+    LOCATION_TYPES,
+    NPC_DISPOSITIONS,
+    NPC_ROLES,
+    PARTY_ORIGINS,
+    PLAY_MODES,
+    SCHEDULES,
     RULES_PACKS,
     SETTING_ORIGINS,
     SETTING_SCALES,
+    THREAT_LEVELS,
     TONES,
     WORLD_CATEGORIES,
     WORLD_MODES,
@@ -118,7 +129,9 @@
     else mode = null;
   }
 
-  const blankEntry = (): EntryDraft => ({ name: "", kind: "", description: "" });
+  const blankEntry = (): EntryDraft => ({ name: "", kind: "", description: "", detail: "" });
+  const progressionSummary = $derived(progression && draft.startingLevel.trim() ? `${progression.label}: ${draft.startingLevel.trim()}` : "");
+  const choiceLabel = (list: Choice[], id: string) => list.find((c) => c.id === id)?.label ?? "";
 
   function toProject(created: NewCampaignProject): Project {
     return {
@@ -230,18 +243,34 @@
   </div>
 {/snippet}
 
-{#snippet entryList(rows: EntryDraft[], noun: string, kindLabel: string, onChange: (rows: EntryDraft[]) => void)}
+{#snippet selectField(aria: string, labelText: string, options: string[], value: string, onPick: (v: string) => void)}
+  <label>{labelText}
+    <select aria-label={aria} {value} onchange={(e) => onPick((e.currentTarget as HTMLSelectElement).value)}>
+      <option value="">Not decided</option>
+      {#each options as option}<option value={option}>{option}</option>{/each}
+    </select>
+  </label>
+{/snippet}
+
+{#snippet entryList(rows: EntryDraft[], noun: string, prompt: string, kind: { label: string; options?: string[] }, detail: { label: string; options: string[] } | null, onChange: (rows: EntryDraft[]) => void)}
   <div class="step-intro">
-    <h3 class="sub-heading">{noun}s</h3>
+    <strong class="question-inline">{prompt}</strong>
     <button class="secondary" type="button" onclick={() => onChange([...rows, blankEntry()])}><Plus size={14} aria-hidden="true" />Add {noun.toLowerCase()}</button>
   </div>
-  {#if rows.length === 0}<div class="empty-card">No {noun.toLowerCase()}s added.</div>{/if}
+  {#if rows.length === 0}<div class="empty-card">No {noun.toLowerCase()}s yet. Add one, or skip this for now.</div>{/if}
   {#each rows as row, index}
     <article class="entity-card">
       <header><strong>{noun} {index + 1}</strong><button type="button" aria-label={`Remove ${noun.toLowerCase()} ${index + 1}`} onclick={() => onChange(rows.filter((_, i) => i !== index))}><Trash2 size={14} /></button></header>
       <div class="form-grid">
         <label>Name<input aria-label={`${noun} ${index + 1} name`} bind:value={row.name} /></label>
-        <label>{kindLabel}<input aria-label={`${noun} ${index + 1} ${kindLabel.toLowerCase()}`} bind:value={row.kind} /></label>
+        {#if kind.options}
+          {@render selectField(`${noun} ${index + 1} ${kind.label.toLowerCase()}`, kind.label, kind.options, row.kind, (v) => (row.kind = v))}
+        {:else}
+          <label>{kind.label}<input aria-label={`${noun} ${index + 1} ${kind.label.toLowerCase()}`} bind:value={row.kind} /></label>
+        {/if}
+        {#if detail}
+          {@render selectField(`${noun} ${index + 1} ${detail.label.toLowerCase()}`, detail.label, detail.options, row.detail, (v) => (row.detail = v))}
+        {/if}
         <label class="wide">Description<textarea aria-label={`${noun} ${index + 1} description`} bind:value={row.description} rows="2"></textarea></label>
       </div>
     </article>
@@ -450,21 +479,29 @@
           {:else if step === 4}
             <section class="entity-step">
               <div class="form-grid">
-                <label>Party name<input aria-label="Party name" bind:value={draft.partyName} /></label>
-                <label>Starting progression<input aria-label="Starting progression" bind:value={draft.startingProgression} /></label>
+                <label>How many players do you expect?<input aria-label="Expected players" bind:value={draft.expectedPlayers} placeholder="4" /></label>
+                <label>Does the party have a name?<input aria-label="Party name" bind:value={draft.partyName} placeholder="Optional" /></label>
+                {@render question("How will the party begin?")}
+                {@render optionCards("Party start", PARTY_ORIGINS, draft.partyOrigin, (id) => (draft.partyOrigin = id))}
+                {#if progressionSummary}
+                  <p class="wide hint">Characters start at <strong>{progressionSummary}</strong>, from Step 2.</p>
+                {/if}
               </div>
-              <p class="hint">Character Studio isn't available yet. A character name here creates a placeholder record, not a character sheet.</p>
+              <p class="hint">Character Studio isn't available yet. A character name here creates a placeholder page with the concept you enter, not a character sheet.</p>
               <div class="step-intro">
-                <h3 class="sub-heading">Players</h3>
-                <button class="secondary" type="button" onclick={() => (draft.players = [...draft.players, { player_name: "", character_name: "" }])}><Plus size={14} aria-hidden="true" />Add player</button>
+                <strong class="question-inline">Who is playing, and what are they playing?</strong>
+                <button class="secondary" type="button" onclick={() => (draft.players = [...draft.players, { player_name: "", character_name: "", concept: "" }])}><Plus size={14} aria-hidden="true" />Add player</button>
               </div>
-              {#if draft.players.length === 0}<div class="empty-card">No players added.</div>{/if}
+              {#if draft.players.length === 0}<div class="empty-card">No players yet. Add them now or after Session Zero.</div>{/if}
               {#each draft.players as player, index}
                 <article class="entity-card">
                   <header><strong>Player {index + 1}</strong><button type="button" aria-label={`Remove player ${index + 1}`} onclick={() => (draft.players = draft.players.filter((_, i) => i !== index))}><Trash2 size={14} /></button></header>
                   <div class="form-grid">
                     <label>Player name<input aria-label={`Player ${index + 1} name`} bind:value={player.player_name} /></label>
                     <label>Character name<input aria-label={`Player ${index + 1} character`} bind:value={player.character_name} placeholder="Optional" /></label>
+                    {#if player.character_name.trim()}
+                      <label class="wide">Character concept<input aria-label={`Player ${index + 1} concept`} bind:value={player.concept} placeholder="A disgraced knight searching for her brother" /></label>
+                    {/if}
                   </div>
                 </article>
               {/each}
@@ -472,64 +509,77 @@
           {:else if step === 5}
             <section class="entity-step">
               <div class="step-intro">
-                <h3 class="sub-heading">NPCs</h3>
+                <strong class="question-inline">Who are the important non-player characters?</strong>
                 <button class="secondary" type="button" onclick={() => (draft.npcs = [...draft.npcs, { name: "", disposition: "neutral", role: "", motivation: "", description: "" }])}><Plus size={14} aria-hidden="true" />Add NPC</button>
               </div>
-              {#if draft.npcs.length === 0}<div class="empty-card">No NPCs added.</div>{/if}
+              {#if draft.npcs.length === 0}<div class="empty-card">No NPCs yet. Patrons, villains and quest givers are good places to start.</div>{/if}
               {#each draft.npcs as npc, index}
                 <article class="entity-card">
                   <header><strong>NPC {index + 1}</strong><button type="button" aria-label={`Remove NPC ${index + 1}`} onclick={() => (draft.npcs = draft.npcs.filter((_, i) => i !== index))}><Trash2 size={14} /></button></header>
                   <div class="form-grid">
                     <label>Name<input aria-label={`NPC ${index + 1} name`} bind:value={npc.name} /></label>
-                    <label>Disposition
+                    <label>How do they feel about the party?
                       <select aria-label={`NPC ${index + 1} disposition`} bind:value={npc.disposition}>
-                        <option value="ally">Ally</option><option value="neutral">Neutral</option><option value="villain">Villain</option>
+                        {#each NPC_DISPOSITIONS as d (d.id)}<option value={d.id}>{d.label}</option>{/each}
                       </select>
                     </label>
-                    <label>Role<input aria-label={`NPC ${index + 1} role`} bind:value={npc.role} /></label>
-                    <label>Motivation<input aria-label={`NPC ${index + 1} motivation`} bind:value={npc.motivation} /></label>
-                    <label class="wide">Description<textarea aria-label={`NPC ${index + 1} description`} bind:value={npc.description} rows="2"></textarea></label>
+                    {@render selectField(`NPC ${index + 1} role`, "Role in the story", NPC_ROLES, npc.role, (v) => (npc.role = v))}
+                    <label>What do they want?<input aria-label={`NPC ${index + 1} motivation`} bind:value={npc.motivation} /></label>
+                    <label class="wide">Description<textarea aria-label={`NPC ${index + 1} description`} bind:value={npc.description} rows="2" placeholder="One look, one habit, one secret"></textarea></label>
                   </div>
                 </article>
               {/each}
-              {@render entryList(draft.creatures, "Creature", "Creature type", (rows) => { draft.creatures = rows; })}
-              {@render entryList(draft.factions, "Faction", "Goal", (rows) => { draft.factions = rows; })}
+              {@render entryList(draft.creatures, "Creature", "Which creatures or monsters will the party face?", { label: "Creature type", options: CREATURE_TYPES }, { label: "Threat level", options: THREAT_LEVELS }, (rows) => { draft.creatures = rows; })}
+              {@render entryList(draft.factions, "Faction", "Which groups are pulling strings?", { label: "Goal" }, { label: "Attitude toward the party", options: FACTION_ATTITUDES }, (rows) => { draft.factions = rows; })}
             </section>
           {:else if step === 6}
             <section class="form-grid">
-              <label class="wide">Central conflict<textarea aria-label="Central conflict" bind:value={draft.centralConflict} rows="3"></textarea></label>
-              <label>Starting adventure<input aria-label="Starting adventure" bind:value={draft.startingAdventure} /></label>
-              <label>Adventure summary<input aria-label="Adventure summary" bind:value={draft.startingAdventureSummary} /></label>
-              <label class="wide">Story arcs<textarea aria-label="Story arcs" bind:value={draft.arcs} rows="4" placeholder="One per line"></textarea></label>
-              <label class="wide">Side quests<textarea aria-label="Side quests" bind:value={draft.sideQuests} rows="4" placeholder="One per line"></textarea></label>
+              {@render question("How is the campaign structured?")}
+              {@render optionCards("Campaign structure", CAMPAIGN_STRUCTURES, draft.storyStructure, (id) => (draft.storyStructure = id))}
+              {@render question("How long do you expect it to run?")}
+              {@render chipRadio("Campaign length", CAMPAIGN_LENGTHS, draft.storyLength, (id) => (draft.storyLength = id))}
+              <label class="wide">What is the central conflict?<textarea aria-label="Central conflict" bind:value={draft.centralConflict} rows="3" placeholder="Who wants what, and what happens if the heroes do nothing?"></textarea></label>
+              <label>What is the first adventure called?<input aria-label="Starting adventure" bind:value={draft.startingAdventure} /></label>
+              {#if draft.startingAdventure.trim()}
+                <label>What hooks the characters into it?<input aria-label="Adventure hook" bind:value={draft.startingAdventureSummary} /></label>
+              {/if}
+              {#if draft.storyStructure !== "episodic" && draft.storyLength !== "one-shot"}
+                <label class="wide">What larger story arcs do you have in mind?<textarea aria-label="Story arcs" bind:value={draft.arcs} rows="3" placeholder="One per line"></textarea></label>
+              {/if}
+              {#if draft.storyLength !== "one-shot"}
+                <label class="wide">Any side quests ready to go?<textarea aria-label="Side quests" bind:value={draft.sideQuests} rows="3" placeholder="One per line"></textarea></label>
+              {/if}
             </section>
           {:else if step === 7}
             <section class="entity-step">
               <div class="form-grid">
-                <label class="wide">Starting location<input aria-label="Starting location" bind:value={draft.startingLocation} /></label>
+                <label class="wide">Where does the campaign begin?<input aria-label="Starting location" bind:value={draft.startingLocation} placeholder="A town, a ship, a prison cell…" /></label>
               </div>
-              {@render entryList(draft.locations, "Location", "Type", (rows) => { draft.locations = rows; })}
+              {@render entryList(draft.locations, "Location", "Which other places matter early on?", { label: "Type", options: LOCATION_TYPES }, null, (rows) => { draft.locations = rows; })}
               <div class="form-grid">
-                <label class="wide">Existing map files<textarea aria-label="Existing map files" bind:value={draft.mapReferences} rows="3" placeholder="One path or note per line"></textarea></label>
+                <label class="wide">Do you already have map files?<textarea aria-label="Existing map files" bind:value={draft.mapReferences} rows="3" placeholder="One path or note per line"></textarea></label>
               </div>
               <p class="hint">Map Studio isn't available yet, so no maps are generated. The Maps folders are created and ready for your files.</p>
             </section>
           {:else if step === 8}
             <section class="form-grid">
-              <label>First session title<input aria-label="First session title" bind:value={draft.firstSessionTitle} placeholder="Session 1" /></label>
-              <label>Tabletop style
-                <select aria-label="Tabletop style" bind:value={draft.playMode}>
-                  <option value="physical">Physical</option><option value="hybrid">Hybrid</option><option value="digital">Digital</option>
-                </select>
-              </label>
-              <label class="wide">First session notes<textarea aria-label="First session notes" bind:value={draft.firstSessionNotes} rows="4"></textarea></label>
-              <label class="wide">GM notes<textarea aria-label="GM notes" bind:value={draft.gmNotes} rows="4"></textarea></label>
-              <label>Dice
-                <select aria-label="Dice" bind:value={draft.dice}>
-                  <option value="physical">Physical dice</option><option value="digital">Digital dice</option>
-                </select>
-              </label>
-              <label class="check"><input type="checkbox" aria-label="Use a player display" bind:checked={draft.playerDisplay} />Use a player display</label>
+              {@render question("How will you play?")}
+              {@render optionCards("Tabletop style", PLAY_MODES, draft.playMode, (id) => (draft.playMode = id as typeof draft.playMode))}
+              {@render question("Which dice will you use?")}
+              {@render chipRadio("Dice", [{ id: "physical", label: "Physical dice" }, { id: "digital", label: "Catalyst's dice roller" }], draft.dice, (id) => (draft.dice = id as typeof draft.dice))}
+              {#if draft.playMode !== "digital"}
+                <label class="check wide"><input type="checkbox" aria-label="Use a player display" bind:checked={draft.playerDisplay} />Show maps and handouts on a second screen for players</label>
+              {/if}
+              {@render question("How often will you play?")}
+              {@render chipRadio("Schedule", SCHEDULES, draft.schedule, (id) => (draft.schedule = id))}
+              <label>How long is a typical session?<input aria-label="Session length" bind:value={draft.sessionLength} placeholder="3 hours" /></label>
+              <label class="check"><input type="checkbox" aria-label="First session is a Session Zero" bind:checked={draft.sessionZero} />The first session is a Session Zero</label>
+              {#if draft.sessionZero}
+                <p class="wide hint">The first session plan will include a Session Zero agenda: pitch, lines and veils, schedule, house rules and building characters together.</p>
+              {/if}
+              <label>First session title<input aria-label="First session title" bind:value={draft.firstSessionTitle} placeholder={draft.sessionZero ? "Session Zero" : "Session 1"} /></label>
+              <label class="wide">How should the first session open?<textarea aria-label="First session notes" bind:value={draft.firstSessionNotes} rows="3" placeholder="A strong opening scene, the first choice, the first clue…"></textarea></label>
+              <label class="wide">Private GM notes<textarea aria-label="GM notes" bind:value={draft.gmNotes} rows="3" placeholder="Secrets, reminders, things the players mustn't see"></textarea></label>
             </section>
           {:else}
             <section class="review">
@@ -539,14 +589,18 @@
                 <span>{draft.projectRoot}</span>
               </div>
               <div class="review-grid">
-                <article><strong>Rules</strong><span>{rulesName}</span></article>
-                <article><strong>World</strong><span>{draft.worldMode === "new" ? draft.worldName || "New world" : "Decide later"}</span></article>
-                <article><strong>Worldbuilding areas</strong><span>{WORLD_CATEGORIES.filter((c) => draft.categories[c.id].enabled).length}</span></article>
-                <article><strong>Players</strong><span>{draft.players.length}</span></article>
-                <article><strong>NPCs / creatures / factions</strong><span>{draft.npcs.length} / {draft.creatures.length} / {draft.factions.length}</span></article>
-                <article><strong>Locations</strong><span>{draft.locations.length}</span></article>
-                <article><strong>Tabletop style</strong><span>{draft.playMode}, {draft.dice} dice</span></article>
-                <article><strong>First session</strong><span>{draft.firstSessionTitle || draft.firstSessionNotes ? "Planned" : "Not set"}</span></article>
+                {#each [
+                  { label: "Rules", value: [rulesName, progressionSummary, draft.houseRulesMode ? choiceLabel(HOUSE_RULE_MODES, draft.houseRulesMode) : ""].filter(Boolean).join(" · "), step: 1 },
+                  { label: "World", value: draft.worldMode === "new" ? [draft.worldName || "New world", choiceLabel(SETTING_SCALES, draft.worldScale), choiceLabel(ERAS, draft.era)].filter(Boolean).join(" · ") : "Decide later", step: 2 },
+                  { label: "Worldbuilding areas", value: String(WORLD_CATEGORIES.filter((c) => draft.categories[c.id].enabled).length), step: 3 },
+                  { label: "Players", value: [draft.expectedPlayers ? `${draft.expectedPlayers} expected` : "", `${draft.players.length} added`].filter(Boolean).join(" · "), step: 4 },
+                  { label: "NPCs / creatures / factions", value: `${draft.npcs.length} / ${draft.creatures.length} / ${draft.factions.length}`, step: 5 },
+                  { label: "Story", value: [choiceLabel(CAMPAIGN_STRUCTURES, draft.storyStructure), choiceLabel(CAMPAIGN_LENGTHS, draft.storyLength)].filter(Boolean).join(" · ") || "Not set", step: 6 },
+                  { label: "Locations", value: [draft.startingLocation, `${draft.locations.length} added`].filter(Boolean).join(" · "), step: 7 },
+                  { label: "Sessions", value: [choiceLabel(PLAY_MODES, draft.playMode), draft.schedule, draft.sessionZero ? "Session Zero first" : ""].filter(Boolean).join(" · "), step: 8 },
+                ] as card (card.label)}
+                  <button type="button" class="review-card" aria-label={`Edit ${card.label}`} onclick={() => { error = null; step = card.step; }}><strong>{card.label}</strong><span>{card.value}</span></button>
+                {/each}
               </div>
               <div class="planned">
                 <h3 class="sub-heading">Files to be created ({planned.length})</h3>
@@ -627,7 +681,7 @@
   .entity-step { display:grid; gap:12px; }
   .step-intro { display:flex; align-items:center; justify-content:space-between; gap:16px; }
   .review-note { color:var(--color-text-muted); line-height:1.55; }
-  .entity-card,.empty-card,.review-hero,.review-grid article { border:1px solid var(--color-border); border-radius:7px; background:var(--color-surface); }
+  .entity-card,.empty-card,.review-hero { border:1px solid var(--color-border); border-radius:7px; background:var(--color-surface); }
   .entity-card { padding:13px; }
   .entity-card.selected { border-color:var(--color-accent-text); }
   .entity-card > header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:var(--color-text); }
@@ -644,10 +698,10 @@
   .review-hero h3 { margin:0 0 5px; color:var(--color-text); font:600 22px/1.2 var(--font-display); }
   .review-hero p,.review-hero span { margin:0; color:var(--color-text-muted); }
   .review-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-  .review-grid article { display:flex; align-items:center; justify-content:space-between; padding:11px 12px; color:var(--color-text); }
-  .review-grid article span { color:var(--color-text-muted); }
+  .review-card { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 12px; border:1px solid var(--color-border); border-radius:7px; background:var(--color-surface); color:var(--color-text); text-align:left; font:inherit; cursor:pointer; }
+  .review-card:hover,.review-card:focus-visible { border-color:var(--color-accent-text); }
+  .review-card span { color:var(--color-text-muted); text-align:right; }
   .form-grid select { width:100%; box-sizing:border-box; padding:9px 10px; border:1px solid var(--color-border); border-radius:6px; background:var(--color-surface-sunken); color:var(--color-text); font:13px/1.5 var(--font-ui); }
-  .step-intro h3 { margin:8px 0 0; }
   .planned ul { max-height:220px; overflow:auto; margin:0; padding:10px 12px 10px 28px; border:1px solid var(--color-border); border-radius:7px; background:var(--color-surface-sunken); color:var(--color-text-muted); font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; }
   .review-note.warning { color:var(--color-warning, var(--color-accent-text)); }
   .foundation-error { margin:16px 0 0; padding:9px 10px; border:1px solid var(--color-error); border-radius:6px; color:var(--color-error); }

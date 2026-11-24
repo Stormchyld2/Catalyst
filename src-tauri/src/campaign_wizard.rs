@@ -291,6 +291,8 @@ pub struct CategoryAnswer {
 pub struct PlayerInput {
     pub player_name: String,
     pub character_name: String,
+    /// A one-line character concept until Character Studio exists.
+    pub concept: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -299,6 +301,10 @@ pub struct PartyInput {
     pub name: String,
     pub starting_progression: String,
     pub players: Vec<PlayerInput>,
+    /// Expected number of players (free text so "4-5" works).
+    pub expected_players: String,
+    /// "together", "first-session" or "mixed" (empty when unanswered).
+    pub origin: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -320,11 +326,17 @@ pub struct NamedEntryInput {
     pub name: String,
     pub kind: String,
     pub description: String,
+    /// Creature threat level, or a faction's attitude toward the party.
+    pub detail: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct StoryInput {
+    /// "sandbox", "episodic", "linear" or "mixed".
+    pub structure: String,
+    /// "one-shot", "short", "medium", "long" or "ongoing".
+    pub length: String,
     pub central_conflict: String,
     pub starting_adventure: String,
     pub starting_adventure_summary: String,
@@ -351,6 +363,10 @@ pub struct SessionInput {
     /// "physical" or "digital".
     pub dice: String,
     pub player_display: bool,
+    pub schedule: String,
+    pub session_length: String,
+    /// The first session is a Session Zero.
+    pub session_zero: bool,
 }
 
 impl Default for SessionInput {
@@ -362,6 +378,9 @@ impl Default for SessionInput {
             play_mode: "physical".into(),
             dice: "physical".into(),
             player_display: false,
+            schedule: String::new(),
+            session_length: String::new(),
+            session_zero: false,
         }
     }
 }
@@ -449,6 +468,10 @@ pub struct CampaignPlayManifest {
     pub mode: String,
     pub dice: String,
     pub player_display: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schedule: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session_length: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -459,6 +482,10 @@ pub struct CampaignPartyManifest {
     pub starting_progression: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub players: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_players: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
 }
 
 /// RPG-only campaign metadata. Identity (title, timestamps) stays in
@@ -514,6 +541,9 @@ pub struct NewCampaignProject {
     pub overview_path: String,
     pub overview_id: String,
 }
+
+/// Agenda added to a first session marked as Session Zero.
+const SESSION_ZERO_AGENDA: &str = "## Session Zero Agenda\n\n- [ ] Pitch the campaign: genre, tone and premise\n- [ ] Agree on lines and veils, and how anyone can pause a scene\n- [ ] Confirm schedule, session length and what happens when someone is absent\n- [ ] Explain house rules and character-creation restrictions\n- [ ] Build characters together and tie each one to the group\n- [ ] Decide how the party knows each other";
 
 pub const OVERVIEW_PATH: &str = "Adventures/Main Campaign/Campaign Overview.md";
 
@@ -617,6 +647,15 @@ fn validate(input: &NewCampaignInput, root: &Path) -> Result<(), String> {
             return Err(format!("Unknown worldbuilding category '{}'.", category.id));
         }
     }
+    if !matches!(input.party.origin.trim(), "" | "together" | "first-session" | "mixed") {
+        return Err(format!("Unknown party start '{}'.", input.party.origin));
+    }
+    if !matches!(input.story.structure.trim(), "" | "sandbox" | "episodic" | "linear" | "mixed") {
+        return Err(format!("Unknown campaign structure '{}'.", input.story.structure));
+    }
+    if !matches!(input.story.length.trim(), "" | "one-shot" | "short" | "medium" | "long" | "ongoing") {
+        return Err(format!("Unknown campaign length '{}'.", input.story.length));
+    }
     if input.npcs.iter().any(|n| n.name.trim().is_empty()) {
         return Err("NPC names must not be empty.".into());
     }
@@ -697,6 +736,8 @@ fn build_in_staging(
             mode: input.session.play_mode.trim().into(),
             dice: input.session.dice.trim().into(),
             player_display: input.session.player_display,
+            schedule: non_empty(&input.session.schedule),
+            session_length: non_empty(&input.session.session_length),
         },
         party: CampaignPartyManifest {
             name: non_empty(&input.party.name),
@@ -708,6 +749,8 @@ fn build_in_staging(
                 .map(|p| p.player_name.trim().to_string())
                 .filter(|p| !p.is_empty())
                 .collect(),
+            expected_players: non_empty(&input.party.expected_players),
+            origin: non_empty(&input.party.origin),
         },
         starting_session_id: seeded.first_session_id,
     };
@@ -891,6 +934,8 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             ("gm_name", s(&b.gm_name)),
             ("start_date", s(&b.start_date)),
             ("central_conflict", s(&story.central_conflict)),
+            ("campaign_structure", s(&story.structure)),
+            ("campaign_length", s(&story.length)),
             ("status", s("planning")),
         ],
     )?;
@@ -991,7 +1036,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             "Characters/Player Characters",
             character,
             "player-character-placeholder",
-            "",
+            &player.concept,
             &[
                 ("player", s(&player.player_name)),
                 ("status", s("placeholder")),
@@ -1002,7 +1047,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
 
     for npc in &input.npcs {
         let disposition = match npc.disposition.trim() {
-            d @ ("ally" | "villain" | "neutral") => d,
+            d @ ("ally" | "neutral" | "rival" | "villain" | "unknown") => d,
             _ => "neutral",
         };
         seeder.record(
@@ -1026,7 +1071,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             &creature.name,
             "creature-profile",
             &creature.description,
-            &[("creature_type", s(&creature.kind))],
+            &[("creature_type", s(&creature.kind)), ("threat", s(&creature.detail))],
         )?;
     }
 
@@ -1037,7 +1082,7 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
             &faction.name,
             "faction-secret-society",
             &faction.description,
-            &[("agenda", s(&faction.kind))],
+            &[("agenda", s(&faction.kind)), ("attitude", s(&faction.detail))],
         )?;
     }
 
@@ -1134,18 +1179,26 @@ fn seed_documents(root: &Path, input: &NewCampaignInput) -> Result<Seeded, Strin
     let mut first_session_id = None;
     if !session.first_session_title.trim().is_empty()
         || !session.first_session_notes.trim().is_empty()
+        || session.session_zero
     {
-        let title = if session.first_session_title.trim().is_empty() {
-            "Session 1"
-        } else {
-            session.first_session_title.trim()
+        let title = match session.first_session_title.trim() {
+            "" if session.session_zero => "Session Zero",
+            "" => "Session 1",
+            t => t,
         };
+        let mut prose = session.first_session_notes.trim().to_string();
+        if session.session_zero {
+            if !prose.is_empty() {
+                prose.push_str("\n\n");
+            }
+            prose.push_str(SESSION_ZERO_AGENDA);
+        }
         let doc = seeder.record(
             root,
             "Sessions/Session Plans",
             title,
             "session-plan",
-            &session.first_session_notes,
+            &prose,
             &[
                 ("session_number", Value::Number(1.into())),
                 ("status", s("planned")),
@@ -1438,7 +1491,9 @@ mod tests {
             CampaignPlayManifest {
                 mode: "hybrid".into(),
                 dice: "digital".into(),
-                player_display: true
+                player_display: true,
+                schedule: None,
+                session_length: None,
             }
         );
         assert_eq!(c.party.players, vec!["Sam".to_string(), "Ari".to_string()]);
@@ -1613,7 +1668,13 @@ mod tests {
             "worldbuilding": [
                 { "id": "geography", "answers": [ { "question": "What is the general climate?", "answer": "Cold" } ] },
                 { "id": "settlements", "entries": [ { "name": "Cinderford", "description": "**What purpose does it serve?** Trade" } ] }
-            ]
+            ],
+            "party": { "expected_players": "4", "origin": "first-session", "players": [ { "player_name": "Sam", "character_name": "Kestrel", "concept": "A scout who lost her watch." } ] },
+            "npcs": [ { "name": "Vey", "disposition": "rival", "role": "Rival" } ],
+            "creatures": [ { "name": "Cinder Hound", "kind": "Beast", "detail": "Elite" } ],
+            "factions": [ { "name": "Ash Council", "kind": "Rule", "detail": "Hostile" } ],
+            "story": { "structure": "sandbox", "length": "long" },
+            "session": { "play_mode": "hybrid", "dice": "physical", "schedule": "Weekly", "session_length": "3 hours", "session_zero": true }
         }))
         .unwrap();
         create_campaign(&input).unwrap();
@@ -1635,6 +1696,23 @@ mod tests {
         assert!(town.body.starts_with("**What purpose does it serve?** Trade"));
         let world = read_document(&root, Path::new("Worldbuilding/Ember Marches.md")).unwrap();
         assert_eq!(meta(&world, "scale").and_then(Value::as_str), Some("Region"));
+        assert_eq!(campaign.party.expected_players.as_deref(), Some("4"));
+        assert_eq!(campaign.party.origin.as_deref(), Some("first-session"));
+        assert_eq!(campaign.play.schedule.as_deref(), Some("Weekly"));
+        assert_eq!(campaign.play.session_length.as_deref(), Some("3 hours"));
+        let text = |path: &str, key: &str| {
+            let doc = read_document(&root, Path::new(path)).unwrap();
+            meta(&doc, key).and_then(Value::as_str).map(str::to_string)
+        };
+        assert_eq!(text("Characters/Non-Player Characters/Vey.md", "disposition").as_deref(), Some("rival"));
+        assert_eq!(text("Creatures & Monsters/Custom Creatures/Cinder Hound.md", "threat").as_deref(), Some("Elite"));
+        assert_eq!(text("Worldbuilding/Organizations & Factions/Ash Council.md", "attitude").as_deref(), Some("Hostile"));
+        assert_eq!(text(OVERVIEW_PATH, "campaign_structure").as_deref(), Some("sandbox"));
+        let pc = read_document(&root, Path::new("Characters/Player Characters/Kestrel.md")).unwrap();
+        assert!(pc.body.starts_with("A scout who lost her watch."));
+        let zero = read_document(&root, Path::new("Sessions/Session Plans/Session Zero.md")).unwrap();
+        assert!(zero.body.contains("## Session Zero Agenda"));
+        assert_eq!(campaign.starting_session_id.as_deref(), Some(zero.identity.id.as_str()));
     }
 
     #[test]
@@ -1646,6 +1724,8 @@ mod tests {
             serde_json::json!({ "world": { "mode": "new", "origin": "stolen" } }),
             serde_json::json!({ "rules": { "pack_id": "system-neutral", "house_rules_mode": "chaos" } }),
             serde_json::json!({ "worldbuilding": [ { "id": "nations", "entries": [ { "name": " " } ] } ] }),
+            serde_json::json!({ "party": { "origin": "teleported" } }),
+            serde_json::json!({ "story": { "structure": "railroad" } }),
         ] {
             let mut value = serde_json::json!({ "project_root": root.to_string_lossy(), "name": "Bad", "setup_mode": "guided" });
             for (k, v) in patch.as_object().unwrap() {
