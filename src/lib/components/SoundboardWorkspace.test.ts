@@ -7,6 +7,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import SoundboardWorkspace from "./SoundboardWorkspace.svelte";
 import type { Project } from "../types";
 import { BUILTIN_SOUNDS, defaultLayout, type SoundboardLayout } from "../soundboard.svelte";
+import { soundboard } from "../soundboardBoard.svelte";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
@@ -31,7 +32,8 @@ const project: Project = {
 let stored: SoundboardLayout | null;
 let files: { path: string; name: string; size: number }[];
 
-beforeEach(() => {
+beforeEach(async () => {
+  await soundboard.close();
   stored = { ...defaultLayout(), pads: [] };
   files = [
     { path: "Music/Tavern.ogg", name: "Tavern.ogg", size: 10 },
@@ -130,5 +132,24 @@ describe("SoundboardWorkspace", () => {
     await fireEvent.click(screen.getByLabelText("Loop until stopped"));
     await fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(stored!.pads[0]).toMatchObject({ label: "Front door", loop: true }), { timeout: 2000 });
+  });
+
+  it("saves pad tags for GM Screen pad sets", async () => {
+    stored = { ...defaultLayout(), pads: [{ id: "pad-1", label: "Door", file: "door.wav", channel: "effects", loop: false, volume: 1 }] };
+    render(SoundboardWorkspace, { project });
+    await fireEvent.click(await screen.findByRole("button", { name: "Edit Door" }));
+    await fireEvent.input(screen.getByPlaceholderText("combat, tavern"), { target: { value: "Combat, tavern, combat" } });
+    await fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(stored?.pads[0].tags).toEqual(["Combat", "tavern"]), { timeout: 2000 });
+  });
+
+  it("keeps the board loaded when the workspace is closed and reopened", async () => {
+    stored = { ...defaultLayout(), pads: [{ id: "pad-1", label: "Door", file: "door.wav", channel: "effects", loop: false, volume: 1 }] };
+    const first = render(SoundboardWorkspace, { project });
+    await screen.findByRole("button", { name: "Edit Door" });
+    first.unmount();
+    render(SoundboardWorkspace, { project });
+    await screen.findByRole("button", { name: "Edit Door" });
+    expect(vi.mocked(invoke).mock.calls.filter(([c]) => c === "load_soundboard_layout")).toHaveLength(1);
   });
 });

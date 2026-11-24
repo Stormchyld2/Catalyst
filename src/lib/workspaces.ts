@@ -13,6 +13,7 @@ export type WorkspaceId =
   | "outline"
   | "characters"
   | "listen"
+  | "gm-screen"
   | "publish"
   | "git"
   | "settings";
@@ -89,6 +90,14 @@ export const WORKSPACES: readonly WorkspaceDefinition[] = [
     stage: "core-preview",
     group: "table",
     description: "Campaign soundboard: offline ambience, music, and sound-effect pads for live play.",
+  },
+  {
+    id: "gm-screen",
+    label: "GM Screen",
+    requiresProject: true,
+    stage: "core-preview",
+    group: "table",
+    description: "One screen for live play: soundboard pads, dice and roll history.",
   },
   {
     id: "publish",

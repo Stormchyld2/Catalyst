@@ -85,6 +85,9 @@ describe("ModuleRail", () => {
     expect(
       screen.getByTestId("rail-group-table").querySelector("[data-testid=module-listen]")?.textContent
     ).toContain("Soundboard");
+    expect(
+      screen.getByTestId("rail-group-table").querySelector("[data-testid=module-gm-screen]")?.textContent
+    ).toContain("GM Screen");
     const share = screen.getByTestId("rail-group-share");
     expect(share.querySelector("[data-testid=module-publish]")?.textContent).toContain("Print & Export");
     expect(share.querySelector("[data-testid=module-git]")?.textContent).toContain("GitHub Sync");
