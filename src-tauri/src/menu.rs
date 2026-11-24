@@ -15,24 +15,10 @@ pub fn create_menu(app: &AppHandle<Wry>, bindings: &BTreeMap<String, String>) ->
         }
         item.build(app)
     };
-    let import_submenu = SubmenuBuilder::new(app, "Import")
-        .item(&command("import_plottr", "Plottr (.pltr)")?)
-        .item(&command("import_ywriter", "yWriter 7 (.yw7)")?)
-        .item(&command("import_markdown", "Markdown (.md)")?)
-        .item(&command("import_longform", "Longform (Index or Vault...)")?)
-        .item(&command("import_scrivener", "Scrivener 3 (.scriv)")?)
-        .item(&command(
-            "import_novelwriter",
-            "novelWriter (Project Folder)",
-        )?)
-        .build()?;
     let file_submenu = SubmenuBuilder::new(app, "File")
         .item(&command("new_project", "New Project")?)
         .item(&command("open_project_folder", "Open Project Folder…")?)
-        .item(&command("editorial_open", "Open Review or Feedback File…")?)
-        .item(&command("editorial_project", "Editorial Review…")?)
         .separator()
-        .item(&import_submenu)
         .item(&command("export", "Export...")?)
         .separator()
         .item(&command("close_project", "Close Project")?)
