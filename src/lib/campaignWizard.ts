@@ -294,6 +294,54 @@ export const WORLD_CATEGORIES: CategorySpec[] = [
   },
 ];
 
+export const PARTY_ORIGINS: (Choice & { hint: string })[] = [
+  { id: "together", label: "Already together", hint: "The characters know each other when play begins." },
+  { id: "first-session", label: "Meet in the first session", hint: "Their first meeting is part of the story." },
+  { id: "mixed", label: "Some know each other", hint: "A few ties, a few strangers." },
+];
+
+export const NPC_DISPOSITIONS: Choice[] = [
+  { id: "ally", label: "Ally" },
+  { id: "neutral", label: "Neutral" },
+  { id: "rival", label: "Rival" },
+  { id: "villain", label: "Villain" },
+  { id: "unknown", label: "Unknown" },
+];
+
+export const NPC_ROLES = ["Patron", "Quest giver", "Mentor", "Merchant", "Authority figure", "Informant", "Rival", "Main villain", "Henchman", "Other"];
+export const CREATURE_TYPES = ["Beast", "Monster", "Undead", "Humanoid", "Spirit", "Construct", "Aberration", "Dragon", "Other"];
+export const THREAT_LEVELS = ["Minion", "Standard", "Elite", "Boss", "Legendary"];
+export const FACTION_ATTITUDES = ["Friendly", "Neutral", "Suspicious", "Hostile", "Unknown"];
+export const LOCATION_TYPES = ["Settlement", "Building", "Dungeon", "Wilderness", "Landmark", "Ruin", "Planar / Otherworldly", "Other"];
+
+export const CAMPAIGN_STRUCTURES: (Choice & { hint: string })[] = [
+  { id: "sandbox", label: "Sandbox", hint: "Players choose where to go; the world reacts." },
+  { id: "episodic", label: "Episodic", hint: "Self-contained adventures, loosely connected." },
+  { id: "linear", label: "Story-driven", hint: "A planned storyline with clear chapters." },
+  { id: "mixed", label: "Mixed", hint: "A main story with room to wander." },
+];
+
+export const CAMPAIGN_LENGTHS: Choice[] = [
+  { id: "one-shot", label: "One-shot" },
+  { id: "short", label: "Short (2–6 sessions)" },
+  { id: "medium", label: "Medium (7–20 sessions)" },
+  { id: "long", label: "Long (20+ sessions)" },
+  { id: "ongoing", label: "Ongoing / open-ended" },
+];
+
+export const PLAY_MODES: (Choice & { hint: string })[] = [
+  { id: "physical", label: "In person", hint: "Around a table with books, minis or a battle map." },
+  { id: "hybrid", label: "Hybrid", hint: "Some players at the table, some online, or screens at the table." },
+  { id: "digital", label: "Online", hint: "Voice or video with a virtual tabletop." },
+];
+
+export const SCHEDULES: Choice[] = [
+  { id: "Weekly", label: "Weekly" },
+  { id: "Every two weeks", label: "Every two weeks" },
+  { id: "Monthly", label: "Monthly" },
+  { id: "Irregular", label: "When we can" },
+];
+
 export const GUIDED_STEPS = [
   "Campaign Identity",
   "RPG System & Rules",
@@ -309,9 +357,9 @@ export const GUIDED_STEPS = [
 
 export type SetupMode = "quick-start" | "guided" | "blank";
 
-export interface PlayerDraft { player_name: string; character_name: string }
-export interface NpcDraft { name: string; disposition: "ally" | "neutral" | "villain"; role: string; motivation: string; description: string }
-export interface EntryDraft { name: string; kind: string; description: string }
+export interface PlayerDraft { player_name: string; character_name: string; concept: string }
+export interface NpcDraft { name: string; disposition: string; role: string; motivation: string; description: string }
+export interface EntryDraft { name: string; kind: string; description: string; detail: string }
 export interface WorldEntryDraft { name: string; fields: Record<string, string> }
 export interface CategoryDraft { enabled: boolean; answers: Record<string, string>; entries: WorldEntryDraft[]; notes: string }
 
@@ -347,11 +395,14 @@ export interface CampaignDraft {
   worldNotes: string;
   categories: Record<string, CategoryDraft>;
   partyName: string;
-  startingProgression: string;
+  expectedPlayers: string;
+  partyOrigin: string;
   players: PlayerDraft[];
   npcs: NpcDraft[];
   creatures: EntryDraft[];
   factions: EntryDraft[];
+  storyStructure: string;
+  storyLength: string;
   centralConflict: string;
   startingAdventure: string;
   startingAdventureSummary: string;
@@ -366,6 +417,9 @@ export interface CampaignDraft {
   playMode: "physical" | "hybrid" | "digital";
   dice: "physical" | "digital";
   playerDisplay: boolean;
+  schedule: string;
+  sessionLength: string;
+  sessionZero: boolean;
 }
 
 export function emptyCategory(): CategoryDraft {
@@ -405,11 +459,14 @@ export function emptyDraft(): CampaignDraft {
     worldNotes: "",
     categories: Object.fromEntries(WORLD_CATEGORIES.map((c) => [c.id, emptyCategory()])),
     partyName: "",
-    startingProgression: "",
+    expectedPlayers: "",
+    partyOrigin: "",
     players: [],
     npcs: [],
     creatures: [],
     factions: [],
+    storyStructure: "",
+    storyLength: "",
     centralConflict: "",
     startingAdventure: "",
     startingAdventureSummary: "",
@@ -424,6 +481,9 @@ export function emptyDraft(): CampaignDraft {
     playMode: "physical",
     dice: "physical",
     playerDisplay: false,
+    schedule: "",
+    sessionLength: "",
+    sessionZero: false,
   };
 }
 
@@ -564,7 +624,9 @@ export function plannedFiles(draft: CampaignDraft): string[] {
     add("Worldbuilding/Settlements & Locations", start);
   }
   if (lines(draft.mapReferences).length) add("Maps", "Map References");
-  if (draft.firstSessionTitle.trim() || draft.firstSessionNotes.trim()) add("Sessions/Session Plans", draft.firstSessionTitle.trim() || "Session 1");
+  if (draft.firstSessionTitle.trim() || draft.firstSessionNotes.trim() || draft.sessionZero) {
+    add("Sessions/Session Plans", draft.firstSessionTitle.trim() || (draft.sessionZero ? "Session Zero" : "Session 1"));
+  }
   if (draft.gmNotes.trim()) add("Game Master/GM Notes", "GM Notes");
   return files;
 }
@@ -578,10 +640,12 @@ export function buildCampaignInput(draft: CampaignDraft) {
     rules: { pack_id: draft.rulesPackId, custom_system_name: draft.customSystemName.trim() },
   };
   if (draft.mode !== "guided") return base;
-  const entry = (row: EntryDraft) => ({ name: row.name.trim(), kind: row.kind.trim(), description: row.description.trim() });
+  const entry = (row: EntryDraft) => ({ name: row.name.trim(), kind: row.kind.trim(), description: row.description.trim(), detail: row.detail.trim() });
   const pack = rulesPack(draft.rulesPackId);
   const editionLabel = pack.editions.find((e) => e.id === draft.edition)?.label ?? draft.edition.trim();
   const newWorld = draft.worldMode === "new";
+  const progression = pack.progressions.find((p) => p.id === draft.progressionType);
+  const startingProgression = progression && draft.startingLevel.trim() ? `${progression.label}: ${draft.startingLevel.trim()}` : "";
   return {
     ...base,
     basics: {
@@ -622,9 +686,11 @@ export function buildCampaignInput(draft: CampaignDraft) {
     }),
     party: {
       name: draft.partyName.trim(),
-      starting_progression: draft.startingProgression.trim(),
+      starting_progression: startingProgression,
+      expected_players: draft.expectedPlayers.trim(),
+      origin: draft.partyOrigin,
       players: draft.players
-        .map((p) => ({ player_name: p.player_name.trim(), character_name: p.character_name.trim() }))
+        .map((p) => ({ player_name: p.player_name.trim(), character_name: p.character_name.trim(), concept: p.concept.trim() }))
         .filter((p) => p.player_name || p.character_name),
     },
     npcs: draft.npcs.map((n) => ({
@@ -637,6 +703,8 @@ export function buildCampaignInput(draft: CampaignDraft) {
     creatures: draft.creatures.map(entry),
     factions: draft.factions.map(entry),
     story: {
+      structure: draft.storyStructure,
+      length: draft.storyLength,
       central_conflict: draft.centralConflict.trim(),
       starting_adventure: draft.startingAdventure.trim(),
       starting_adventure_summary: draft.startingAdventureSummary.trim(),
@@ -655,6 +723,9 @@ export function buildCampaignInput(draft: CampaignDraft) {
       play_mode: draft.playMode,
       dice: draft.dice,
       player_display: draft.playerDisplay,
+      schedule: draft.schedule,
+      session_length: draft.sessionLength.trim(),
+      session_zero: draft.sessionZero,
     },
   };
 }
