@@ -23,7 +23,7 @@
           label: "Preferences",
           areas: [
             { id: "appearance", label: "Appearance & Guidance" },
-            { id: "author", label: "Author & Contact" },
+            { id: "author", label: "Legacy Author & Contact" },
             { id: "keyboard", label: "Keyboard Shortcuts" },
           ],
         },
@@ -43,12 +43,12 @@
       sections: [
         {
           id: "manuscript",
-          label: "Manuscript",
-          areas: [{ id: "details", label: "Project Details" }],
+          label: "Campaign",
+          areas: [{ id: "details", label: "Campaign Details" }],
         },
         {
           id: "reference-library",
-          label: "Reference Library",
+          label: "World Builder References",
           areas: [
             { id: "references", label: "Reference Types" },
             { id: "tags", label: "Tags" },
@@ -294,7 +294,7 @@
                     >{/each}
                 </select>
                 <p id="settings-project-help" class="ka-help">
-                  Settings for this project. Your open manuscript stays in place.
+                  Settings for this campaign. Existing documents and local files remain untouched.
                 </p>
               </div>
             {/if}
